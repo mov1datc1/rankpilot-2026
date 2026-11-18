@@ -45,11 +45,18 @@ def nonasserted_sector_advisories(verdict,package):
             and defect.get('conflict_basis')=='source_vs_source'
             and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
             and defect.get('owner')!='user' and defect.get('field_path')=='client_sector'
-            and scope=='facts' and not term and not quote
+            and scope in ('facts','submission','letter') and not quote
             and check.get('relationship')=='conflicting' and check.get('nonessential_sector') is True
             and check.get('claims')==[] and bool(row))
         if source_only:
             reg=norm(check.get('register_quote'));nar=norm(check.get('narrative_quote'))
+            # DeForest 18-11 (v1.0.100): the reviewer may label the same
+            # source-only warning letter/submission and name the register
+            # descriptor while quoting nothing from either document. That is
+            # still not a generated claim; only a term from this same grounded
+            # register comparison is accepted.
+            if term and term not in (reg,nar):source_only=False
+        if source_only:
             grounded=bool(reg and nar and any(reg in norm(r.get('quote')) for r in row['confidentialityEvidence']['client_register'])
                 and any(nar in norm(row.get(k)) for k in ('source_excerpt','rawNotes','summary')))
             absent=all(not re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',norm(package[k]))

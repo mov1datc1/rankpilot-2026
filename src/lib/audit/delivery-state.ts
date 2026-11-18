@@ -1,6 +1,7 @@
 import { publicationStatus, valueConflict, validValueResolution, pendingExtractionIssues } from './input-review';
 import { REVIEW_CONTRACT } from './review-versions';
 import {preparationInputIssues, officialFilingGaps} from './preparation-input';
+import {implausibleValueWarnings} from './value-plausibility';
 export interface DeliveryStateResult {
   approved: boolean;
   available: boolean;
@@ -56,6 +57,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (requireArtifact && !data?.approved_artifact?.input_hash && !data?.available_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
   if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== expectedContract.policy || data.completed_renderer_version !== expectedContract.renderer || data.completed_artifact_review_version !== expectedContract.artifact)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
   const warnings: string[] = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
+  warnings.push(...implausibleValueWarnings(matters));
   if(data?.restricted_delivery_policy === 'restricted-unconfirmed-v1' && matters.some(m=>publicationStatus(m)==='confirmation_required')) warnings.push('Los asuntos sin permiso confirmado se entregan únicamente como confidenciales; su publicación sigue pendiente.');
   const dirLabel = /500/i.test(data?.targetDirectory || data?.directory || '') ? 'The Legal 500' : 'Chambers';
   if (isUnrankedClaim(data?.ranking_claim || data?.current_band)) {

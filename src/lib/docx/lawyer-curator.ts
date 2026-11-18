@@ -97,10 +97,13 @@ export function cleanLawyerUrl(raw: string): string {
  * Anonymization dictionary to replace confidential client names with high-impact sector descriptors in public bios.
  * Prevents confidential leaks in public sections (B9, B10, C2) while preserving high-caliber substantive evidence.
  */
-export function anonymizeConfidentialClients(text: string, confClientNames: string[] = [], career: CareerMention[] = []): string {
+export function anonymizeConfidentialClients(text: string, confClientNames: string[] = [], career: CareerMention[] = [], knownClients: string[] = []): string {
   if (!text) return '';
-  if (career.length) return transformOutsideCareerMentions(text,career,part=>anonymizeConfidentialClients(part,confClientNames));
+  if (career.length) return transformOutsideCareerMentions(text,career,part=>anonymizeConfidentialClients(part,confClientNames,[],knownClients));
   let res = text;
+  // A name the source lists only as a lawyer's client (no matter, no confirmed
+  // publication) is a client relationship by definition, not an unknown entity.
+  const clientIdentity=new Set(clientAliases(knownClients).map(name=>name.trim().toLocaleLowerCase()));
 
   // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
   for (const confName of clientAliases(confClientNames)) {
@@ -118,7 +121,8 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
         const after=whole.slice(offset+match.length);
         // The name's presence in the confidential register is not proof of
         // the relationship described by this particular biography sentence.
-        const explicitClient=/(?:the (?:firm|team) (?:advis(?:e[sd]?|ing)|represent(?:s|ed|ing)?)|clients? such as)\s+$/i.test(before)
+        const explicitClient=clientIdentity.has(cleanConf.toLocaleLowerCase())
+          || /(?:the (?:firm|team) (?:advis(?:e[sd]?|ing)|represent(?:s|ed|ing)?)|clients? such as)\s+$/i.test(before)
           || /^\s+(?:retained|engaged|instructed|appointed)\s+(?:us|the (?:firm|team))\b/i.test(after);
         return explicitClient ? 'a confidential client' : 'a confidential entity';
       });

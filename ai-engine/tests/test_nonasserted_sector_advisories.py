@@ -77,7 +77,7 @@ class NonassertedSectorAdvisoryTests(unittest.TestCase):
             if change=='critical':d['severity']='critical'
             elif change=='user':d['owner']='user'
             elif change=='field':d['field_path']='outcome'
-            elif change=='scope':d['scope']='submission'
+            elif change=='scope':d['scope']='strategy'
             elif change=='claim':c['claims']=[{'artifact_quote':'Still asserted'}]
             elif change=='reg':c['register_quote']='foreign register'
             elif change=='nar':c['narrative_quote']='foreign narrative'
@@ -85,3 +85,31 @@ class NonassertedSectorAdvisoryTests(unittest.TestCase):
             elif change=='output_reg':p['rendered_audit']+=' Private education.'
             else:p['rendered_artifact']+=' private security workforces.'
             self.assertEqual(nonasserted_sector_advisories(v,p),(v,[]),change)
+
+
+class SourceOnlyWarningLabelledOnADocumentTests(unittest.TestCase):
+    """DeForest 18-11 (v1.0.100): the reviewer labelled two source-only sector
+    warnings scope=letter with the register descriptor as term and no quote;
+    the validator rejected them and voided the whole paid final review."""
+
+    def deforest_shape(self,term='Private education'):
+        p,v=fixture();d=v['defects'][0]
+        d.update(scope='letter',artifact_quote='',conflicting_artifact_term=term,artifact_claim_kind=None)
+        v['register_checks']['m1']['claims']=[]
+        return p,v
+
+    def test_register_term_without_artifact_quote_becomes_an_internal_note(self):
+        p,v=self.deforest_shape()
+        with self.assertRaises(ValidationError):Defect.model_validate(v['defects'][0])
+        fixed,notes=nonasserted_sector_advisories(v,p)
+        self.assertEqual(fixed['defects'],[]);self.assertEqual(notes[0]['code'],'NON_ASSERTED_OPTIONAL_SECTOR')
+        p,v=self.deforest_shape('private security workforces')
+        self.assertEqual(nonasserted_sector_advisories(v,p)[0]['defects'],[])
+
+    def test_foreign_term_or_asserted_descriptor_still_requires_review(self):
+        p,v=self.deforest_shape('Retail')
+        self.assertEqual(nonasserted_sector_advisories(v,p),(v,[]))
+        p,v=self.deforest_shape();p['rendered_audit']+=' A private education provider.'
+        self.assertEqual(nonasserted_sector_advisories(v,p),(v,[]))
+        p,v=self.deforest_shape();v['defects'][0]['severity']='critical'
+        self.assertEqual(nonasserted_sector_advisories(v,p),(v,[]))

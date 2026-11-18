@@ -218,6 +218,24 @@ def bind_quote(value, matter):
                 if match:return source[match.start():match.end()]
     return None
 
+# Ángela (Ramos 17-11, DeForest 18-11): a sentence that only restates the
+# matter value in registry voice ("The matter is recorded with a value of
+# US$…") repeats E3/D3 inside the narrative. E3 already prints that value, so
+# the sentence carries no work, outcome or scale and is removed at
+# construction, before any review. Amounts with their own concept (exposure,
+# project value, claim reduction) are separate sentences and stay untouched.
+VALUE_RESTATEMENT = re.compile(
+    r"(?:(?<=^)|(?<=[.!?]\s))\s*(?:The|This)\s+(?:matter|engagement|mandate)(?:['’]s)?\s+"
+    r"(?:is\s+recorded\s+(?:at|as|with\s+a\s+(?:stated\s+)?value\s+of)|(?:stated|recorded|declared)\s+value\s+is|value\s+is\s+(?:recorded|stated)\s+(?:at|as))"
+    r"\s+(?:approximately\s+|approx\.\s+|about\s+)?(?:US\$|USD|MXN|EUR|\$|€)\s?[\d.,]+(?:\s*(?:million|billion|m))?\s*\.(?=\s|$)", re.I)
+
+
+def drop_value_restatement(text):
+    text=str(text or '')
+    cleaned=VALUE_RESTATEMENT.sub('',text)
+    return re.sub(r'[ \t]{2,}',' ',cleaned).strip() if cleaned!=text else text
+
+
 def bind_development(package, proposal):
     proposal=copy.deepcopy(proposal)
     # Canonicalize generated presentation before binding and validation, never
@@ -229,6 +247,8 @@ def bind_development(package, proposal):
         for field in ('text','completion_status'):
             if field in draft:draft[field]=sanitize_narrative_voice(draft[field])
         matter=register.get(draft.get('matter_id'),{})
+        if 'text' in draft and str(matter.get('value') or '').strip():
+            draft['text']=drop_value_restatement(draft['text'])
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
