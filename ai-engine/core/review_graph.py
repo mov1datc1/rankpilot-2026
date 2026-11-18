@@ -169,6 +169,7 @@ class ReviewState(TypedDict, total=False):
     selection_review_proofs: dict
     selection_review_reused_ids: list
     selection_advisories: list
+    selection_observations: dict
     writer_attempts: int
     writer_validated: bool
     letter_repair_requested: bool
@@ -621,9 +622,14 @@ def selection_gate(state):
 
 
 def selection_review(state):
-    from core.selection_review import review_selection, rebind_selection_diagnostics
+    from core.selection_review import review_selection, rebind_selection_diagnostics, accept_with_observations
     rebound=rebind_selection_diagnostics(state)
     if rebound is not None:return rebound
+    # The same reviewed strategy with no paid round left: never buy another
+    # review, continue with its bound wording findings as Audit observations.
+    accepted=accept_with_observations(state)
+    if accepted is not None:
+        return {**accepted,'selection_review_attempts':state.get('selection_review_attempts',0),'trace':list(state.get('trace',[]))}
     if state.get('selection_review_attempts',0)>=3:
         valid=state.get('selection_review_validated') is True and state.get('selection_validated') is True
         return {'selection_review_validated':valid,'selection_validated':valid,
@@ -631,7 +637,11 @@ def selection_review(state):
                 'errors':[] if valid else state.get('errors') or ['La revisión de selección alcanzó su límite; se conserva el rechazo.'],
                 'trace':list(state.get('trace',[]))}
     try:
-        return review_selection(state, invoke_role)
+        reviewed=review_selection(state, invoke_role)
+        if reviewed.get('errors'):
+            accepted=accept_with_observations({**state,**reviewed})
+            if accepted is not None:return {**reviewed,**accepted}
+        return reviewed
     except Exception as error:
         # Preserve the successful selector and its usage if the independent
         # reviewer is unavailable. A later retry reuses it, never invents a pass.
@@ -1101,8 +1111,13 @@ def select_or_reuse(state):
             from core.selection_repair_cache import replay_selection_repair
             return replay_selection_repair(state)
         if state.get('selection_feedback',{}).get('semantic_rejection'):
-            from core.selection_review import repair_selection, can_repair_selection
+            from core.selection_review import repair_selection, can_repair_selection, accept_with_observations
             if state.get('selection_failure_history') and not can_repair_selection(state):
+                # A saved rejection whose only findings are internal wording:
+                # the unchanged strategy passes the deterministic gate and the
+                # review node records the observations without a paid call.
+                if accept_with_observations(state) is not None:
+                    return {'strategy':state['strategy'],'errors':[]}
                 return {'errors':state.get('selection_feedback',{}).get('errors') or ['La corrección de selección alcanzó su límite sin una validación independiente.'],
                         'selection_validated':False,'selection_review_validated':False}
             bounded=repair_selection(state,invoke_role)

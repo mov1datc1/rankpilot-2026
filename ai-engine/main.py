@@ -350,6 +350,12 @@ async def _extract_readable_source(doc_text, context):
         if "SOURCE DOCUMENT" in raw_practice or raw_practice.startswith("===") or "END DOCUMENT" in raw_practice:
             raw_practice = ""
         calibrated_practice = context.get("practice_area") or context.get("practiceArea") or ""
+        # Ramos 18-11: a blank template carried "Energy & Natural Resources" in
+        # A1 (firm name) as well as A2. A practice label is not a firm identity
+        # and must not raise SOURCE_IDENTITY_CONFLICT against the real firm.
+        same = lambda a, b: bool(a and b) and re.sub(r'\W+', '', a).casefold() == re.sub(r'\W+', '', b).casefold()
+        if same(firm_name, raw_practice) or same(firm_name, calibrated_practice):
+            firm_name = ""
         practice_area = raw_practice or calibrated_practice
         location = prelim.get("jurisdiction") or prelim.get("location") or context.get("jurisdiction") or ""
 
@@ -431,6 +437,13 @@ async def extract_document_endpoint(request: Request):
             errors.append(SourceError('SOURCE_UNREADABLE').as_dict(name))
     if errors:
         return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': errors})
+    if context.get('scope_preflight'):
+        # Ángela 18-11: a template header contradicting the selected practice
+        # was discovered only after the paid extraction. Reading is free, so
+        # the declared scope of every source is returned before any model call.
+        from utils.source_scope import source_scope
+        return JSONResponse(status_code=200, content={'success': True, 'scope_preflight': True, 'source_reports': [
+            {'source': name, 'source_scope': source_scope(text), 'character_count': len(text)} for name, text in prepared]})
 
     results = []
     for (name, text), report in zip(prepared, reports):

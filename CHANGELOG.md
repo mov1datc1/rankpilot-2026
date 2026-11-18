@@ -1,3 +1,14 @@
+## 1.0.98 — Ask about scope before spending; selection never stops on wording alone
+
+Two user tests on v1.0.97 stopped on 18 Nov 2026 without documents.
+- **Scope question before the paid extraction.** In one case, a blank Chambers template among six sources carried another practice in A2 (and in A1), so the case was blocked *after* the paid extraction. The sources are now read for free first. A declared practice or jurisdiction conflict becomes a single question ("Continuar con X" / "Cambiar a Y"), recommended by the majority of sources. The confirmation is stored (`scope_confirmations`), stays visible as a source warning and is honoured by later stages only while the selected scope is the same. Directory conflicts and missing scope still block.
+- A form whose firm name repeats its practice label no longer counts as a firm identity, so it cannot raise `SOURCE_IDENTITY_CONFLICT`.
+- **Selection review limit.** In the other case, three paid selection reviews flagged a different internal-rationale nuance each round, and the exhausted rounds stopped the case. The reviewer never disputed a disposition, the hero or the portfolio. When no paid round remains and every finding is bound, wording-only and outside the confidential-delivery rule, the reviewed selection continues and those findings become Audit observations (`selection-limit-observations-v1`), with no provider call. Disposition, rule, unbound or unknown-usage findings still stop.
+  - The same failed job can continue once on the new build (`selection_observation_acceptance_requested`).
+  - The selection reviewer treats a nonessential client-sector discrepancy between source records as advisory.
+- **First-pass metric.** A unit whose text did not change counts as first pass even if its evidence view changed before review (`evidence_changed_before_review`).
+- Replay of the stopped selection checkpoint: it continues with 0 provider calls. Validation: 954 Python tests, 603 Node tests (1 skipped), TypeScript.
+
 ## 1.0.97 — Honest progress messages; last lead-partner form
 
 Ramos on v1.0.96 (job `b989d6e0`): 14.1 min, 1.19M tokens (−32% vs v1.0.95, with no unread cache writes), no second judge round. The final review met 7 of 8 criteria; the remaining one is a real source conflict the Audit already asks the client to confirm.

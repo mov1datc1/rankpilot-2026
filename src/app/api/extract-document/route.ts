@@ -1,4 +1,4 @@
-import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { selectedScope, scopeIssues, scopeQuestion, unconfirmedScopeIssues } from '@/lib/audit/analysis-scope';
 import { engineFetch } from '@/lib/editorial/engine';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
     console.log(`[EXTRACT-DOCUMENT] Calling ${pythonApiUrl}/extract for submission ${submission.id}...`);
 
-    const extractResponse = await engineFetch(`${pythonApiUrl}/extract`, {
+    const engineRequest = (extra:Record<string,unknown>={}) => engineFetch(`${pythonApiUrl}/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -89,10 +89,34 @@ export async function POST(request: NextRequest) {
           jurisdiction: submission.guideRegion,
           practice_area: submission.practiceArea,
           firm_name: context?.firm_name || '',
-          sources: sources
+          sources: sources,
+          ...extra
         }
       })
     });
+    const modality = context?.modality || selected.modality;
+    const scopeConfirmations = Array.isArray(body.scope_confirmations) ? body.scope_confirmations : [];
+    const scopeConflictResponse = (issues:any[], reports:any[]) => {
+      const question = scopeQuestion(issues, reports);
+      return NextResponse.json({code:'SCOPE_CONFLICT',error:question.confirmable?question.items.map(i=>i.message).join(' '):issues.map(i=>i.message).join(' '),issues,question,submissionId:submission.id},{status:422});
+    };
+
+    if (!confidentialityOnly) {
+      // Reading sources is free; extraction is paid. Ask about a declared
+      // scope conflict before spending, never after.
+      const preflight = await engineRequest({scope_preflight: true});
+      const preflightData = await preflight.json().catch(()=>({}));
+      if (preflight.ok && preflightData.scope_preflight === true) {
+        const open = unconfirmedScopeIssues(scopeIssues(selected, preflightData.source_reports || [], modality), scopeConfirmations);
+        if (open.length) return scopeConflictResponse(open, preflightData.source_reports || []);
+      } else if (!preflight.ok) {
+        const status = preflight.status >= 400 && preflight.status < 500 ? preflight.status : 502;
+        const code = preflightData.code || 'EXTRACTION_UNAVAILABLE';
+        return NextResponse.json({code,error:processingFeedback({...preflightData,code},status,'extract'),source_errors:preflightData.source_errors || [],issues:preflightData.issues || [],usage:null,retryable:preflightData.retryable ?? false},{status});
+      }
+    }
+
+    const extractResponse = await engineRequest();
 
     if (!extractResponse.ok) {
       const failure = await extractResponse.json().catch(()=>({}));
@@ -109,8 +133,15 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const scopeConflicts=scopeIssues(selected,extractData.source_reports || [], context?.modality || selected.modality);
-    if(scopeConflicts.length) return NextResponse.json({code:'SCOPE_CONFLICT',error:scopeConflicts.map(i=>i.message).join(' '),issues:scopeConflicts},{status:422});
+    const allScopeIssues=scopeIssues(selected,extractData.source_reports || [], modality);
+    const scopeConflicts=unconfirmedScopeIssues(allScopeIssues,scopeConfirmations);
+    if(scopeConflicts.length) return scopeConflictResponse(scopeConflicts,extractData.source_reports || []);
+    // A confirmed conflict stays visible as a source warning; it is never erased.
+    const confirmedScope=allScopeIssues.filter(i=>!scopeConflicts.includes(i));
+    for(const issue of confirmedScope) {
+      const report=(extractData.source_reports || []).find((r:any)=>r.source===issue.source);
+      if(report) (report.warnings ||= []).push(`Confirmaste continuar con «${issue.selected}» aunque esta fuente indica «${issue.detected}».`);
+    }
     const extractedMeta = extractData.metadata || {};
     const extractedB10 = extractData.original_b10 || '';
     const extractedMatters: any[] = extractData.matters || [];
@@ -238,6 +269,7 @@ export async function POST(request: NextRequest) {
       },
       ingestion_quality: extractData.ingestion_quality || null,
       analysis_scope: selected,
+      ...(confirmedScope.length ? {scope_confirmations: confirmedScope.map(i=>({field:i.field,selected:i.selected,detected:i.detected,source:i.source,quote:i.quote}))} : {}),
       modality: context?.modality || existingChambers.modality || selected.modality || '',
       draft_revision: Number(existingChambers.draft_revision || 0) + 1,
       original_b10: extractedB10,

@@ -3,7 +3,7 @@ import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
 import { bindGeneratedFindings, renderedSubmissionFindings } from '@/lib/editorial/artifact-findings';
 import { supportedDevelopment } from '@/lib/editorial/development';
-import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { savedScopeIssues } from '@/lib/audit/analysis-scope';
 import { normalizeLetterSections } from '@/lib/audit/letter-sections';
 import { engineFetch } from '@/lib/editorial/engine';
 import { randomUUID } from 'node:crypto';
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const previous = {...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
     const inputIssues=editorialPreparationIssues(previous,previous.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
-    const scopeProblems=scopeIssues(selectedScope(submission),previous.source_reports || []);
+    const scopeProblems=savedScopeIssues(submission,previous);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const stored = Array.isArray(previous.matters) ? previous.matters : submission.matters;
     const draft = Array.isArray(body.matters) ? body.matters : stored;

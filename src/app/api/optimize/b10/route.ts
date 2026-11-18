@@ -1,5 +1,5 @@
 import {preparationInputIssues} from '@/lib/audit/preparation-input';
-import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { savedScopeIssues } from '@/lib/audit/analysis-scope';
 import { stableHash } from '@/lib/editorial/contracts';
 import { engineFetch } from '@/lib/editorial/engine';
 import { NextRequest, NextResponse } from 'next/server';
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const chambersData = {...((submission.chambersData as any) || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
     const inputIssues=preparationInputIssues(chambersData,chambersData.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
-    const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);
+    const scopeProblems=savedScopeIssues(submission,chambersData);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 

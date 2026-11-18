@@ -6,6 +6,11 @@ are only a subset of whole-document quality; Audit/pair consistency is later.
 import copy
 
 
+def output_digest(text):
+    from hashlib import sha256
+    return sha256(' '.join(str(text or '').split()).encode()).hexdigest()[:24]
+
+
 def initial_quality(state):
     from core.field_review import units_for
     try:
@@ -14,7 +19,7 @@ def initial_quality(state):
         return {'scope': 'development_source_field_obligations_only', 'status': 'unmeasurable',
                 'reason': 'Original construction has an incomplete field/source contract.'}
     return {'scope': 'development_source_field_obligations_only', 'target_percent': 90,
-            'status': 'awaiting_review', 'units': {u['field']: {'hash': u['hash'],
+            'status': 'awaiting_review', 'units': {u['field']: {'hash': u['hash'], 'output_hash': output_digest(u['output']),
                 'obligation_ids': [o['id'] for o in u['obligations']], 'checks': {}} for u in units},
             'whole_document_quality': 'not_measured'}
 
@@ -35,7 +40,12 @@ def record_first_review(report, units, result):
         saved = initial['units'].get(unit['field'])
         if not saved or saved.get('first_review') or saved['checks']:
             continue
-        if saved['hash'] == unit['hash']:
+        # Same text the construction wrote: a repair of ANOTHER field may change
+        # this unit's evidence view, but its first review still judges original
+        # construction output and counts as first pass.
+        if saved['hash'] == unit['hash'] or (saved.get('output_hash') and saved['output_hash'] == output_digest(unit['output'])):
+            if saved['hash'] != unit['hash']:
+                saved['evidence_changed_before_review'] = True
             saved['checks'] = {key: checks[key]['status'] for key in saved['obligation_ids']}
             saved['first_review'] = 'original'
         else:

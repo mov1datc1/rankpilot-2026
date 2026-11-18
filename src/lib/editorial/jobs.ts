@@ -9,7 +9,7 @@ import { bindGeneratedFindings } from './artifact-findings';
 import { recoveryPlan, hasUnknownProviderUsage } from './recovery';
 import { isStoppedSelection } from '@/lib/audit/review-actions';
 import { canResumeEditorialResidual } from './residual-recovery';
-import {canResumeSelectionDiagnostic,canResumeSelectionProgress,canReplaySelectionRepair} from './selection-recovery';
+import {canResumeSelectionDiagnostic,canResumeSelectionProgress,canReplaySelectionRepair,canAcceptSelectionObservations} from './selection-recovery';
 import {canRecheckDevelopment,canRecheckFieldContext,FIELD_CONTEXT_VERSION} from './development-recheck';
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 import {editorialNextAction} from './next-action';
@@ -126,6 +126,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     }
     if(retry && canReplaySelectionRepair(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'selection_repair_cache_replay_requested',worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
+    if(retry && canAcceptSelectionObservations(last,current.chambersData,sourceHash,build)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'selection_observation_acceptance_requested',worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }

@@ -60,16 +60,22 @@ class SelectionRegisterEvidenceTests(unittest.TestCase):
         self.assertNotIn('approved_artifact',result)
         develop.assert_not_called()
 
-    def test_a_repeated_grounded_finding_stops_without_drafting_or_approval(self):
+    def test_a_repeated_wording_finding_continues_as_an_audit_observation(self):
+        # v1.0.98 (DeForest 18-11): a bound finding that only disputes internal
+        # rationale wording, repeated after its single repair, no longer stops
+        # the case. No further paid round; the finding travels to the Audit.
+        # Disposition, rule and unbound findings still stop (test_selection_limit_observations).
         calls=[]
         def invoke(state,role,*args):
             calls.append(role)
             return (repair_answer(args[-1],[DECISION]) if role=='strategist' else BAD),[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
-            result=create_review_graph().invoke({'package':PACKAGE})
+            result=create_review_graph().invoke({'package':PACKAGE,'operation':'strategy'})
         self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer'])
-        self.assertFalse(result['selection_review_validated'])
-        self.assertFalse(result['release_verdict']['passed'])
+        self.assertTrue(result['selection_review_validated'])
+        self.assertEqual(result['errors'],[])
+        self.assertEqual([a['origin'] for a in result['selection_advisories'] if a.get('origin')],['selection_review_limit'])
+        self.assertNotIn('release_verdict',result)
         develop.assert_not_called()
 
     def test_comparison_policy_reaches_strategy_selection_development_audit_and_editor(self):
