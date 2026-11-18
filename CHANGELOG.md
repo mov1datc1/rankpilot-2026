@@ -1,3 +1,28 @@
+## 1.0.99 — A correction before a source question ends in delivered documents
+
+A user test on v1.0.98 (18 Nov 2026) passed selection, development and the first final review. It then stopped without documents.
+- The final review found generated defects plus one question for the user: publishing a client named only in a lawyer's bio.
+- The supervisor corrected the generated text but dropped the final review from the scheduled tasks.
+- The job ended at the Audit step, so the corrected content was never reviewed or delivered.
+- The Studio offered only «Actualizar estado», which returned the same saved state.
+
+Changes:
+- **The correction ends in the final review** (`src/lib/editorial/supervisor.ts`).
+  - A correction scheduled before a source question now always finishes with the exact-artifact judge.
+  - After that one verified correction, a still-pending answer cannot buy another paid round. The supervisor returns `needs_input`, which becomes `deliver` when the pair exists, so the documents are delivered with the question as an observation.
+  - Added cost: one final review in this path only, about 180K tokens (about USD 1 at current rates).
+- **The real next step is shown** (`src/lib/editorial/next-action.ts`, `jobs.ts`).
+  - A job waiting for a source answer shows «Responde los datos pendientes» instead of the refresh loop, even when the last supervision was the preceding correction.
+- **Stopped jobs from earlier versions resume once** (`canVerifyInputCorrections`, `recoverStoppedJobs`).
+  - The worker resumes such a job with only the final review appended, under the submission lock.
+  - Marker: `input_corrections_verification_requested`.
+  - Nothing is regenerated, and selection, development and the Audit are kept.
+  - Conditions: unchanged sources, no unknown provider usage, and delivery-ready construction.
+  - Meanwhile the Studio shows «Verificando las correcciones guardadas».
+- Validation: 607 Node tests passed (1 skipped), including 4 new and 1 updated; TypeScript passed; no Python changes.
+  - The new code was evaluated read-only against the saved 18-11 job. It is eligible, shows the waiting step, and with the same findings the decision after the review is `deliver`.
+  - No OpenAI calls.
+
 ## 1.0.98 — Ask about scope before spending; selection never stops on wording alone
 
 Two user tests on v1.0.97 stopped on 18 Nov 2026 without documents.
