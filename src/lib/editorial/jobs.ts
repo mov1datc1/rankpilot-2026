@@ -64,7 +64,9 @@ export function publicJob(job:any, submission?:any) {
   const canDeliver=!!submission && sourceMatches===true && canContinueWithObservations(job,submission.chambersData,job.sourceHash);
   const canResumeRetired=!!submission && sourceMatches===true && canResumeRetiredBudget(job,submission.chambersData,job.sourceHash);
   const canResumeResidual=canResumePlan || canResumePostConstruction || canResumeRetired || canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
-  const nextAction=editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,constructionPlanRecovery:canResumePlan,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available});
+  const verifyingCorrections=sourceMatches===true && canVerifyInputCorrections(job,submission?.chambersData,job.sourceHash);
+  const waitingForInput=sourceMatches===true && !verifyingCorrections && waitingForSourceInput(job,submission?.chambersData,job.sourceHash);
+  const nextAction=editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,constructionPlanRecovery:canResumePlan,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available,waitingForInput,verifyingCorrections});
   return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message:active?message:nextAction.description,pauseReason,sourceMatches,canResumeResidual,nextAction,canResumeConstructionPlan:canResumePlan,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,activity:active && submission ? jobActivity(job,submission.chambersData) : null,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
@@ -205,6 +207,27 @@ export function waitingForSourceInput(job:any,data:any,sourceHash:string):boolea
   return job?.status==='needs_review' && job.sourceHash===sourceHash
     && (job.ledger || []).some((entry:any)=>entry.supervision?.reason==='generated_corrections_before_source_input')
     && (data?.final_artifact_review?.judge?.defects || []).some((d:any)=>d.severity==='critical' && d.owner==='user');
+}
+
+export const INPUT_CORRECTION_VERIFICATION='input_corrections_verification_requested';
+/** v1.0.99 (Ángela 18-11): before this version a correction preceding a source
+ * question ended without the exact-artifact judge, so the corrected content
+ * could be neither delivered nor reviewed and no step was offered. That saved
+ * job resumes ONCE with only that judge; nothing is regenerated. */
+export function canVerifyInputCorrections(job:any,data:any,sourceHash:string):boolean {
+  const ledger:any[]=job?.ledger || [];
+  const last=[...ledger].reverse().find((entry:any)=>entry.supervision)?.supervision;
+  const state=data?.review_checkpoint?.state;
+  return job?.status==='needs_review' && job.sourceHash===sourceHash
+    && Array.isArray(job.tasks) && job.cursor===job.tasks.length && job.tasks.at(-1)!=='artifact'
+    && last?.action==='repair' && last?.reason==='generated_corrections_before_source_input'
+    && !(last.repair?.tasks || []).includes('artifact')
+    && !ledger.some((entry:any)=>entry.status===INPUT_CORRECTION_VERIFICATION)
+    && !hasUnknownProviderUsage(ledger)
+    && data?.final_review_stale===true
+    && state?.selection_validated===true
+    && state?.development_delivery_ready===true
+    && (state?.writer_validated===true || state?.writer_delivery_ready===true);
 }
 
 /** Repairs may change generated prose, never source facts or human-edited text. */

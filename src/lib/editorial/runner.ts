@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
 import { editorialIdentity } from './identity';
 import { sourceSnapshot, stableHash } from './contracts';
-import { enqueue, planDrafting, systemIssue } from './jobs';
+import { enqueue, planDrafting, systemIssue, canVerifyInputCorrections, INPUT_CORRECTION_VERIFICATION } from './jobs';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
 import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
@@ -18,13 +18,25 @@ import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview,
 
 /** Recover only the latest job, with unchanged owned sources, under the same lock as enqueue. */
 export async function recoverStoppedJobs() {
-  const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE ((j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot') OR (j."status"='needs_review' AND j."stage"='artifact')) AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
+  const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE ((j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot') OR (j."status"='needs_review' AND j."stage" IN ('artifact','audit'))) AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
   for(const candidate of candidates) {
     if(candidate.issue?.code==='EDITORIAL_BUDGET_REQUIRED' && !Number.isFinite(editorialTokenBudget(candidate.ledger))) {
       // enqueue rechecks the latest owned source under the submission lock.
       const current=await prisma.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
       if(current && current.userId===candidate.userId && canResumeRetiredBudget(candidate,current.chambersData,stableHash(sourceSnapshot(current))))
         await enqueue(current,true);
+      continue;
+    }
+    if(candidate.status==='needs_review' && candidate.stage!=='artifact') {
+      // Pre-v1.0.99 correction before a source question: append only the
+      // exact-artifact judge, once, under the submission lock.
+      await prisma.$transaction(async tx=>{
+        await tx.$queryRaw`SELECT "id" FROM "Submission" WHERE "id"=${candidate.submissionId} FOR UPDATE`;
+        const current=await tx.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
+        if(!current || current.userId!==candidate.userId || !canVerifyInputCorrections(candidate,current.chambersData,stableHash(sourceSnapshot(current)))) return;
+        const marker={stage:'artifact',cursor:candidate.cursor,status:INPUT_CORRECTION_VERIFICATION,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};
+        await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"tasks"=${JSON.stringify([...candidate.tasks,'artifact'])}::jsonb,"stage"='artifact',"issue"=NULL,"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"leaseToken"=NULL,"leaseUntil"=now(),"updatedAt"=now() WHERE "id"=${candidate.id} AND "status"='needs_review' AND "cursor"=${candidate.cursor} AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND newer."id"<>${candidate.id} AND (newer."createdAt">=(SELECT "createdAt" FROM "EditorialJob" WHERE "id"=${candidate.id}) OR newer."status" IN ('queued','running')))`;
+      });
       continue;
     }
     const diagnostic=candidate.status==='needs_review';

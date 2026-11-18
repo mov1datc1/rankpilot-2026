@@ -42,8 +42,12 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
   const needsInput=critical.some((d:any)=>d.owner==='user');
   const sourceDecision=()=>decision('needs_input','source_confirmation_required');
   // Complete independent generated-text corrections once before asking for
-  // source input. Do not repurchase an artifact judge while input is missing.
+  // source input, then verify them with ONE judge so the corrected pair is
+  // delivered with the question as an observation (Ángela 18-11: stopping
+  // after the correction left no files and no visible question). A second
+  // pass cannot buy another correction while that answer is pending.
   if(needsInput && !targetedRepair(data)) return sourceDecision();
+  if(needsInput && correctedBeforeInput(job.ledger)) return sourceDecision();
   if(hasUnknownProviderUsage(job.ledger || [])) return decision('pause','provider_outcome_unknown');
   if(authorizedExtension(job.ledger)) return decision('pause','authorized_review_limit');
   if(spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)) return decision('pause','token_budget');
@@ -59,7 +63,7 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
     const plan=fieldRecoveryPlan(job.ledger || [],concrete,data.review_checkpoint?.state?.field_review_attempts || {});
     if(!repair || !plan.strategy) return needsInput ? sourceDecision():decision('pause',plan.reason || 'no_supported_repair');
     return decision('repair',needsInput?'generated_corrections_before_source_input':'source_bound_field_recovery',{
-      repair:needsInput?{...repair,tasks:repair.tasks.filter(task=>task!=='artifact')}:repair,
+      repair:withArtifactReview(repair),
       recovery_contract:FIELD_RECOVERY_CONTRACT,obligation_keys:plan.keys,repair_strategy:plan.strategy,repair_fields:plan.fields});
   }
   const attempted=new Set((job.ledger || []).flatMap((entry:any)=>
@@ -69,6 +73,16 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
   if(!mayRepairAutomatically(job.ledger || [],data)) return decision('pause','repair_progress_limit');
   const repair=targetedRepair(data);
   return repair ? decision('repair',needsInput?'generated_corrections_before_source_input':'targeted_generated_content',
-      {repair:needsInput?{...repair,tasks:repair.tasks.filter(task=>task!=='artifact')}:repair})
+      {repair:withArtifactReview(repair)})
     : decision('pause','no_supported_repair');
+}
+
+export const INPUT_CORRECTION_REASON='generated_corrections_before_source_input';
+export function correctedBeforeInput(ledger:any[]=[]) {
+  return ledger.some((entry:any)=>entry.supervision?.action==='repair' && entry.supervision?.reason===INPUT_CORRECTION_REASON);
+}
+/** Every scheduled correction ends in the exact-artifact judge: without it the
+ * corrected content can be neither delivered nor shown as reviewed. */
+function withArtifactReview(repair:{tasks:string[];letter:boolean}) {
+  return repair.tasks.at(-1)==='artifact' ? repair : {...repair,tasks:[...repair.tasks.filter(task=>task!=='artifact'),'artifact']};
 }

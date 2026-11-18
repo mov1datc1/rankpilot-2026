@@ -24,14 +24,25 @@ test('source questions alone and exhausted budgets cannot trigger a paid correct
  const d=data();d.final_artifact_review.judge.defects=[{...issue,owner:'user'}];assert.equal(superviseArtifact(job(),d,'build').action,'needs_input');
  const j=job();j.ledger=[{trace:{usage:{total_tokens:editorialTokenBudget()}}}];assert.equal(superviseArtifact(j,data(),'build').reason,'token_budget');
 });
-test('mixed findings repair generated text once without repurchasing the judge before source input',()=>{
+test('mixed findings repair generated text once and verify it with one judge before the source question',()=>{
  const d=data();d.final_artifact_review.judge.defects.push({...issue,owner:'user',scope:'facts',field_path:'value'});
  const decision=superviseArtifact(job(),d,'build');
- assert.equal(decision.action,'repair');assert.deepEqual(decision.repair.tasks,['audit']);
+ // v1.0.99 (Ángela 18-11): without the judge the corrected pair could be
+ // neither delivered nor reviewed, and the case stopped with no next step.
+ assert.equal(decision.action,'repair');assert.equal(decision.reason,'generated_corrections_before_source_input');assert.deepEqual(decision.repair.tasks,['audit','artifact']);
  const j=job();j.ledger=[{supervision:decision}];
  assert.equal(superviseArtifact(j,d,'build').action,'needs_input');
  d.final_artifact_review.judge.defects=d.final_artifact_review.judge.defects.filter(f=>f.owner==='user');
  assert.equal(superviseArtifact(job(),d,'build').action,'needs_input');
+});
+test('after the verified pre-question correction, a new generated finding cannot buy another paid round; the pair is delivered',()=>{
+ const d=data();d.final_artifact_review.judge.defects.push({...issue,owner:'user',scope:'facts',field_path:'value'});
+ const j=job();j.ledger=[{supervision:superviseArtifact(job(),d,'build')}];
+ d.final_artifact_review.judge.defects[0]={...issue,artifact_quote:'A different generated assertion'};
+ assert.equal(superviseArtifact(j,d,'build').action,'needs_input');
+ d.available_artifact={base64:'docx',audit_base64:'audit'};
+ const delivered=superviseArtifact(j,d,'build');
+ assert.equal(delivered.action,'deliver');assert.equal(delivered.reason,'source_confirmation_required');
 });
 test('invalid diagnostics recheck the reviewer under existing retry limits, never approve',()=>{
  const d=data();d.final_artifact_review.judge={passed:false,acceptance:[{status:'failed'}],defects:[{code:'EDITORIAL_OMISSION',severity:'critical',owner:'rankpilot',message:'La aceptación editorial no está completa: source_fidelity'}]};

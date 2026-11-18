@@ -6,7 +6,7 @@ export type EditorialNextAction={
 };
 
 /** Describe a real transition, not a promise that another click buys retries. */
-export function editorialNextAction(job:any,options:{sourceMatches?:boolean|null;canResume?:boolean;constructionPlanRecovery?:boolean;hasObservations?:boolean;documentsAvailable?:boolean}={}):EditorialNextAction {
+export function editorialNextAction(job:any,options:{sourceMatches?:boolean|null;canResume?:boolean;constructionPlanRecovery?:boolean;hasObservations?:boolean;documentsAvailable?:boolean;waitingForInput?:boolean;verifyingCorrections?:boolean}={}):EditorialNextAction {
   const action=(kind:EditorialNextAction['kind'],title:string,description:string,automatic=false)=>({kind,title,description,automatic});
   if(options.sourceMatches===false)return action('review_changes','Revisa los cambios guardados',
     'Las fuentes cambiaron desde este intento. Revisa los datos actuales y prepara esa versión; los documentos anteriores todavía no incluyen estos cambios.');
@@ -20,7 +20,11 @@ export function editorialNextAction(job:any,options:{sourceMatches?:boolean|null
       'El trabajo continuará automáticamente. Puedes cerrar esta pestaña y volver; no necesitas iniciar otro intento.',true);
   }
   if(options.documentsAvailable===true)return action('download',`Documentos disponibles · ${options.hasObservations?'con observaciones':'sin observaciones'}`,options.hasObservations?'Abre «Descargar» para obtener el Submission y el Audit. Revisa las observaciones antes de presentarlos.':'Abre «Descargar» para obtener el Submission y el Audit. La revisión no dejó observaciones pendientes.');
-  if(lastDecision?.action==='needs_input' || job.issue?.owner==='user')return action('answer','Responde los datos pendientes',
+  if(options.verifyingCorrections===true)return action('wait','Verificando las correcciones guardadas',
+    'RankPilot revisará el Submission y el Audit ya corregidos y dejará los documentos disponibles. No necesitas pulsar ningún botón ni volver a cargar archivos; puedes cerrar esta pestaña y volver después.',true);
+  // The last supervision may be the correction that preceded the question
+  // (Ángela 18-11); a pending answer is still the user's real next step.
+  if(lastDecision?.action==='needs_input' || job.issue?.owner==='user' || options.waitingForInput===true)return action('answer','Responde los datos pendientes',
     'Abre la confirmación indicada abajo y guarda tu respuesta. Después pulsa «Preparar documentos» para continuar con la información actualizada.');
   if(options.canResume && options.constructionPlanRecovery)return action('continue','Completa el análisis pendiente',
     'Pulsa «Continuar preparación». RankPilot completará las comparaciones pendientes entre los asuntos seleccionados y los de reserva, y seguirá con los documentos. Conserva la extracción, la selección y el análisis ya guardados; no vuelvas a cargar el archivo.');
