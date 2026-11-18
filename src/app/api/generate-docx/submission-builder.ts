@@ -6,7 +6,7 @@ import {
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
 import { resolvePublication } from '@/lib/audit/publication-policy';
 import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership, cleanLawyerUrl } from '@/lib/docx/lawyer-curator';
-import { withoutCareerMentions } from '@/lib/docx/career-evidence';
+import { withoutCareerMentions, departmentCareerMentions, bioOnlyClientNames } from '@/lib/docx/career-evidence';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate, validateAndSanitizeValue } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -533,6 +533,9 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       }
     }
   }
+  const publishableClientNames = allMattersPool.filter((m:any)=>resolvePublication(m)==='publishable').map((m:any)=>String(m.client || m.clientName || '')).filter(Boolean);
+  const bioClients = bioOnlyClientNames(chambersData.editorial_development, publishableClientNames);
+  for (const name of bioClients) dynamicConfNames.add(name);
   const confNamesList = Array.from(dynamicConfNames);
 
   const rawInputLawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
@@ -681,14 +684,14 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
       const existingBio = (l.comments || l.bio || '').trim();
       if (l.comments) {
-        const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList, l.career));
+        const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList, l.career, bioClients));
         bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
       } else if (l.bio) {
-        const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList, l.career));
+        const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList, l.career, bioClients));
         bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
       }
       if (l.standoutWork) {
-        const cleanWork = stripAuditVoice(anonymizeConfidentialClients(String(l.standoutWork), confNamesList)).trim();
+        const cleanWork = stripAuditVoice(anonymizeConfidentialClients(String(l.standoutWork), confNamesList, [], bioClients)).trim();
         const isRedundant = existingBio && (
           cleanWork === existingBio ||
           existingBio.includes(cleanWork) ||
@@ -822,7 +825,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   ) {
     b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
-  b10Text = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned, confNamesList);
+  b10Text = sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned;
+  b10Text = anonymizeConfidentialClients(b10Text, confNamesList, departmentCareerMentions(b10Text, lawyers), bioClients);
   b10Text = stripAuditVoice(b10Text);
   // Strategic Primacy (Angela Castillo Directive): ensure opening paragraph leads with competitive differentiators
   b10Text = b10Text.replace(
@@ -845,7 +849,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
 
   // Sanitize any potential template or prompt leakage from C2, strip confidential names, and enforce firm voice
-  c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confNamesList);
+  c2Val = sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned);
+  c2Val = anonymizeConfidentialClients(c2Val, confNamesList, departmentCareerMentions(c2Val, lawyers), bioClients);
   c2Val = stripAuditVoice(String(c2Val));
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
@@ -943,8 +948,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   const dMattersContent = pubMatters.map((m: any) => `${m.client} ${m.name} ${m.summary || ''} ${m.optimizedText || ''}`).join(' ');
   const finalPublicSections = [
-    { name: 'B10 Department Overview', content: b10Text },
-    { name: 'C2 Feedback & Positioning', content: String(c2Val) },
+    { name: 'B10 Department Overview', content: withoutCareerMentions(b10Text, departmentCareerMentions(b10Text, lawyers)) },
+    { name: 'C2 Feedback & Positioning', content: withoutCareerMentions(String(c2Val), departmentCareerMentions(String(c2Val), lawyers)) },
     { name: 'D0 Publishable Clients', content: pubClients.join(', ') },
     { name: 'Section D Publishable Matters', content: dMattersContent },
     { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${withoutCareerMentions(l.comments || '', l.career || [])} ${l.standoutWork || ''}`).join(' ') }
@@ -1163,7 +1168,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // ═══ WHAT SETS YOUR PRACTICE APART ═══
   elements.push(pageStart());
   const lawyers = chambersData.lawyers || [];
-  const confClientNames = [...new Set(rawMattersListL500.filter((m:any)=>resolvePublication(m)!=='publishable').map((m:any)=>m.client || m.clientName).filter(Boolean))] as string[];
+  const bioClientsL500 = bioOnlyClientNames(chambersData.editorial_development, rawMattersListL500.filter((m:any)=>resolvePublication(m)==='publishable').map((m:any)=>String(m.client || m.clientName || '')).filter(Boolean));
+  const confClientNames = [...new Set([...rawMattersListL500.filter((m:any)=>resolvePublication(m)!=='publishable').map((m:any)=>m.client || m.clientName).filter(Boolean),...bioClientsL500])] as string[];
 
   let b7Val = exportMode === 'original'
     ? (chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '')
@@ -1172,13 +1178,13 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   if (exportMode !== 'original' && (!b7Val || String(b7Val).trim().length < 150 || String(b7Val).includes('principal base is Guadalajara') || String(b7Val).includes('throughout the State of Jalisco, where most of our clients operate'))) {
     b7Val = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers);
   }
-  b7Val = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(String(b7Val))).cleaned, confClientNames);
+  b7Val = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(String(b7Val))).cleaned, confClientNames, [], bioClientsL500);
   b7Val = stripAuditVoice(String(b7Val));
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
   let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
   if (c2Val) {
-    c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confClientNames);
+    c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confClientNames, [], bioClientsL500);
     c2Val = stripAuditVoice(String(c2Val));
     elements.push(para('', { spacing: { after: 120 } }));
     elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
@@ -1196,7 +1202,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   const sanitizeBio = (name: string, rawText: string) => {
     const lawyer = lawyers.find((l: any) => normLawyer(l.name) === normLawyer(name));
-    return anonymizeConfidentialClients(String(rawText || ''), confClientNames, lawyer?.career || []);
+    return anonymizeConfidentialClients(String(rawText || ''), confClientNames, lawyer?.career || [], bioClientsL500);
   };
 
   const leadingPartners = lawyers.filter((l: any) => {

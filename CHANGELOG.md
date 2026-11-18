@@ -1,3 +1,30 @@
+## 1.0.100 — Bio-only clients, former employers in B10/C2, value restatements and a voided final review
+
+Reviewing the delivered DeForest pair (18 Nov 2026, v1.0.99) found four deterministic causes. Each fix applies an answer the application already knows; none adds a paid call.
+
+- **Clients named only in a lawyer's profile** (`career-evidence.ts`, `lawyer-curator.ts`, `submission-builder.ts`).
+  - A client listed only in a lawyer's source profile has no matter and no confirmed publication. It is now anonymized as «a confidential client» in public B9, B10 and C2, for both Chambers and Legal 500.
+  - A client whose own matter is confirmed publishable keeps its name.
+  - This removes the user question the final review raised about Megacable. The rule already existed in `editorial_development.py` and in the final review; only the renderer lacked it.
+- **A lawyer's former employer in B10/C2.**
+  - The renderer replaced Raymundo's former employer with «a confidential entity» in B10, because the same company is a confidential matter client. The B9 kept it. The final review rejected the B10 on every pass, and the repaired text was broken again at rendering.
+  - A department sentence now keeps the entity only when it names that lawyer and a career marker and describes no firm work. Any other occurrence, including client work, is anonymized and still detected by the integrity check.
+- **Value restatements in E2/D2** (`editorial_development.py`).
+  - A standalone sentence that only repeats the E3/D3 value in registry voice («The matter is recorded with a value of US$…») is removed at construction, before any review.
+  - Amounts with their own concept (exposure, project value, claim reduction) stay.
+- **Implausible declared values** (`value-plausibility.ts`, `delivery-state.ts`).
+  - A declared value more than 50 times larger than every other amount of the same matter becomes a pre-filing observation. Example: Art Human, US$104,000,000.45 against about MXN 2 million of exposure.
+  - The source value is never changed.
+- **The final review voided by two warnings** (`register_review.py`).
+  - The reviewer labelled two source-only sector discrepancies (Securitas, American Axle) as `scope=letter`, named the register descriptor and quoted nothing from either document.
+  - The validator rejected them as ungrounded, and the whole paid review returned `AI_REVIEW_INVALID` (about 179K tokens).
+  - Such a warning now becomes an internal note when the term comes from the same grounded register comparison and neither competing descriptor appears in either document. Critical, user-owned, foreign-term or asserted findings are unchanged.
+- **Offline validation on the saved DeForest case** (no generation):
+  - The re-rendered Submission changes only «for Megacable» → «for a confidential client» and «a confidential entity» → «Volkswagen de México» in B10, with no integrity block.
+  - The stored final-review response now validates with 7 findings instead of voiding the review.
+  - Only Art Human is flagged among the 32 matters.
+  - 610 Node tests passed (1 skipped), 958 Python tests passed, and TypeScript passed.
+
 ## 1.0.99 — A correction before a source question ends in delivered documents
 
 A user test on v1.0.98 (18 Nov 2026) passed selection, development and the first final review. It then stopped without documents.
