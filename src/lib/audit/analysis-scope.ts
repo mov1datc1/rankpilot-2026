@@ -51,3 +51,47 @@ export function scopeIssues(scope:AnalysisScope,reports:any[]=[],modality?:strin
  }
  return issues;
 }
+
+export type ScopeIssue=ReturnType<typeof scopeIssues>[number];
+export type ScopeConfirmation={field:string;selected:string;detected:string;source:string};
+const CONFIRMABLE=new Set(['practice_area','jurisdiction','guide_region']);
+const confirmationKey=(i:ScopeConfirmation)=>[i.field,canonical(i.selected,i.field as keyof AnalysisScope),canonical(i.detected,i.field as keyof AnalysisScope),i.source].join('|');
+
+/** Issues the user has not yet answered. A confirmation answers only the exact
+ * field, selected value, detected value and source it was given for. */
+export function unconfirmedScopeIssues(issues:ScopeIssue[],confirmations:unknown):ScopeIssue[] {
+ const given=new Set((Array.isArray(confirmations)?confirmations:[]).filter((c:any)=>c && typeof c==='object').map((c:any)=>confirmationKey({field:String(c.field||''),selected:String(c.selected||''),detected:String(c.detected||''),source:String(c.source||'')})));
+ return issues.filter(i=>!(i.code==='SCOPE_CONFLICT' && CONFIRMABLE.has(i.field) && given.has(confirmationKey(i))));
+}
+
+/** Ángela 18-11: one template header ("A2 Practice Area: Energy & Natural
+ * Resources") stopped an Environment case whose other five sources declared
+ * nothing else. A declared practice/jurisdiction conflict becomes ONE question
+ * before any paid call, with the recommendation given by the majority of
+ * sources. Directory conflicts and missing scope still block. */
+export function scopeQuestion(issues:ScopeIssue[],reports:any[]=[]) {
+ const confirmable=issues.length>0 && issues.every(i=>i.code==='SCOPE_CONFLICT' && CONFIRMABLE.has(i.field));
+ const total=Math.max(reports.length,1);
+ const fields=[...new Set(issues.map(i=>i.field))];
+ const items=fields.map(field=>{
+  const own=issues.filter(i=>i.field===field);
+  const conflicting=new Set(own.map(i=>i.source)).size;
+  const detected=[...new Set(own.map(i=>i.detected))];
+  const recommendation:'continue'|'change'=conflicting*2<=total || detected.length>1?'continue':'change';
+  const names=[...new Set(own.map(i=>`«${i.source || 'un documento'}»`))].join(', ');
+  const message=`${names} ${conflicting===1?'indica':'indican'} ${labels[field]} «${detected.join('», «')}», pero elegiste «${own[0].selected}». `
+   +(recommendation==='continue'
+     ?`${total-conflicting} de ${total} fuentes no indican otra ${labels[field]}; recomendamos continuar con «${own[0].selected}».`
+     :`La mayoría de tus fuentes (${conflicting} de ${total}) indica «${detected[0]}»; revisa el filtro antes de continuar.`);
+  return {field,selected:own[0].selected,detected,recommendation,message};
+ });
+ return {confirmable,items,
+  confirmations:issues.filter(i=>i.code==='SCOPE_CONFLICT').map(i=>({field:i.field,selected:i.selected,detected:i.detected,source:i.source}))};
+}
+
+/** Scope check of a saved draft: conflicts the user confirmed at intake (stored
+ * as chambersData.scope_confirmations) do not stop later stages. Changing the
+ * selected scope invalidates the confirmation because its key includes it. */
+export function savedScopeIssues(submission:any,data:any) {
+ return unconfirmedScopeIssues(scopeIssues(selectedScope(submission),data?.source_reports || []),data?.scope_confirmations);
+}

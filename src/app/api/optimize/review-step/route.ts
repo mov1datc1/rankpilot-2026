@@ -1,7 +1,7 @@
 import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { projectDevelopment } from '@/lib/editorial/development';
-import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { savedScopeIssues } from '@/lib/audit/analysis-scope';
 import { engineFetch } from '@/lib/editorial/engine';
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const data: any = {...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
     const inputIssues=editorialPreparationIssues(data,data.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
-    const scopeProblems=scopeIssues(selectedScope(submission),data.source_reports || []);
+    const scopeProblems=savedScopeIssues(submission,data);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const matters = Array.isArray(data.matters) ? data.matters : submission.matters;
     const payload = reviewPackage(submission, data, matters);

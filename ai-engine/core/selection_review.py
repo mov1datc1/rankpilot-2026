@@ -124,6 +124,55 @@ def can_repair_selection(state):
             or (len(history)>1 and len(current) < len(set(history[-2]))))
 
 
+SELECTION_OBSERVATION_CONTRACT = 'selection-limit-observations-v1'
+
+
+def accept_with_observations(state):
+    """Keep the reviewed selection when only internal wording remains disputed.
+
+    DeForest 18-11 (job 357ce8ac): three paid reviews found a different
+    rationale nuance each round (Art Human, then Schaeffler+Grupo Solana, then
+    Securitas+Grupo Solana) and the exhausted rounds stopped the whole case. The
+    reviewer never disputed a disposition, the hero or the portfolio: only the
+    wording of the internal rationale/legal_understanding. When no paid round
+    remains, those bound findings travel to the Audit as observations and the
+    unchanged reviewed selection continues. Disposition changes, application
+    rule (confidential delivery) findings, unbound diagnoses, unknown usage and
+    a failed deterministic gate still stop. No provider call is made here.
+    """
+    feedback = state.get('selection_feedback') or {}
+    failed = feedback.get('failed_checks') or {}
+    if (not feedback.get('semantic_rejection') or not feedback.get('field_only') or not failed
+            or feedback.get('pending_diagnostics') or state.get('selection_diagnostic_invalid')
+            or state.get('selection_review_unavailable') or state.get('selection_review_deferred')
+            or not state.get('strategy') or feedback.get('strategy') != state.get('strategy')
+            or _unknown_usage(state.get('trace', []))
+            or can_repair_selection(state) or can_recheck_selection_diagnostic(state)):
+        return None
+    for check in failed.values():
+        if (check.get('status') != 'repair_required' or check.get('evidence_bound') is not True
+                or check.get('correction_dispositions') or not check.get('field_paths')
+                or check.get('evidence_kind') not in ('source', 'portfolio_comparison')
+                or check.get('rule_id') or check.get('rule_quote')):
+            return None
+    from core.review_graph import selection_gate
+    if not selection_gate(copy.deepcopy(state))['selection_validated']:
+        return None
+    observations = [{'status': 'advisory', 'matter_id': mid, 'origin': 'selection_review_limit',
+                     'explanation': check.get('explanation', ''), 'source_quote': check.get('source_quote', ''),
+                     'decision_quote': check.get('decision_quote', ''), 'field_paths': list(check.get('field_paths', [])),
+                     'evidence_kind': check.get('evidence_kind'), 'comparison_matter_id': check.get('comparison_matter_id')}
+                    for mid, check in failed.items()]
+    known = {(a.get('matter_id'), a.get('explanation')) for a in state.get('selection_advisories', [])}
+    return {'selection_validated': True, 'selection_review_validated': True, 'errors': [],
+            'selection_review_unavailable': False, 'selection_review_deferred': False,
+            'selection_diagnostic_invalid': False,
+            'selection_advisories': list(state.get('selection_advisories', [])) + [o for o in observations if (o['matter_id'], o['explanation']) not in known],
+            'selection_observations': {'contract': SELECTION_OBSERVATION_CONTRACT, 'matter_ids': sorted(failed),
+                                       'reviews': state.get('selection_review_attempts', 0),
+                                       'repairs': state.get('selection_repair_attempts', 0)}}
+
+
 def can_recheck_selection_diagnostic(state):
     """One known invalid verdict may be reviewed again within the SAME cap."""
     def unknown(trace):
@@ -229,7 +278,7 @@ def review_selection(state, invoke):
     checks = create_model('EveryDecisionReview', __config__=ConfigDict(extra='forbid'),
                           **{ref: (check_contract, ...) for ref in active})
     schema = create_model('SelectionReview', checks=(checks, ...))
-    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test every reference listed in review_targets, including reserves and exclusions, against the original source, not merely against its quote. Other matters are comparison context, not new review targets. Return only the required schema keys. Declare all review_dependencies for comparisons, including supported ones. Use advisory for internal follow-up on optional dates or unexplained amounts when the decision does not rely on their meaning and does not assert a false concept; preserve the uncertainty for the Audit without blocking selection. An omitted decisive amount underpinning selection, an invented economic meaning or a false outcome remains repair_required. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. If the disposition itself contradicts the documented practice/client-side thesis or a supplied constraint, set correction_dispositions to ALL source-defensible dispositions resolving that precise defect; exclude the present disposition only when changing it is necessary. A textual disclaimer cannot cure a rejected inclusion decision. For ordinary factual/prose defects, supported decisions or a mere ordering preference, leave correction_dispositions empty. Missing optional evidence alone does not require demotion. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
+    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test every reference listed in review_targets, including reserves and exclusions, against the original source, not merely against its quote. Other matters are comparison context, not new review targets. Return only the required schema keys. Declare all review_dependencies for comparisons, including supported ones. Use advisory for internal follow-up on optional dates or unexplained amounts when the decision does not rely on their meaning and does not assert a false concept; preserve the uncertainty for the Audit without blocking selection. Likewise use advisory when two source records disagree only on a nonessential client-sector descriptor (for example a client table sector versus the matter narrative) and the disposition does not rely on that sector: record the discrepancy for the Audit, do not choose a version and do not block. An omitted decisive amount underpinning selection, an invented economic meaning or a false outcome remains repair_required. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. If the disposition itself contradicts the documented practice/client-side thesis or a supplied constraint, set correction_dispositions to ALL source-defensible dispositions resolving that precise defect; exclude the present disposition only when changing it is necessary. A textual disclaimer cannot cure a rejected inclusion decision. For ordinary factual/prose defects, supported decisions or a mere ordering preference, leave correction_dispositions empty. Missing optional evidence alone does not require demotion. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
         {'scope': {k: state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
          'delivery_policy': state['package'].get('delivery_policy'),
          'application_rules': APPLICATION_RULES,

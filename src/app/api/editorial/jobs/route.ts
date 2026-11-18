@@ -1,5 +1,5 @@
 import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
-import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { savedScopeIssues } from '@/lib/audit/analysis-scope';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
@@ -29,7 +29,7 @@ export async function POST(request:NextRequest) {
   const data:any={...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
   const inputIssues=editorialPreparationIssues(data,data.matters || submission.matters || []);
   if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
-  const issues=scopeIssues(selectedScope(submission),data.source_reports || []);
+  const issues=savedScopeIssues(submission,data);
   if(issues.length) return NextResponse.json({code:issues[0].code,error:issues.map(i=>i.message).join(' '),issues},{status:422});
   try {
     const workers:any[]=await prisma.$queryRaw`SELECT "id" FROM "EditorialWorker" WHERE "version"=${EDITORIAL_VERSION} AND "heartbeat">now()-interval '90 seconds' LIMIT 1`;

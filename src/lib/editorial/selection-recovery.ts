@@ -87,3 +87,33 @@ export function canReplaySelectionRepair(job:any,data:any,sourceHash:string,comm
     && last?.role==='strategist' && last.prompt_revision==='decreasing-selection-residual-progress-v33'
     && /^resp_[a-z0-9]+$/.test(last.provider_request_id || '') && Number.isSafeInteger(last.usage?.total_tokens) && last.usage.total_tokens>0;
 }
+
+
+/** DeForest 18-11: rounds exhausted with only bound internal-wording findings.
+ * One explicit continuation; Python re-verifies every condition, keeps the
+ * same reviewed selection and moves the findings to Audit observations
+ * without any provider call. Disposition, confidential-delivery rule, unbound
+ * or unknown-usage findings never qualify. */
+export function canAcceptSelectionObservations(job:any,data:any,sourceHash:string,commit:string):boolean {
+  const checkpoint=data?.review_checkpoint,state=checkpoint?.state,feedback=state?.selection_feedback,now=Date.now();
+  if(!job || job.status!=='failed' || job.stage!=='selection' || job.cursor!==0
+    || job.tasks?.length!==1 || job.tasks[0]!=='selection' || job.sourceHash!==sourceHash
+    || job.issue?.code!=='SELECTION_REJECTED' || job.issue?.owner!=='rankpilot'
+    || !commit || commit==='local' || !job.ledger?.length || job.ledger.at(-1)?.worker_commit===commit
+    || job.ledger.some((e:any)=>e.status==='selection_observation_acceptance_requested')
+    || hasUnknownProviderUsage(job.ledger) || hasUnknownProviderUsage([{trace:state?.trace}])
+    || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)
+    || !Number.isFinite(checkpoint?.created_at) || now<checkpoint.created_at || now-checkpoint.created_at>=86400000
+    || !checkpoint.step_keys?.strategy
+    || state?.selection_validated!==false || state.selection_review_validated!==false
+    || state.selection_diagnostic_invalid===true || state.selection_review_unavailable===true || state.selection_review_deferred===true
+    || !((state.selection_review_attempts||0)>=3 || (state.selection_repair_attempts||0)>=2)
+    || !Array.isArray(state.trace) || !state.trace.length
+    || state.trace.some((call:any)=>typeof call?.usage?.total_tokens!=='number' || call.usage.total_tokens<0)
+    || feedback?.semantic_rejection!==true || feedback?.field_only!==true
+    || (feedback.pending_diagnostics && Object.keys(feedback.pending_diagnostics).length)) return false;
+  const failed=Object.values(feedback.failed_checks || {}) as any[];
+  return failed.length>0 && failed.every(c=>c?.status==='repair_required' && c.evidence_bound===true
+    && Array.isArray(c.field_paths) && c.field_paths.length>0 && !(c.correction_dispositions || []).length
+    && ['source','portfolio_comparison'].includes(c.evidence_kind) && !c.rule_id && !c.rule_quote);
+}

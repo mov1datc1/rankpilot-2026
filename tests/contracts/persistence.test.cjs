@@ -14,13 +14,14 @@ const {GET}=require('../../src/app/api/generate-docx/route.ts');
 const {updateSubmissionValidatedData}=require('../../src/app/actions/submissions.ts');
 global.fetch=async()=>new Response(JSON.stringify(extracted),{headers:{'Content-Type':'application/json'}});
 const extract=()=>POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source'})}));
-test('text-only sources persist a successful extraction without a document URL or second call',async()=>{
- reset();const original=global.fetch;let calls=0,payload;
- global.fetch=async(url,options)=>{calls++;payload=JSON.parse(options.body);return Response.json(extracted);};
+test('text-only sources persist a successful extraction without a document URL or second paid call',async()=>{
+ reset();const original=global.fetch;let calls=0,payload,preflights=0;
+ global.fetch=async(url,options)=>{calls++;const body=JSON.parse(options.body);if(body.context.scope_preflight){preflights++;return Response.json({success:true,scope_preflight:true,source_reports:[]});}payload=body;return Response.json(extracted);};
  try {
   const sources=[{name:'fictional.txt',text:'Original source text'}];
   const result=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',sources})}));
-  assert.equal(result.status,200);assert.equal(calls,1);assert.equal(payload.user_input,'');
+  // v1.0.98: one free scope preflight, then exactly one paid extraction.
+  assert.equal(result.status,200);assert.equal(calls,2);assert.equal(preflights,1);assert.equal(payload.context.scope_preflight,undefined);assert.equal(payload.user_input,'');
   assert.deepEqual(payload.sources,sources);assert.deepEqual(state.submission.chambersData.sources,sources);
   assert.equal(state.matters[0].client,'New');assert.equal(state.submission.documentUrl,undefined);
  } finally {global.fetch=original;}
@@ -247,4 +248,23 @@ test('fresh ingestion keeps unconfirmed publication restricted without asking fo
  assert.ok(!delivery.errors.some(message=>message.includes('Confirma los permisos de publicación')));
  assert.ok(delivery.warnings.some(message=>message.includes('únicamente como confidenciales')));
  assert.equal(data.approved_artifact,null);
+});
+
+test('v1.0.98: a declared practice conflict is asked before the paid extraction and a confirmation proceeds once',async()=>{
+ reset();state.submission.practiceArea='Environment';state.submission.chambersData.modality='scratch';
+ const original=global.fetch;let paid=0,preflights=0;
+ const reports=[{source:'ENR template.docx',source_scope:{practice_area:{value:'Energy & Natural Resources',quote:'A2 Practice Area\nEnergy & Natural Resources'}}},{source:'matters.docx',source_scope:{}}];
+ global.fetch=async(url,options)=>{const body=JSON.parse(options.body);if(body.context.scope_preflight){preflights++;return Response.json({success:true,scope_preflight:true,source_reports:reports});}paid++;
+  return Response.json({...extracted,source_reports:[{...structuredClone(reviewedSource),source:'ENR template.docx',source_scope:reports[0].source_scope},{...structuredClone(reviewedSource),source:'matters.docx',matter_count:0,source_reconciliation:{...reviewedSource.source_reconciliation,matters_reviewed:0}}]});};
+ try {
+  const ask=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source',context:{modality:'scratch'}})}));
+  const body=await ask.json();
+  assert.equal(ask.status,422);assert.equal(body.code,'SCOPE_CONFLICT');assert.equal(body.question.confirmable,true);
+  assert.equal(body.question.items[0].recommendation,'continue');assert.equal(paid,0);assert.equal(preflights,1);assert.equal(state.matters[0].id,'old');
+  const go=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source',context:{modality:'scratch'},scope_confirmations:body.question.confirmations})}));
+  assert.equal(go.status,200);assert.equal(paid,1);
+  const data=state.submission.chambersData;
+  assert.equal(data.scope_confirmations[0].detected,'Energy & Natural Resources');
+  assert.match(data.source_reports[0].warnings.join(' '),/Confirmaste continuar con «Environment»/);
+ } finally {global.fetch=original;}
 });

@@ -85,6 +85,8 @@ function BuilderContent() {
   const draftAttempt = useRef<{id:string; configuration:string} | null>(null);
   const buildBusy = useRef(false);
   const [savedDraftId,setSavedDraftId] = useState('');
+  // One scope question before any paid extraction (v1.0.98).
+  const [scopeAsk,setScopeAsk] = useState<{question:any; payload:any; submissionId:string} | null>(null);
 
   // Smart objective defaults based on band
   useEffect(() => {
@@ -221,6 +223,11 @@ function BuilderContent() {
       });
 
       const extJson = await extRes.json();
+      if (extJson?.code === 'SCOPE_CONFLICT' && extJson.question?.confirmable) {
+        setScopeAsk({question: extJson.question, payload: extractPayload, submissionId});
+        setIsBuilding(false);
+        return;
+      }
       if (!extRes.ok || !extJson.success) {
         throw new Error(processingFeedback(extJson,extRes.status,'extract'));
       }
@@ -233,6 +240,38 @@ function BuilderContent() {
       setErrorMessage(err.message || 'Ocurrió un error inesperado al construir el submission.');
       setIsBuilding(false);
     } finally {buildBusy.current=false;}
+  };
+
+  // Continue with the selected scope: the same uploaded sources, no re-upload.
+  const continueWithSelectedScope = async () => {
+    if (!scopeAsk || buildBusy.current) return;
+    const ask = scopeAsk;
+    buildBusy.current = true;
+    setScopeAsk(null);
+    setErrorMessage('');
+    setIsBuilding(true);
+    setBuildStepText('Comprobando el formato real, la lectura completa y los asuntos de cada fuente…');
+    try {
+      const extRes = await fetch('/api/extract-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({...ask.payload, scope_confirmations: ask.question.confirmations})
+      });
+      const extJson = await extRes.json();
+      if (!extRes.ok || !extJson.success) throw new Error(processingFeedback(extJson,extRes.status,'extract'));
+      setBuildStepText('¡Extracción completada! Abriendo Asistente de Validación...');
+      router.push(`/reports/${ask.submissionId}?validate=true`);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Ocurrió un error inesperado al construir el submission.');
+      setIsBuilding(false);
+    } finally { buildBusy.current = false; }
+  };
+  const changeToDetectedScope = () => {
+    const item = scopeAsk?.question?.items?.find((i:any)=>i.field==='practice_area');
+    const detected = item?.detected?.[0];
+    if (detected && (PRACTICE_AREAS as readonly string[]).includes(detected)) setPracticeArea(detected);
+    setScopeAsk(null);
+    setErrorMessage(detected && item ? `Cambiamos la práctica a «${detected}». Revisa los filtros y vuelve a pulsar construir.` : 'Revisa los filtros y vuelve a pulsar construir.');
   };
 
   return (
@@ -929,6 +968,37 @@ function BuilderContent() {
                     lineHeight: '1.5'
                   }}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Scope question: asked once, before any paid extraction */}
+          {scopeAsk && (
+            <div role="alert" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '1rem 1.25rem', marginTop: '1.25rem', color: '#78350F', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>Una pregunta antes de analizar (todavía sin consumo)</span>
+              {scopeAsk.question.items.map((item:any) => (
+                <p key={item.field} style={{ margin: 0, lineHeight: 1.5 }}>{item.message}</p>
+              ))}
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                {scopeAsk.question.items.map((item:any) => item.field).includes('practice_area') ? (
+                  <>
+                    <button type="button" onClick={continueWithSelectedScope} style={{ background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+                      Continuar con «{scopeAsk.question.items.find((i:any)=>i.field==='practice_area')?.selected}»
+                    </button>
+                    <button type="button" onClick={changeToDetectedScope} style={{ background: '#FFFFFF', color: '#1E293B', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '0.5rem 0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+                      Cambiar a «{scopeAsk.question.items.find((i:any)=>i.field==='practice_area')?.detected?.[0]}»
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={continueWithSelectedScope} style={{ background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+                      Continuar con lo que elegí
+                    </button>
+                    <button type="button" onClick={()=>{setScopeAsk(null);setErrorMessage('Revisa los filtros y vuelve a pulsar construir.');}} style={{ background: '#FFFFFF', color: '#1E293B', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '0.5rem 0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+                      Revisar los filtros
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
