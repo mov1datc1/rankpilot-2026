@@ -1,3 +1,28 @@
+## 1.0.107 — Lower review cost and a clear "can I generate now?" verdict
+
+- **Each repeated review rule is sent once per call** (`core/shared_rules.py`).
+  - The final judge received 191 obligations whose instructions repeated the same long rules (one matter-evidence rule 20 times, one decisive-fact rule 60 times): 274K characters, about 40% of its input on DeForest.
+  - Inside one request, a repeated sentence is now sent once in `shared_rules` and cited as [Rn]. Every rule's text is unchanged, and each obligation keeps its own specifics in place.
+  - Applied to the final judge (`role_payload`) and to the field reviewer.
+  - Together with v1.0.106, the field-review payload on DeForest drops from 910K to 679K characters (−25%).
+- **An identical unit is never sent back to the reviewer** (`field_review.schedule`).
+  - Failed verdicts are remembered by the exact unit hash. On DeForest one 37K-token unit was reviewed four times with the same input.
+  - A remembered failure goes straight to the existing bounded repair/observation route, at no cost.
+  - Changed text is reviewed normally and a closed observation is never reopened. The context recheck is unaffected because its version is part of the hash.
+- **The «Qué le falta a tu expediente» checklist now gives a verdict** (`readinessVerdict`):
+  - «Todavía no conviene generar», using the same rule that blocks preparation in Studio, so the two never disagree;
+  - «Puedes generar, con limitaciones», with each limitation's effect on the Audit and the Submission (e.g. no lawyer profiles: no B9 and no individual strategy);
+  - «Listo para generar».
+  - The next step follows the verdict. Missing administrative fields never lower it.
+  - On the real cases: Ramos Environment is «con limitaciones», Ramos Real Estate and DeForest are «listo».
+- **Validation**:
+  - 999 Python tests passed;
+  - Node: 627 passed, 1 skipped;
+  - tsc passed.
+- **Pending**:
+  - re-using the final judge's own verdicts on unchanged fields in its second round (v1.0.108);
+  - prompt caching with stable schemas.
+
 ## 1.0.106 — Field-review cost, "what your case is missing", budget reservation and two intake fixes
 
 The release is based on the real Ramos Castillo runs on v1.0.105 (19 Nov 2026), a cost analysis of six real runs, an external review of PR79, and Jake's code review.

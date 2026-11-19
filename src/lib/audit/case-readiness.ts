@@ -1,5 +1,6 @@
 import { filingDetailsGaps } from './filing-details';
 import { integrityChecks } from './integrity-checks';
+import { editorialPreparationIssues } from './preparation-input';
 
 /**
  * v1.0.106 (Jonathan, 19 Nov): after reading dispersed sources (Builder option
@@ -11,13 +12,39 @@ import { integrityChecks } from './integrity-checks';
  * another practice; the Wizard showed this only as scattered small print.
  */
 export type ReadinessItem = { kind: 'missing' | 'doubt' | 'check'; text: string };
+export type ReadinessVerdict = { status: 'blocked' | 'limited' | 'ready'; summary: string; limitations: string[] };
 export type ReadinessInput = {
+  firmName?: string; practiceArea?: string;
   lawyers?: any[]; matters?: any[]; filingDetails?: any; b10Text?: string;
   sourceReports?: { source: string; matter_count?: number }[];
   scopeConfirmations?: { field: string; selected: string; detected: string; source: string }[];
 };
 
-export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; nextStep: string } {
+/**
+ * v1.0.107 (Jonathan, 19 Nov): say whether the case can be generated now and
+ * with what result. «blocked» uses the same rule that already blocks
+ * preparation in Studio (editorialPreparationIssues), so the Wizard and Studio
+ * never disagree. Missing administrative fields never lower the verdict: they
+ * are needed to file with the directory, not to build a sound Audit/Submission.
+ */
+export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
+  const matters = input.matters || [], lawyers = input.lawyers || [];
+  const blocking = editorialPreparationIssues({ firm_name: input.firmName, practice_area: input.practiceArea, original_b10: input.b10Text }, matters);
+  if (blocking.length)
+    return { status: 'blocked', limitations: blocking,
+      summary: 'Todavía no conviene generar: sin esta información el Audit y el Submission no serían aceptables. Complétala y vuelve a intentarlo.' };
+  const limitations: string[] = [];
+  if (!lawyers.length) limitations.push('El Submission saldrá sin B9 y el Audit sin estrategia individual por abogado; la cartera, el B10 y el C2 sí se desarrollan completos.');
+  if (matters.length < 5) limitations.push(`Con ${matters.length} asunto(s) la cartera es corta: el Audit tendrá poco margen para elegir, comparar y justificar el asunto principal.`);
+  if ((input.scopeConfirmations || []).length) limitations.push('Una fuente corresponde a otra práctica: su contenido solo se usará si es pertinente a la práctica elegida.');
+  if (limitations.length)
+    return { status: 'limited', limitations,
+      summary: 'Puedes generar ya: el resultado será coherente con la información disponible, con estas limitaciones. Si añades lo que falta, el resultado será más completo.' };
+  return { status: 'ready', limitations: [],
+    summary: 'Listo para generar: tienes asuntos suficientes, perfiles de abogados y descripción del departamento para un Audit y un Submission completos.' };
+}
+
+export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; nextStep: string; verdict: ReadinessVerdict } {
   const items: ReadinessItem[] = [];
   const lawyers = input.lawyers || [], matters = input.matters || [];
   if (!lawyers.length)
@@ -37,11 +64,15 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
     items.push({ kind: 'doubt', text: `«${c.source}» indica ${c.field === 'practice_area' ? 'la práctica' : c.field === 'jurisdiction' ? 'la jurisdicción' : 'la guía'} «${c.detected}»; elegiste continuar con «${c.selected}». Revisa que su contenido corresponda a esa práctica.` });
   for (const text of integrityChecks({ numPartners: input.filingDetails?.numPartners, lawyers }, matters))
     items.push({ kind: 'check', text });
-  const missing = items.filter(i => i.kind === 'missing').length;
-  const nextStep = missing
-    ? 'Completa lo que falta (o continúa si no lo tienes: RankPilot preparará los documentos con lo disponible y lo señalará en el Audit). Después confirma los asuntos y pulsa preparar.'
-    : items.length
-      ? 'Tu expediente tiene lo necesario. Revisa las dudas señaladas y después confirma los asuntos y pulsa preparar.'
-      : 'Tu expediente tiene lo necesario para preparar los documentos. Confirma los asuntos y pulsa preparar.';
-  return { items, nextStep };
+  const verdict = readinessVerdict(input);
+  // The next step follows the verdict, so it never invites generating a case
+  // that Studio would not prepare.
+  const nextStep = verdict.status === 'blocked'
+    ? 'Completa primero la información indicada; después confirma los asuntos y pulsa preparar.'
+    : verdict.status === 'limited'
+      ? 'Si tienes lo que falta, añádelo para un resultado más completo; si no, confirma los asuntos y pulsa preparar: RankPilot generará con lo disponible y lo señalará en el Audit.'
+      : items.length
+        ? 'Revisa las dudas señaladas y después confirma los asuntos y pulsa preparar.'
+        : 'Confirma los asuntos y pulsa preparar.';
+  return { items, nextStep, verdict };
 }

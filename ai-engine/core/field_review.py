@@ -229,7 +229,14 @@ def review_payload(units):
     # reviewer on DeForest. Remove literal copies only, as the final judge
     # already does; proofs still bind to the complete original records.
     from core.review_graph import compact_review_payload
-    result={'units':items,'original_sources':{key:_without_contained_narratives(value) for key,value in compact_review_payload(records).items()},'original_passages':passages}
+    # v1.0.107: each rule repeated across this call's obligations is sent once.
+    from core.shared_rules import share_repeated_rules, USAGE
+    flat,rules=share_repeated_rules([check for item in items for check in item['obligations']])
+    position=0
+    for item in items:
+        item['obligations']=flat[position:position+len(item['obligations'])];position+=len(item['obligations'])
+    result={'units':items,'original_sources':{key:_without_contained_narratives(value) for key,value in compact_review_payload(records).items()},'original_passages':passages,
+            **({'shared_rules':rules,'shared_rules_usage':USAGE} if rules else {})}
     contexts=[u['institutional_context'] for u in units if 'institutional_context' in u]
     if contexts:
         if any(c!=contexts[0] for c in contexts):raise ValueError('Institutional source views differ')
@@ -403,6 +410,15 @@ def schedule(state,result=None):
     observations=[o for o in merged.get('field_review_observations',[]) if any(
         u['field']==o.get('field') and u['hash']==o.get('hash') for u in units)]
     failures=current_failures(merged.get('field_review_failures'),units)
+    # v1.0.107: an identical unit already reviewed and failed keeps that verdict
+    # (DeForest 19-11: the same 37K-token unit was sent to review four times).
+    # Its finding returns to the bounded repair/observation route at no cost.
+    known={(v['field'],v['hash']):v['defects'] for v in merged.get('field_review_failed_verdicts',[]) or []}
+    listed={d['field_path'] for d in failures}
+    for u in units:
+        if (u['field'] not in listed and (u['field'],u['hash']) in known and not any(receipt_matches(u,r) for r in receipts)
+                and not any(o['field']==u['field'] and o['hash']==u['hash'] for o in observations)):
+            failures+=known[(u['field'],u['hash'])];listed.add(u['field'])
     failed={d['field_path'] for d in failures}
     pending=[u for u in units if u['field'] not in failed and not any(receipt_matches(u,r) for r in receipts)
         and not any(o['field']==u['field'] and o['hash']==u['hash'] for o in observations)]
@@ -548,6 +564,7 @@ def advance(state):
     receipts_all=[r for r in state.get('field_review_receipts',[])]
     report=state.get('development_build_report',{})
     failures=list(state.get('field_review_failures',[]))
+    verdicts=list(state.get('field_review_failed_verdicts',[]))
     reconciled=list(state.get('field_review_reconciled_feedback',[]))
     institutional=False
     for units,outcome in outcomes:
@@ -569,7 +586,11 @@ def advance(state):
         hashes={u['field']:u['hash'] for u in units}
         failures=[d for d in failures if d.get('field_path') not in group]+[{**d,'unit_hash':hashes[d['field_path']]} for d in defects]
         reconciled+=defects
+        for field in {d['field_path'] for d in defects}:
+            verdicts=[v for v in verdicts if not (v['field']==field and v['hash']==hashes[field])]
+            verdicts.append({'field':field,'hash':hashes[field],'defects':[{**d,'unit_hash':hashes[field]} for d in defects if d['field_path']==field]})
     update={'trace':trace,'field_review_receipts':receipts_all,'field_review_failures':failures,
+            'field_review_failed_verdicts':verdicts[-200:],
             'field_review_reconciled_feedback':reconciled,'field_review_isolated':isolated}
     if report.get('first_pass_quality'):update['development_build_report']=report
     if institutional:update['field_review_context_version']=INSTITUTIONAL_CONTEXT
