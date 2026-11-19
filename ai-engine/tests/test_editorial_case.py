@@ -94,6 +94,27 @@ class EditorialCaseTests(unittest.TestCase):
             execution_defects(p,s,v,letter,wrong)
         checks[0]['status']='failed';defects=execution_defects(p,s,v,letter,checks)
         self.assertEqual(defects[0]['field_path'],'b10');self.assertEqual(defects[0]['owner'],'rankpilot')
+    def test_v103_a_passage_from_the_obligations_own_catalog_is_its_source_evidence(self):
+        # Ramos Castillo 19-11: catalog passages from register evidence or form
+        # cells could never bind, so the leader check had no valid answer.
+        from core.editorial_case import execution_source_catalog
+        p,s,v=fixture();p['matters'][0]['leadPartner']='Sofia Vega and Luis Prado.'
+        p['matters'][0]['confidentialityEvidence']={'client_register':[{'quote':'Example Client | Energy | Luis Prado'}]}
+        letter={'leadership':'Luis Prado led the negotiations.','evidence_gaps':'Routine advice adds no distinct capability.'}
+        catalog=execution_source_catalog(p,s,v)
+        checks=[]
+        for o in obligations(p,s,v):
+            text=execution_output(p,v,letter,o['field'])[0]
+            source='prevented a strike'
+            if o['id'].startswith('leader:'):
+                source=next(q for q in catalog[o['id']].values() if 'client_register' in q)
+            checks.append({'obligation_id':o['id'],'status':'met','artifact_quote':text,'source_quote':source,'reason':'Executes the source work'})
+        self.assertTrue(any(c['obligation_id'].startswith('leader:') for c in checks))
+        self.assertEqual(execution_defects(p,s,v,letter,checks),[])
+        leader=next(c for c in checks if c['obligation_id'].startswith('leader:'))
+        leader['source_quote']='Luis Prado was appointed managing partner.'
+        with self.assertRaisesRegex(ValueError,'own source'):
+            execution_defects(p,s,v,letter,checks)
     def test_exact_word_cannot_be_replaced_by_old_proposal(self):
         p,s,v=fixture();p['rendered_artifact']='Different final text'
         o=obligations(p,s,v)[0]
