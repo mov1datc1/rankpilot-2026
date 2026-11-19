@@ -26,6 +26,11 @@ LEAD_PATTERNS = [
     (re.compile(r'\b(?P<be>was|is)\s+' + _ADV + _ROLE + r'(?=\s*[,;.])'), 'the matter'),
 ]
 EXTRA_LEAD = [
+    # v1.0.110: "is (also) listed as a team member on" -> "is (also) a team member on".
+    # Form vocabulary for participation; the voice rules reject it and a bound
+    # quotation made it impossible to repair (the case stopped).
+    (re.compile(r'\b(?P<be>is|are|was|were)(?P<adv>\s+(?:also|likewise|further))?\s+(?:listed|named|recorded|identified)\s+as\s+(?P<art>(?:an?|one\s+of\s+the)\s+)?(?P<what>team\s+members?|members?\s+of\s+the\s+team)\b', re.I),
+     lambda m: f"{m.group('be')}{m.group('adv') or ''} {m.group('art') or ''}{m.group('what')}"),
     # "is named lead partner or co-lead partner on mandates" -> "leads or co-leads mandates"
     (re.compile(r'\b(?P<be>was|is)\s+(?P<adv>(?:also|likewise|further)\s+)?(?:named|recorded|listed)\s+(?:as\s+)?lead(?:-|\s)partner\s+or\s+co-?lead(?:-|\s)partner\s+(?:in|on|for)\s+'),
      lambda m: f"{m.group('adv') or ''}{'led or co-led' if m.group('be') == 'was' else 'leads or co-leads'} "),

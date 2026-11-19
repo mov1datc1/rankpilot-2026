@@ -1,3 +1,20 @@
+## 1.0.110 — A correction that cannot be applied never stops the case
+
+The DeForest validation run on v1.0.109 (19 Nov 2026, submission ffb88ba7) stopped in development with `DEVELOPMENT_REJECTED`.
+
+- **Cause**:
+  - The profile of a lawyer who appears only as a team member was written with «is listed as a team member», wording the voice rules reject.
+  - The single repair could not remove it, because the same sentence was bound as a quotation that had to be preserved verbatim. The repairer correctly answered «unresolved».
+  - The engine treated a declared-unresolved correction as a reason to stop.
+- **Fix 1, wording in code** (`prose_rules.natural_lead`): «is (also) listed/named/recorded as a team member» becomes «is (also) a team member», applied to the biography and to its bound quotations alike. Same facts, no model call.
+- **Fix 2, never stop (RP13)** (`development_delivery.retain_complete_development`):
+  - A correction the repairer itself declares it cannot apply is exhausted. It is retained as an observation and the case continues to the independent field review.
+  - The proposal must still be complete, identity-bound and privacy-safe; those guards are unchanged.
+- **Validation**:
+  - 1019 Python tests passed;
+  - Node: 633 passed, 1 skipped;
+  - tsc passed.
+
 ## 1.0.109 — Audit hardening: real table categories, no hard-coded identities, switches and traceability
 
 Result of an independent audit of v1.0.101–v1.0.108 before the next real run.
