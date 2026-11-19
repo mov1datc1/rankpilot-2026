@@ -279,7 +279,7 @@ def scoped_final_review():
 
 
 TRANSPORT_KEYS=('rendered_artifact','rendered_audit','rendered_candidate_bios','_verified_field_obligations',
-                '_scoped_final_review','field_review_receipts')
+                '_scoped_final_review','field_review_receipts','judge_receipts','_judge_receipts_reused')
 
 
 def rendered_exactly(rendered,text):

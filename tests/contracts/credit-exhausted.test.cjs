@@ -19,3 +19,11 @@ test('rechecks stop after 12 hours and an unknown outcome is still never retried
  assert.equal(recoveryPlan(unknown,'AI_CREDIT_EXHAUSTED','build'),null);
  assert.equal(recoveryPlan({...job(0),issue:{code:'AI_REVIEW_UNAVAILABLE',owner:'rankpilot'}},'AI_REVIEW_UNAVAILABLE','build'),null);
 });
+test('v1.0.108: a request-rate refusal is retried after 1..5 minutes, then stops',()=>{
+ const {RATE_LIMIT_RETRIES}=require('../../src/lib/editorial/recovery.ts');
+ const limited={stage:'development',cursor:1,issue:{code:'AI_RATE_LIMITED'},trace:{usage:{input_tokens:0,output_tokens:0,total_tokens:0},usage_status:'rejected_unbilled'}};
+ const job=n=>({stage:'development',cursor:1,issue:{code:'AI_RATE_LIMITED',owner:'rankpilot',retryable:true},ledger:Array.from({length:n},()=>limited)});
+ assert.equal(recoveryPlan(job(1),'AI_RATE_LIMITED','build',0).retryAt.getTime(),60000);
+ assert.equal(recoveryPlan(job(3),'AI_RATE_LIMITED','build',0).retryAt.getTime(),180000);
+ assert.equal(recoveryPlan(job(RATE_LIMIT_RETRIES+1),'AI_RATE_LIMITED','build'),null);
+});

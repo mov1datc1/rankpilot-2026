@@ -33,6 +33,7 @@ export function processingFeedback(payload: any, status = 0, operation: 'extract
   const code = String(payload?.code || (status === 409 ? 'DRAFT_CONFLICT' : status === 401 ? 'SESSION_EXPIRED' : ''));
   if (code === 'SCOPE_CONFLICT' || code === 'SCOPE_REQUIRED') return Array.isArray(payload?.issues) && payload.issues.length ? payload.issues.map((issue: any)=>String(issue.message || '')).join(' ') : 'Revisa el directorio, la práctica y la jurisdicción seleccionados y su correspondencia con el documento.';
   if (code === 'FILING_RECONCILIATION_UNAVAILABLE' || code === 'SOURCE_RECONCILIATION_UNAVAILABLE') return 'El documento se leyó correctamente, pero el contraste con IA requiere un reintento. Tu borrador está guardado; vuelve a intentar la extracción.';
+  if (code === 'AI_RATE_LIMITED') return 'El proveedor de IA pidió esperar por exceso de solicitudes. Tu avance se conserva y la etapa se reanuda sola en unos instantes.';
   if (code === 'AI_CREDIT_EXHAUSTED') return 'El proveedor de IA no tiene crédito disponible. Por favor contacta al administrador para revisar la facturación.';
   if (code === 'AI_OUTPUT_LIMIT') return 'La respuesta superó el límite de tokens. Tu avance está guardado; contacta a soporte para calibrar esta etapa.';
   if (code === 'AI_REVIEW_UNAVAILABLE') return 'Esta etapa de análisis no concluyó. Tu avance se conserva; por favor espera unos momentos antes de reintentar.';

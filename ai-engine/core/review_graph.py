@@ -282,6 +282,8 @@ def compact_review_payload(value):
 
 def role_payload(payload, role):
     result = compact_review_payload(payload)
+    # Signed judge receipts are application bookkeeping, never model input.
+    if isinstance(result.get('package'),dict):result['package'].pop('_judge_receipts_reused',None);result['package'].pop('judge_receipts',None)
     if role in ('development','repair'):
         # Public prose uses original evidence + the shared case, not an old
         # executive letter as a writing example. Keep the precise repair
@@ -455,11 +457,12 @@ def invoke_role(state, role, schema, instruction, payload):
         # 429 insufficient_quota) is a KNOWN outcome: the provider refused the
         # request and billed nothing. Report it as such so the case resumes when
         # credit returns, instead of being frozen as an unknown outcome.
-        if any(term in str(error).lower() for term in ('insufficient_quota','credit_balance_exhausted','no credits remaining','billing_hard_limit')):
-            failure = EditorialResponseError('provider credit exhausted: insufficient_quota', {
+        from utils.provider_budget import billing_rejection, rate_limited
+        if billing_rejection(error) or rate_limited(error):
+            failure = EditorialResponseError('provider credit exhausted: insufficient_quota' if billing_rejection(error) else 'provider rate limited: rate_limit_exceeded', {
                 'role':role,'seconds':round(time.monotonic()-started,3),
                 'usage':{'input_tokens':0,'output_tokens':0,'total_tokens':0},'usage_status':'rejected_unbilled',
-                'provider_rejection':'insufficient_quota',
+                'provider_rejection':'insufficient_quota' if billing_rejection(error) else 'rate_limit_exceeded',
                 'prompt_version':_RULES['version'],'prompt_revision':_RULES.get('prompt_revision',_RULES['version'])
             })
             failure.trace_history = list(state.get('trace', [])) + [failure.trace]
@@ -790,6 +793,12 @@ def editor(state):
     proposal_for_scope=state.get('development') or package.get('editorial_development') or {}
     verified=verified_obligations(package,state.get('strategy') or {},proposal_for_scope)
     package.pop('field_review_receipts',None)
+    # v1.0.108: the judge's own signed MET verdicts on unchanged output.
+    from core.judge_receipts import reusable
+    judge_receipts=package.pop('judge_receipts',None) or []
+    reused=reusable(package,state.get('strategy') or {},proposal_for_scope,state.get('letter') or {},judge_receipts)
+    verified=list(dict.fromkeys(list(verified)+reused))
+    package['_judge_receipts_reused']={'receipts':judge_receipts,'ids':reused}
     if verified:
         package['_verified_field_obligations']=verified
         from core.field_review import scoped_final_review
@@ -877,6 +886,10 @@ def editor(state):
         if development.get('version') in ('editorial-development-v3','editorial-development-v4'):
             try:
                 verdict.setdefault('defects',[]).extend(execution_defects(state['package'],state['strategy'],development,state['letter'],verdict.get('case_checks',[])))
+                from core.judge_receipts import issue
+                carried=state['package'].get('_judge_receipts_reused') or {}
+                verdict['judge_receipts']=issue(state['package'],state['strategy'],development,state['letter'],verdict.get('case_checks',[]),
+                                                reused=carried.get('ids',[]),previous=carried.get('receipts',[]))
             except ValueError as error:
                 raise _review_failure(str(error),trace) from error
         from core.editorial_development import submission_voice_paths

@@ -12,6 +12,8 @@ def provider_failure(error):
         return {'success':False,'code':'AI_REVIEW_INVALID',**({'retryable':False} if getattr(error,'diagnostic_retry_exhausted',False) else {}),'error':'RankPilot está comprobando una observación interna antes de continuar. El avance se conserva.'}
     if getattr(error,'code',None)=='AI_CREDIT_EXHAUSTED' or any(term in text for term in ('insufficient_quota', 'credit_balance_exhausted', 'no credits remaining', 'billing_hard_limit')):
         return {'success': False, 'code': 'AI_CREDIT_EXHAUSTED', 'error': 'El proveedor de IA no tiene crédito disponible. El administrador debe revisar la facturación. Se conserva el avance guardado.'}
+    if getattr(error,'code',None)=='AI_RATE_LIMITED' or (any(term in text for term in ('rate_limit_exceeded','rate limit reached')) and 'insufficient_quota' not in text):
+        return {'success': False, 'code': 'AI_RATE_LIMITED', 'retryable': True, 'error': 'El proveedor de IA pidió esperar por exceso de solicitudes. Se conserva el avance y la etapa se reanuda sola en unos instantes.'}
     if any(term in text for term in ('max_output_tokens', 'lengthfinishreason', 'length limit', 'structured response unavailable', 'eof while parsing')):
         return {'success': False, 'code': 'AI_OUTPUT_LIMIT', 'error': 'La respuesta de IA no quedó completa dentro del límite de tokens. Se conserva el avance para recuperar únicamente esta etapa.'}
     return {'success': False, 'code': 'AI_REVIEW_UNAVAILABLE', 'error': 'No se completó esta etapa de IA. El avance anterior se conserva y no se considera aprobado.'}

@@ -1,3 +1,25 @@
+## 1.0.108 — Second judge round reuses its own signed verdicts; results kept in B9 and matters; rate limits never freeze a case
+
+- **The final judge reuses its own MET verdicts on unchanged output** (`core/judge_receipts.py`).
+  - After a bounded repair the whole rendered pair returned to the final judge, which re-checked every obligation (DeForest: a second 175–200K-token call on the most expensive model).
+  - Each MET check now gets a receipt signed with the service secret and bound to a digest of its exact output text, its obligation instruction and its sources, like field receipts.
+  - On the next round, an obligation whose digest is unchanged joins the existing verified set and is not sent again. A changed word or instruction, a failed check or a forged/foreign receipt is always re-reviewed.
+  - The global acceptance of both files is still judged every round, and receipts never reach the model.
+- **B9 keeps each mandate's achieved result** (`editorial_construction`):
+  - Most B9 failures in DeForest and Ramos were an achieved result left out, or rewritten as an aim («designed to maintain compliance»), especially when grouping secondary mandates.
+  - The B9 writer now receives `mandate_results`: the decisive passages the shared plan chose for each of the lawyer's mandates. Every mandate it mentions keeps its result in the same sentence or the next; grouping shortens the description, never the result.
+- **Matter status and tense fidelity**:
+  - when the source gives no status, the narrative states none (no invented «ongoing» / «continues to»);
+  - achieved stays achieved, planned stays planned, and an ordered inspection is not described as carried out.
+- **A request-rate refusal never freezes a case** (`AI_RATE_LIMITED`):
+  - An HTTP 429 `rate_limit_exceeded` bills nothing. It is now recorded as such: the budget reservation is returned and sibling calls stop cleanly.
+  - The worker retries after 1, 2, 3, 4 and 5 minutes. Before, it was an unknown outcome that could never be retried.
+- **Validation**:
+  - 1008 Python tests passed;
+  - Node: 628 passed, 1 skipped;
+  - tsc passed.
+- **Not changed**: the Audit's five sections, the editorial rules Ángela approved, the 1,000-word maximum, and the models.
+
 ## 1.0.107 — Lower review cost and a clear "can I generate now?" verdict
 
 - **Each repeated review rule is sent once per call** (`core/shared_rules.py`).
