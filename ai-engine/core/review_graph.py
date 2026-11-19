@@ -906,6 +906,33 @@ def grounded_metadata_reference(quote, package):
     return all(re.fullmatch(r'(?:19|20)\d{2}',n) and n in years for n in numbers)
 
 
+IDENTITY_FINDING = re.compile(r'\b(?:nombrad[oa]s?|nombra|identifica|named|names|naming|identifies|menciona|mentions?)\b', re.I)
+
+
+def identity_absent_from_word(defect, package):
+    """Names a public-identity finding attributes to the delivered Submission
+    but which that Word never prints (v1.0.102).
+
+    DeForest v1.0.101: the judge quoted the development B9 ("work for
+    Megacable"), or quoted the Word's own "a confidential client" while saying
+    the name stayed. The name must come from the quoted record, be the one the
+    message accuses, and occur nowhere in the rendered Submission, so a finding
+    about a name the Word does print is never touched.
+    """
+    import unicodedata
+    rendered=str((package or {}).get('rendered_artifact') or '')
+    if not rendered or defect.get('scope')!='submission':
+        return []
+    if defect.get('code')!='PUBLICATION_PERMISSION' and not IDENTITY_FINDING.search(str(defect.get('message') or '')):
+        return []
+    plain=lambda s:' '.join(''.join(c for c in unicodedata.normalize('NFKD',str(s or '')) if not unicodedata.combining(c)).split()).casefold()
+    word,message=plain(rendered),plain(defect.get('message'))
+    quoted=str(defect.get('artifact_quote') or '')+' '+str(defect.get('source_quote') or '')
+    names=dict.fromkeys(n for n in re.findall(r'\b[A-ZÁÉÍÓÚÑ][\w&-]*(?:\.[\w&-]+)*', quoted) if len(n)>=4)
+    return [n for n in names if re.search(r'\b'+re.escape(plain(n))+r'\b',message)
+            and not re.search(r'\b'+re.escape(plain(n))+r'\b',word)]
+
+
 def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
     """RP16: an uncorroborated model label is never enough to override a defect.
 
@@ -917,6 +944,14 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
     defects = [dict(d) for d in verdict.get('defects', [])]
     for defect in defects:
         code=defect.get('code')
+        absent=identity_absent_from_word(defect, package)
+        if absent:
+            defect.update(severity='warning', owner='rankpilot', action='review', retryable=False,
+                internal_diagnostic=defect.get('message'), rendered_resolution='identity_not_printed',
+                entity_id=defect.get('matter_id'), rule_id='RP01',
+                message='La revisión citó el texto interno de desarrollo; el Word entregado no imprime '+', '.join(absent)
+                        +' en ninguna sección y la presenta sin nombre. No necesitas cambiar tus datos.')
+            continue
         from core.portfolio_counts import wrong_generated_count
         if wrong_generated_count(defect, package or {}, strategy or {}):
             defect['severity']='critical'
@@ -1056,6 +1091,19 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
             defect['owner'] = 'rankpilot'
             defect['action'] = 'retry'
             defect['message'] = 'RankPilot debe comprobar un hallazgo temporal ambiguo antes de aprobar. No necesitas inventar fechas ni repetir el expediente. Detalle: ' + defect.get('message','')
+    # The acceptance summary failed only because of a name the Word does not
+    # print: when no other critical finding remains, it is that same note.
+    resolved=[n for d in defects if d.get('rendered_resolution')=='identity_not_printed'
+              for n in re.findall(r'no imprime (.+?) en ninguna', d['message'])]
+    failed=[c for c in verdict.get('acceptance',[]) if c.get('status')=='failed']
+    summary=[d for d in defects if str(d.get('message','')).startswith('La aceptación editorial no está completa')]
+    others=[d for d in defects if d['severity']=='critical' and d not in summary]
+    if resolved and failed and summary and not others and all(
+            any(n.strip().casefold() in str(c.get('evidence','')).casefold() for name in resolved for n in name.split(','))
+            for c in failed):
+        for d in summary:
+            d.update(severity='warning', action='review', retryable=False, rendered_resolution='identity_not_printed',
+                     internal_diagnostic=d.get('message'))
     return {**verdict, 'defects': defects,
             'passed': (not any(d['severity'] == 'critical' for d in defects)) if defects else verdict.get('passed', False)}
 

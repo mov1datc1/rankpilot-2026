@@ -5,7 +5,14 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 CONTRACT = 'candidate-profile-v1'
-CHAMBERS_CATEGORY_GUIDANCE = {'source_url':'https://chambers.com/submissions/rankings-explained','guidance':'Choose an evidenced specific category as a proposed target, not a predicted or current recognition. Up-and-Coming concerns developing reputation and contribution to firm growth; a partner title does not by itself rule it out. Associates to Watch and Star Associate are associate categories, incompatible with confirmed partnership. Assess category maturity and criteria rather than forcing all partners into an unspecified band.'}
+# v1.0.102: the firm's own methodology (rag_knowledge "¿Cómo rankeamos
+# abogado_as?", section E) proposes "Band ranking" for partners with proven
+# leadership, relevant matters and reputation, e.g. "Band 5 candidate" /
+# "possible lower-band candidate". The previous guidance named no category for
+# an established partner, so the model wrote "Established Individual", which is
+# not a Chambers category and was forced to Category pending (DeForest v1.0.101:
+# all three nominated partners pending, category:fit failed 3/3).
+CHAMBERS_CATEGORY_GUIDANCE = {'source_url':'https://chambers.com/submissions/rankings-explained','guidance':'Choose an evidenced specific category as a proposed target, not a predicted or current recognition. Categories: Band N candidate (a specific band) for partners with proven leadership of relevant mandates and established career standing; for a practice or person not yet ranked, propose the lower band the evidence can defend (for example Band 5 candidate) and say in category_rationale that it is an editorial target, not a prediction or current recognition. Up and Coming for developing reputation and contribution to firm growth; a partner title does not by itself rule it out. Associates to Watch and Star Associate are associate categories, incompatible with confirmed partnership. "Established Individual" and other maturity descriptors are not Chambers categories. Use Category pending only when neither a band nor Up and Coming can be argued from the evidence.'}
 MATERIAL_ROLE=re.compile(r'\b(?:served|worked|appointed|director|counsel|president|chair(?:man|person)?|head of|partner|professor|degree|qualified|admitted|licen[cs]ed|presidente|socio|consejero|comisi[oó]n)\b',re.I)
 
 def norm(value):
@@ -157,16 +164,28 @@ def bind_profile_identities(candidate, package):
 
 
 def retained_confidential_clients(candidate, package):
-    """Profile clients kept by name although the register marks them confidential."""
-    from core.client_identity import register_matches, is_confidential, is_publishable
+    """Profile clients kept by name although they have no publication permission.
+
+    A confidential register client, or (v1.0.102) a client named only in the
+    profile: the Word renderer prints neither by name, so a retained name made
+    the development text and the delivered Word disagree (DeForest v1.0.101:
+    Megacable retained in Eduardo's B9, printed as "a confidential client").
+    """
+    from core.client_identity import register_matches, is_confidential, is_publishable, tokens
     found=[]
+    bio=norm(candidate.get('submission_bio')).casefold()
     for item in candidate.get('profile_coverage',[]):
         if item.get('relationship')!='client' or item.get('decision')!='retain':continue
-        matches=register_matches(item.get('entity_name'),package)
+        name=norm(item.get('entity_name'))
+        matches=register_matches(name,package)
         if matches and any(is_confidential(m) for m in matches) and not any(is_publishable(m) for m in matches):
-            found.append(f"PRIVACY: {item.get('entity_name')} is a confidential registered client (matter "
+            found.append(f"PRIVACY: {name} is a confidential registered client (matter "
                          f"{next(m['id'] for m in matches if is_confidential(m))}); use decision=generalize and describe it "
                          "without its name in submission_bio, keeping the legal work and role.")
+        elif not matches and len(''.join(tokens(name)))>=3 and name.casefold() in bio:
+            found.append(f"PRIVACY: {name} is named only in the profile and has no publishable register matter; "
+                         "use decision=generalize (privacy_basis client_register, matter_id empty) and describe it without "
+                         "its name in submission_bio, keeping the legal work and role.")
     return found
 
 

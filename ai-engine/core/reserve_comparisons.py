@@ -14,7 +14,11 @@ closest relevant selected alternative, using the original legal work, outcomes,
 qualifications and comparable scale. In each tradeoff, state concrete legal
 mechanisms, positive scope/scale and documented status (ongoing/completed) for
 BOTH the selected matter and the reserve, and never reference uninvolved third
-matters. Do not compare every reserve only with the hero. Return each supplied comparison slot; the application owns its reserve ID.
+matters. Name the reserve's OWN concrete actions from its source (for example
+audits, redesigned procedures, sensitive terminations, management training,
+employer registrations) before stating what it lacks; never compress the reserve
+into "advice", "planning" or "a broader programme". A reserve described only by
+its gaps fails review. Do not compare every reserve only with the hero. Return each supplied comparison slot; the application owns its reserve ID.
 Select audit_comparison_references only for material borderline comparisons that
 the client should see (at least one across the complete plan). Other comparisons
 remain internal, not omitted. Visibility in the Audit is not coverage of the plan.

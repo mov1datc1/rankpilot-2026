@@ -19,6 +19,7 @@ QUALIFIER = re.compile(r'^(?:de\b|m[eé]xico\b|industrial\b|manufacturing\b|inte
 DESCRIPTION = re.compile(r'(?:\.|\s+[-–—]\s+|,\s*)\s*(?:is an?|it is an?|a (?:global|world|leading)|company (?:dedicated|engaged|specializing)|located in|based in|headquartered in|empresa dedicada|dedicada a|con sede en)\b', re.I)
 LEGAL = {'sa', 'de', 'cv', 'sab', 'sapi', 's', 'rl', 'inc', 'llc', 'ltd', 'corp', 'gmbh', 'ag', 'plc', 'co', 'sc', 'spa', 'srl', 'bv', 'nv'}
 CONFIDENTIAL = ('confidential', 'confirmation_required', 'non_publishable')
+CAREER = re.compile(r'\b(?:served|worked|working|employed|joined|director|general counsel|in-house|head of|manager|officer|president|vice[- ]president|years at|decades at|career at|trabaj[óo]|director[a]?|gerente)\b', re.I)
 
 
 def _plain(value):
@@ -165,6 +166,13 @@ def profile_identity_table(person, package):
                               for i in range(len(words) - n + 1)
                               if same_entity(' '.join(words[i:i + n]).strip('.,;:'), registered)), None)
                 if found and not any(r['profile_name'] == found and r['matter_id'] == matter['id'] for r in table):
+                    # DeForest v1.0.101 run: Raymundo's Volkswagen is his former
+                    # employer. A career unit keeps the name; only a client
+                    # relationship is generalised.
+                    career = bool(CAREER.search(unit['source_quote']))
                     table.append({'reference': unit['reference'], 'profile_name': found, 'registered_client': registered,
-                                  'matter_id': matter['id'], 'public_rule': 'generalize: confidential client'})
+                                  'matter_id': matter['id'],
+                                  'public_rule': ('career fact: if this unit describes employment or an office held there, keep the name '
+                                                  '(relationship former_employer, decision retain); generalize only a client relationship')
+                                                 if career else 'generalize: confidential client'})
     return table

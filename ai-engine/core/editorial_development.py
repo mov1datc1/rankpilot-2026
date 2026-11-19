@@ -53,7 +53,7 @@ class Comparison(BaseModel):
     selected_id: str
     alternative_id: str
     incremental_contribution: str
-    tradeoff: str = Field(description="State concrete source-grounded differences. Never label a reserve menor escala/mayor escala/smaller scale/larger scale; state the actual supplied facts or comparable quantities, with their concepts, instead. Absence of a final result is not evidence of lower scale.")
+    tradeoff: str = Field(description="State concrete source-grounded differences. Never label a reserve menor escala/mayor escala/smaller scale/larger scale; state the actual supplied facts or comparable quantities, with their concepts, instead. Absence of a final result is not evidence of lower scale. Name the reserve's own concrete actions from its source before what it lacks; never reduce it to generic advice, planning or a programme.")
 
 class Development(BaseModel):
     personal_quality_contract: str = ''
@@ -226,7 +226,9 @@ def bind_quote(value, matter):
 # project value, claim reduction) are separate sentences and stay untouched.
 VALUE_RESTATEMENT = re.compile(
     r"(?:(?<=^)|(?<=[.!?]\s))\s*(?:The|This)\s+(?:matter|engagement|mandate)(?:['’]s)?\s+"
-    r"(?:is\s+recorded\s+(?:at|as|with\s+a\s+(?:stated\s+)?value\s+of)|(?:stated|recorded|declared)\s+value\s+is|value\s+is\s+(?:recorded|stated)\s+(?:at|as))"
+    # v1.0.102 (DeForest run): "recorded with an approximate value of US$675,000."
+    r"(?:is\s+recorded\s+(?:at|as|with\s+an?\s+(?:(?:stated|approximate|estimated|declared)\s+)?value\s+of)"
+    r"|(?:stated|recorded|declared|approximate|estimated)\s+value\s+is|value\s+is\s+(?:recorded|stated)\s+(?:at|as))"
     r"\s+(?:approximately\s+|approx\.\s+|about\s+)?(?:US\$|USD|MXN|EUR|\$|€)\s?[\d.,]+(?:\s*(?:million|billion|m))?\s*\.(?=\s|$)", re.I)
 
 
@@ -240,8 +242,11 @@ def bind_development(package, proposal):
     proposal=copy.deepcopy(proposal)
     # Canonicalize generated presentation before binding and validation, never
     # after returning development_validated. Source evidence stays verbatim.
+    from core.editorial_repetition import drop_restated_sentences
     for field in ('b10','c2'):
-        if field in proposal:proposal[field]=sanitize_narrative_voice(proposal[field])
+        if field in proposal:
+            quotes=[link.get(field+'_quote','') for link in proposal.get('institutional_execution',[])]
+            proposal[field]=drop_restated_sentences(sanitize_narrative_voice(proposal[field]),quotes)
     register={m['id']:m for m in package.get('matters',[])}
     for draft in proposal.get('matters',[]):
         for field in ('text','completion_status'):
@@ -253,7 +258,10 @@ def bind_development(package, proposal):
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
     for candidate in proposal.get('candidates',[]):
-        if 'submission_bio' in candidate:candidate['submission_bio']=sanitize_narrative_voice(candidate['submission_bio'])
+        if 'submission_bio' in candidate:
+            quotes=[item.get('public_quote','') for key in ('profile_coverage','submission_case_coverage')
+                    for item in candidate.get(key,[]) or []]
+            candidate['submission_bio']=drop_restated_sentences(sanitize_narrative_voice(candidate['submission_bio']),quotes)
         # Binding evidence must not rewrite the biography after its quotations
         # have been generated. Head/partner claims belong to sourced drafting
         # and independent review, not an unconditional text substitution.
@@ -532,7 +540,7 @@ def develop_proposal(state):
     from core.editorial_construction import advance
     return advance(state,invoke_role)
 
-TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Account for EVERY unit of this candidate in profile_coverage, using separate records for its distinct named entities, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
+TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Account for EVERY unit of this candidate in profile_coverage, using separate records for its distinct named entities, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate (no band number) and other generic placeholders are invalid. A specific band target (for example Band 5 candidate) is valid when category_methodology supports it and category_rationale states the evidence for that band; never present it as a current or predicted ranking. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
 TASK += " For every profile unit classify its relationship and copy entity_name exactly as the profile writes it. generalize requires privacy_basis: the exact original restriction in this person's profile (profile_restriction, empty matter_id), or the restricted register client and its original matter_id (client_register). The application binds a profile spelling, short name or legal suffix of a registered client to that register entry itself; a client named only in a profile, with no publishable register matter, is not publishable and is generalized (client_register, the profile name, empty matter_id). A free-text reason, missing general permission or another client's restriction cannot justify erasing an employer or association. retain keeps that entity in the B9 quote; retain/omit use null privacy_basis. These are internal facts, never public prose."
 
 TASK += " PERSONAL EVIDENCE CAPACITY: Read source_obligations.personal_attribution_policy. A literal team listing alone establishes membership, not individual substantive responsibility or achievements. Keep such a category-pending, not-nominated public profile limited to supplied credentials and participation; do not manufacture two personal contributions or force a client answer merely to complete the report. This exception does not dilute substantive personally attributed mandates or an actual proposed nomination. Do not identify a shorter name with a longer lead name without source support. Record optional identity or role follow-up internally."

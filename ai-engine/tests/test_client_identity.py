@@ -78,6 +78,25 @@ class ProfileSpellingsBindToTheRegister(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertIn('SKF', found[0])
 
+    def test_v102_a_retained_profile_only_client_printed_in_the_bio_is_flagged(self):
+        # DeForest v1.0.101 run: Megacable retained in development, anonymised in the Word.
+        candidate = {'submission_bio': 'Ana also works for Megacable on preventive frameworks.',
+                     'profile_coverage': [item('Megacable', 'retain'), item('Open Foods', 'retain'),
+                                          item('Example Motors', 'retain', relationship='former_employer')]}
+        found = retained_confidential_clients(candidate, PACKAGE)
+        self.assertEqual(len(found), 1)
+        self.assertIn('Megacable', found[0])
+        candidate['submission_bio'] = 'Ana also works for a confidential client on preventive frameworks.'
+        self.assertEqual(retained_confidential_clients(candidate, PACKAGE), [])
+
+    def test_v102_a_former_employer_in_the_register_keeps_its_name_in_the_writer_table(self):
+        # DeForest v1.0.101 run: Raymundo's Volkswagen is his career, not a client mandate.
+        person = {'name': 'Raymundo', 'bio': 'He served nearly forty years at Volkswagen as General Legal Director.'}
+        table = profile_identity_table(person, PACKAGE)
+        self.assertEqual([r['profile_name'] for r in table], ['Volkswagen'])
+        self.assertTrue(table[0]['public_rule'].startswith('career fact'))
+        self.assertEqual(profile_identity_table(PERSON, PACKAGE)[0]['public_rule'], 'generalize: confidential client')
+
 
 class PublicViewOfConfidentialMatters(unittest.TestCase):
     def test_writer_receives_the_names_and_figures_that_stay_private(self):

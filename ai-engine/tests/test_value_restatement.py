@@ -15,6 +15,11 @@ class ValueRestatementTest(unittest.TestCase):
                      'The matter is recorded at US$553,278.59 and reflects a nationwide portfolio.'):
             self.assertEqual(drop_value_restatement(kept), kept)
 
+    def test_v102_approximate_value_wording_from_the_deforest_run(self):
+        self.assertEqual(drop_value_restatement('DeForest negotiated. The matter is recorded with an approximate value of US$675,000. Ana leads.'),
+                         'DeForest negotiated. Ana leads.')
+        self.assertEqual(drop_value_restatement('It settled. The engagement’s estimated value is MXN 2 million.'), 'It settled.')
+
     def test_construction_applies_it_only_when_e3_carries_a_value(self):
         text = 'DeForest manages the portfolio. The matter is recorded at US$553,278.59. The matter is ongoing.'
         package = {'matters': [{'id': 'm1', 'value': 'US$ 553,278.59'}, {'id': 'm2', 'value': ''}]}

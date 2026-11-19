@@ -117,6 +117,51 @@ def metric_spans(text):
     return result
 
 
+# Business families used only to notice that the client register and the
+# matter narrative describe a client's business differently (v1.0.102).
+SECTOR_FAMILIES = {
+    'manufacturing': r'manufactur|fabric|automotive|auto ?parts|industrial|maker|producer|plant|metal',
+    'logistics': r'logistic|supply chain|supply &|supply and|transport|distribution|freight|warehous',
+    'retail': r'retail|store|supermarket|tiendas?',
+    'finance': r'bank|financ|insur|leasing|credit',
+    'energy': r'energy|oil|gas|power|electric|solar|petrol',
+    'telecom': r'telecom|cable|broadband|internet|mobile',
+    'entertainment': r'cinema|entertainment|film|media|radio',
+    'hospitality': r'hotel|hospitality|restaurant|tourism',
+    'security': r'security services|guard|seguridad privada',
+    'education': r'educat|school|universit|escuela',
+    'technology': r'technolog|software|digital platform',
+    'real_estate': r'real estate|property develop|inmobiliari',
+}
+
+
+def register_sector(matter):
+    """Sector column of this matter's own client-register row, when present."""
+    rows=((matter.get('confidentialityEvidence') or {}).get('client_register') or [])
+    for row in rows:
+        cells=[c.strip() for c in str(row.get('quote') or '').split('|')]
+        if len(cells)>=2 and cells[1] and not re.fullmatch(r'[YN]|N/?A|-',cells[1],re.I):
+            return cells[1]
+    return ''
+
+
+def _families(text):
+    return {k for k,p in SECTOR_FAMILIES.items() if re.search(r'\b(?:'+p+')',str(text or ''),re.I)}
+
+
+def sector_rule(matter):
+    """How a public section may describe this client's business."""
+    sector=register_sector(matter)
+    if not sector:return None
+    narrative='\n'.join(str(matter.get(k) or '') for k in ('summary','rawNotes','description'))
+    registered,described=_families(sector),_families(narrative)
+    if registered and described and not registered & described:
+        return {'register_sector':sector,'disputed':True,
+                'rule':'The client register and the matter narrative describe this business differently: give no sector or industry label for this client; write "a confidential client".'}
+    return {'register_sector':sector,'disputed':False,
+            'rule':'Any sector label for this client must agree with the register sector.'}
+
+
 def public_disclosure(package, matter_ids):
     """Public view of each confidential mandate for the B9/B10/C2 writers (v1.0.101).
 
@@ -131,9 +176,12 @@ def public_disclosure(package, matter_ids):
     for matter in package.get('matters',[]):
         if matter.get('id') not in matter_ids or not is_private_matter(matter):continue
         source='\n'.join(str(matter.get(k) or '') for k in SOURCE_KEYS)
-        view.append({'matter_id':matter['id'],'client_names_not_public':client_aliases(register_names(matter)[:1]),
-                     'figures_not_public':metric_spans(source),
-                     'public_rule':'Describe this mandate as work for a confidential client; give its scale qualitatively. Legal problem, action, role and result stay.'})
+        entry={'matter_id':matter['id'],'client_names_not_public':client_aliases(register_names(matter)[:1]),
+               'figures_not_public':metric_spans(source),
+               'public_rule':'Describe this mandate as work for a confidential client; give its scale qualitatively. Legal problem, action, role and result stay.'}
+        sector=sector_rule(matter)
+        if sector:entry['client_sector']=sector
+        view.append(entry)
     return view
 
 
