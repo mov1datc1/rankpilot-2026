@@ -186,6 +186,31 @@ def contract(units):
     return create_model('SourceFieldVerdict',__config__=ConfigDict(extra='forbid'),checks=(checks,...))
 
 
+def _without_contained_narratives(record):
+    """Drop rawNotes/summary whose every paragraph occurs, in order and word for
+    word, inside the same record's source_excerpt (form cells carry a label on
+    the same line, e.g. "Matter's Context: ..."). Nothing is lost: the complete
+    text stays in source_excerpt. A changed word or reordered account survives."""
+    import re
+    if not isinstance(record,dict) or not isinstance(record.get('source_excerpt'),str):
+        return record
+    excerpt=' '.join(record['source_excerpt'].split())
+    result=dict(record)
+    for key in ('rawNotes','summary'):
+        narrative=result.get(key)
+        if not isinstance(narrative,str) or not narrative.strip():continue
+        cursor=0
+        for paragraph in [' '.join(p.split()) for p in re.split(r'\n\s*\n',narrative) if p.strip()]:
+            found=excerpt.find(paragraph,cursor)
+            if found<0:break
+            cursor=found+len(paragraph)
+        else:
+            del result[key]
+    for duplicate,canonical in (('lead_partner','leadPartner'),('team_members','teamMembers')):
+        if duplicate in result and result.get(duplicate)==result.get(canonical):del result[duplicate]
+    return result
+
+
 def review_payload(units):
     """One copy per original record/passage, irrespective of obligation count."""
     records={};passages={};items=[]
@@ -199,7 +224,12 @@ def review_payload(units):
         items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks,
             **({'contextual_source_ids':unit['contextual_source_ids'],
                 'institutional_context_ref':'institutional_context'} if 'contextual_source_ids' in unit else {})})
-    result={'units':items,'original_sources':records,'original_passages':passages}
+    # v1.0.106: the register carries the same matter narrative three times
+    # (source_excerpt, rawNotes, summary): 49% of the records sent to this
+    # reviewer on DeForest. Remove literal copies only, as the final judge
+    # already does; proofs still bind to the complete original records.
+    from core.review_graph import compact_review_payload
+    result={'units':items,'original_sources':{key:_without_contained_narratives(value) for key,value in compact_review_payload(records).items()},'original_passages':passages}
     contexts=[u['institutional_context'] for u in units if 'institutional_context' in u]
     if contexts:
         if any(c!=contexts[0] for c in contexts):raise ValueError('Institutional source views differ')

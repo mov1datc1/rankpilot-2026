@@ -95,7 +95,11 @@ export async function POST(request: NextRequest) {
       })
     });
     const modality = context?.modality || selected.modality;
-    const scopeConfirmations = Array.isArray(body.scope_confirmations) ? body.scope_confirmations : [];
+    // v1.0.106 (external review of PR79): answers given at intake are stored in
+    // chambersData.scope_confirmations; later calls (e.g. the confidentiality
+    // re-check, which Studio sends without them) must not re-ask after paying.
+    const scopeConfirmations = [...(Array.isArray(body.scope_confirmations) ? body.scope_confirmations : []),
+      ...(Array.isArray((submission.chambersData as any)?.scope_confirmations) ? (submission.chambersData as any).scope_confirmations : [])];
     const scopeConflictResponse = (issues:any[], reports:any[]) => {
       const question = scopeQuestion(issues, reports);
       return NextResponse.json({code:'SCOPE_CONFLICT',error:question.confirmable?question.items.map(i=>i.message).join(' '):issues.map(i=>i.message).join(' '),issues,question,submissionId:submission.id},{status:422});
@@ -134,7 +138,9 @@ export async function POST(request: NextRequest) {
     }
 
     const allScopeIssues=scopeIssues(selected,extractData.source_reports || [], modality);
-    const scopeConflicts=unconfirmedScopeIssues(allScopeIssues,scopeConfirmations);
+    // The confidentiality re-check reads already accepted sources and changes no
+    // scope; scope is asked before spending at intake, never after a paid call.
+    const scopeConflicts=confidentialityOnly ? [] : unconfirmedScopeIssues(allScopeIssues,scopeConfirmations);
     if(scopeConflicts.length) return scopeConflictResponse(scopeConflicts,extractData.source_reports || []);
     // A confirmed conflict stays visible as a source warning; it is never erased.
     const confirmedScope=allScopeIssues.filter(i=>!scopeConflicts.includes(i));

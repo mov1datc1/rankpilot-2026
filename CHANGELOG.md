@@ -1,3 +1,42 @@
+## 1.0.106 — Field-review cost, "what your case is missing", budget reservation and two intake fixes
+
+The release is based on the real Ramos Castillo runs on v1.0.105 (19 Nov 2026), a cost analysis of six real runs, an external review of PR79, and Jake's code review.
+
+- **Builder option B tells the user what the case is missing** (`src/lib/audit/case-readiness.ts`, Wizard).
+  - After the sources are read, the Wizard opens with «Qué le falta a tu expediente» and the next step. It brings together what used to be scattered small print:
+    - no lawyer profiles (B9 would be empty);
+    - no department description;
+    - missing form fields;
+    - fewer than 10 matters;
+    - a document that contributed no matter;
+    - a document declaring another practice;
+    - the source-integrity checks.
+  - It never blocks and never changes a value.
+- **Source-integrity checks refined** (`integrity-checks.ts`), after the Ramos Real Estate run:
+  - figures with irregular separators («11.775,193.22», «172,37,026.00») are asked about as ambiguous;
+  - a value stated in two currencies that do not match is flagged (BEMIS: MXN 5M stated as USD 27.7M);
+  - cents on an approximate conversion are no longer flagged;
+  - the register name followed by the next sentence («… S.A. DE C.V. Is», «…PRIMAVERA. In») is no longer a «variant». The final judge correctly rejected those two v1.0.105 checks.
+- **Field-review cost** (`field_review.review_payload`):
+  - The reviewer received each matter narrative four times (source_excerpt, summary, rawNotes and the passage catalogue). Literal copies whose every paragraph is already inside source_excerpt are removed, in order and word for word.
+  - On DeForest this cuts records by 40% and field-review input by 14% (about US$0.55 per case). Proofs still bind to the complete original records.
+- **Token budget reserved before sending** (`provider_budget.py`, Jake's review):
+  - Parallel calls could all pass the same check and overspend a case cap together (140 of 100). The worst case is now reserved before each call and the actual usage is reconciled afterwards.
+  - The cap is not enabled in production today, so this was latent.
+- **A billing refusal inside a parallel stage is known, not unknown**:
+  - Any failure, including HTTP 429 `insufficient_quota`, marked the request budget «uncertain», so sibling calls ended as unknown outcomes and could freeze the case again.
+  - A billing refusal now returns its reservation and stops sibling calls as `AI_CREDIT_EXHAUSTED`, so the v1.0.105 credit recheck applies.
+- **Intake fixes from the external review of PR79**:
+  - The confidentiality re-check paid for an extraction and then re-asked an already confirmed scope conflict. Stored confirmations now apply, and that mode never asks about scope.
+  - «Cambiar a "Fiscal"» said the practice was changed without changing it. The detected practice is now mapped through the scope aliases (`matchPracticeArea`), and only a real change is announced.
+- **Reviewers know D5/D6 print the team** (`editorial_case.py`): listing team members in a matter narrative is not required; the role of the person who led the work still belongs there (Ramos Real Estate).
+- **Validation**:
+  - 995 Python tests passed;
+  - Node: 626 passed, 1 skipped;
+  - tsc passed;
+  - the checks and the payload reduction were reproduced on the real DeForest and Ramos data, with no generation.
+- **Not changed**: the Audit's five sections, the editorial rules, the 1,000-word maximum and the judge models.
+
 ## 1.0.105 — Ángela's DeForest feedback (19 Nov) without regressing what she praised
 
 Ángela called her DeForest run on v1.0.102 "by far the best result" she has seen: the strategic Audit, the selection, B10 and C2. This version keeps those capabilities unchanged and applies her improvement points.

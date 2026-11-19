@@ -1,6 +1,14 @@
 """Count the actual structured request before generation under a worker budget."""
+import threading
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+
+BILLING_REJECTION=('insufficient_quota','credit_balance_exhausted','no credits remaining','billing_hard_limit')
+
+
+def billing_rejection(error):
+    """An explicit HTTP 429 billing refusal: the provider billed nothing."""
+    return any(term in str(error).lower() for term in BILLING_REJECTION)
 from langchain_openai import ChatOpenAI
 
 
@@ -18,30 +26,51 @@ class RequestBudget:
     remaining: int | None
     spent_tokens: int = 0
     uncertain: bool = False
+    credit_exhausted: bool = False
     last_stop: dict = field(default_factory=dict)
+    lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def halt(self,code,details=None):
         self.last_stop={'code':code,'details':details or {}}
         raise BudgetPreflightError(code,details)
 
-    def admit(self, input_tokens, output_limit):
-        if self.uncertain:
-            self.halt('PROVIDER_OUTCOME_UNKNOWN')
-        if not isinstance(input_tokens,int) or isinstance(input_tokens,bool) or input_tokens<0 or output_limit<=0:
-            self.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-        if self.remaining is not None and input_tokens+output_limit>self.remaining:
-            self.halt('EDITORIAL_BUDGET_REQUIRED',{
-                'input_tokens':input_tokens,'reserved_output_tokens':output_limit,'remaining_tokens':self.remaining})
+    def stop_if_blocked(self):
+        if self.credit_exhausted:self.halt('AI_CREDIT_EXHAUSTED')
+        if self.uncertain:self.halt('PROVIDER_OUTCOME_UNKNOWN')
 
-    def settle(self, result):
+    def admit(self, input_tokens, output_limit):
+        """Reserve the worst case BEFORE sending (v1.0.106): parallel calls used
+        to pass the same check and overspend the cap together (140 of 100)."""
+        with self.lock:
+            self.stop_if_blocked()
+            if not isinstance(input_tokens,int) or isinstance(input_tokens,bool) or input_tokens<0 or output_limit<=0:
+                self.halt('AI_BUDGET_CHECK_UNAVAILABLE')
+            if self.remaining is not None and input_tokens+output_limit>self.remaining:
+                self.halt('EDITORIAL_BUDGET_REQUIRED',{
+                    'input_tokens':input_tokens,'reserved_output_tokens':output_limit,'remaining_tokens':self.remaining})
+            reserved=input_tokens+output_limit if self.remaining is not None else 0
+            if self.remaining is not None:self.remaining-=reserved
+            return reserved
+
+    def settle(self, result, reserved=0):
         usage=getattr(result.generations[0].message,'usage_metadata',None) if result.generations else None
         total=(usage or {}).get('total_tokens')
-        if not isinstance(total,int) or isinstance(total,bool) or total<0:
-            self.uncertain=True
-            raise RuntimeError('provider outcome unknown: usage unavailable')
-        self.spent_tokens+=total
-        if self.remaining is not None:
-            self.remaining-=total
+        with self.lock:
+            if not isinstance(total,int) or isinstance(total,bool) or total<0:
+                self.uncertain=True  # the reservation stays spent: outcome unknown
+                raise RuntimeError('provider outcome unknown: usage unavailable')
+            self.spent_tokens+=total
+            if self.remaining is not None:
+                self.remaining+=reserved-total
+
+    def fail(self, error, reserved=0):
+        """A billing refusal is a known, unbilled outcome; anything else is unknown."""
+        with self.lock:
+            if billing_rejection(error):
+                self.credit_exhausted=True
+                if self.remaining is not None:self.remaining+=reserved
+            else:
+                self.uncertain=True
 
 
 request_budget=ContextVar('editorial_request_budget',default=None)
@@ -70,38 +99,40 @@ class BudgetedChatOpenAI(ChatOpenAI):
         budget=request_budget.get()
         if budget is None:
             return super()._generate(messages,stop=stop,run_manager=run_manager,**kwargs)
-        if budget.uncertain:budget.halt('PROVIDER_OUTCOME_UNKNOWN')
+        budget.stop_if_blocked()
+        reserved=0
         if budget.remaining is not None:
             payload,output_limit=self._budget_payload(messages,stop,kwargs)
             try:
                 count=self.root_client.responses.input_tokens.count(**payload,timeout=10)
             except Exception:
                 budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-            budget.admit(count.input_tokens,output_limit)
+            reserved=budget.admit(count.input_tokens,output_limit)
         try:
             result=super()._generate(messages,stop=stop,run_manager=run_manager,**kwargs)
-            budget.settle(result)
-            return result
-        except Exception:
-            budget.uncertain=True
+        except Exception as error:
+            budget.fail(error,reserved)
             raise
+        budget.settle(result,reserved)
+        return result
 
     async def _agenerate(self,messages,stop=None,run_manager=None,**kwargs):
         budget=request_budget.get()
         if budget is None:
             return await super()._agenerate(messages,stop=stop,run_manager=run_manager,**kwargs)
-        if budget.uncertain:budget.halt('PROVIDER_OUTCOME_UNKNOWN')
+        budget.stop_if_blocked()
+        reserved=0
         if budget.remaining is not None:
             payload,output_limit=self._budget_payload(messages,stop,kwargs)
             try:
                 count=await self.root_async_client.responses.input_tokens.count(**payload,timeout=10)
             except Exception:
                 budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-            budget.admit(count.input_tokens,output_limit)
+            reserved=budget.admit(count.input_tokens,output_limit)
         try:
             result=await super()._agenerate(messages,stop=stop,run_manager=run_manager,**kwargs)
-            budget.settle(result)
-            return result
-        except Exception:
-            budget.uncertain=True
+        except Exception as error:
+            budget.fail(error,reserved)
             raise
+        budget.settle(result,reserved)
+        return result

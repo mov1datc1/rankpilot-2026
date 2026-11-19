@@ -19,6 +19,12 @@ function canonical(value:unknown,field:keyof AnalysisScope) {
  text=text.replace(/&/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
  return aliases[text] || text;
 }
+/** v1.0.106: the list entry a detected practice names, through the same
+ * aliases as the scope check (e.g. «Derecho Fiscal» → «Tax»), or null. */
+export function matchPracticeArea(detected:unknown,options:readonly string[]):string|null {
+ const key=canonical(detected,'practice_area');
+ return key ? options.find(option=>canonical(option,'practice_area')===key) ?? null : null;
+}
 export function selectedScope(input:any):AnalysisScope {
  return {
   directory:input.targetDirectory ?? input.directory ?? '',

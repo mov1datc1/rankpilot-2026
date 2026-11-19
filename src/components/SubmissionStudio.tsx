@@ -4487,6 +4487,7 @@ export default function SubmissionStudio({
           filingFieldStatus:chambersData.filing_field_status,
           filingReviewed:chambersData.filing_reviewed,
           sourceReports: chambersData.source_reports || [],
+          scopeConfirmations: chambersData.scope_confirmations || [],
           sourceFactReview: chambersData.source_fact_review,
           draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',

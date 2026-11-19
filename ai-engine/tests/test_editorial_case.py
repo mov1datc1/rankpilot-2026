@@ -121,6 +121,7 @@ class EditorialCaseTests(unittest.TestCase):
         texts=[o['instruction'] for o in obligations(p,s,v) if o['id'].startswith('matter:')]
         self.assertTrue(texts)
         self.assertTrue(all('D3/E3 field' in t for t in texts))
+        self.assertTrue(all('D5/D6 (E5/E6) fields' in t for t in texts))
     def test_exact_word_cannot_be_replaced_by_old_proposal(self):
         p,s,v=fixture();p['rendered_artifact']='Different final text'
         o=obligations(p,s,v)[0]
