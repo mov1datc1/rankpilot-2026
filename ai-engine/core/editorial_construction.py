@@ -36,7 +36,9 @@ Form the institutional case_plan, comparative hero rationale and concrete reserv
 tradeoffs from original evidence. A reserve remains eligible personal evidence.
 For each lawyer decide nomination, proposed category, reason, personally attributed
 support and remaining action. Do not equate maturity descriptors with directory
-categories or unverified targets with current recognition. Use Category pending
+categories or unverified targets with current recognition. Apply
+category_methodology when supplied: a specific band target is a valid proposal for
+a partner with proven leadership of relevant mandates. Use Category pending
 with the specific undecided criterion and action when no defensible category is
 established. Preserve supplied objectives or explain a proposed change. Evaluate
 additional source leaders internally without inventing roster titles.'''
@@ -84,7 +86,9 @@ submission_bio) and keep its legal work. A client named only in the profile with
 publishable matter is generalised too. public_disclosure lists, per confidential
 mandate, the figures that identify it: never write those figures in submission_bio;
 state scale qualitatively (for example "a multi-million-dollar exposure", "a
-workforce of several thousand") while keeping the legal obstacle, action and result. Bind each original profile unit/entity in
+workforce of several thousand") while keeping the legal obstacle, action and result.
+A client_sector entry governs how you label that client's business: when disputed,
+give no sector or industry label ("a confidential client"). Bind each original profile unit/entity in
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
 (never from another unit), copy source_quote literally, and for every retained
 credential copy public_quote verbatim from the actual resulting submission_bio.
@@ -138,7 +142,8 @@ invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
 while preserving legal work and career credentials. public_disclosure lists the
 client names and the exact figures of every confidential mandate: write none of
-them in B10 or C2; state scale qualitatively instead. A former employer, public
+them in B10 or C2; state scale qualitatively instead; a disputed client_sector gets
+no sector label. A former employer, public
 office or professional association named in a lawyer's profile is a career fact,
 not a client: keep its name unless an explicit restriction covers it. When you
 state the size of the team, use department_size exactly: partners and other

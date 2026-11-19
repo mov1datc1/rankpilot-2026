@@ -1,3 +1,38 @@
+## 1.0.102 — Defects measured in the DeForest v1.0.101 real run
+
+The real DeForest run on v1.0.101 (18 Nov 2026, submission 520ba6a1) completed with no stops at 87.18% first-pass (Ángela on v1.0.100: 64.33%). This version fixes the causes of what still failed, using that run's own data.
+
+- **Categories follow the firm methodology** (`candidate_evidence.py`, development, plan and category review prompts).
+  - The firm's methodology proposes «Band ranking» for partners with proven leadership (e.g. «Band 5 candidate»). The guidance given to the model named no category for an established partner and told it not to propose a band.
+  - The model wrote «Established Individual», which is not a Chambers category and was forced to «Category pending». All three nominated partners failed `category:fit`.
+  - A specific band target is now valid when its rationale ties it to the person's evidence and does not present it as a current or predicted ranking. «Established Individual» is still mapped to pending.
+- **Reserve comparisons keep the reserve's own work** (`reserve_comparisons.py`, `Comparison.tradeoff`).
+  - All five internal comparisons failed for the same reason: the reserve was reduced to «advice», «planning» or «a broader programme».
+  - The tradeoff must now name the reserve's concrete actions before what it lacks.
+- **A retained profile-only client is flagged before review** (`retained_confidential_clients`).
+  - Megacable, a client named only in Eduardo's profile, was retained by name in the development B9 while the Word printed «a confidential client».
+  - It is now reported within the existing single B9 self-correction.
+- **The judge's identity findings are checked against the delivered Word** (`review_graph.identity_absent_from_word`).
+  - Two critical findings named Megacable, a name that appears nowhere in the delivered Submission.
+  - Such a finding becomes a non-blocking note. A name the Word does print, and omission findings, stay blocking.
+  - The acceptance summary is relaxed only when every failed criterion cites that name and no other critical finding remains.
+- **Disputed client sector** (`public_privacy.sector_rule`, B9/B10/C2 prompts).
+  - The register classifies American Axle as «Supply & Logistics Services» while its narrative says automotive manufacturer. The B9 printed «industrial manufacturer».
+  - Writers now receive `client_sector`: when the register and the narrative disagree, no sector label is used. DeForest has 4 such clients: American Axle, Bosch, Enerflex and Nueva Empresa.
+- **Restated adjacent sentence removed** (`editorial_repetition.drop_restated_sentences`, applied in `bind_development`).
+  - A sentence is removed only when every content word of it (numbers included) is already in its neighbour, and only if every output quotation survives.
+  - On the run's data it removes only Eduardo's duplicate sentence (733 → 718 words) and changes nothing else in the 7 B9s, B10 or C2.
+- **Value restatement «approximate value»** (`VALUE_RESTATEMENT`): «The matter is recorded with an approximate value of US$675,000.» is removed; E3 already prints the value.
+- **Former employer in the writer table** (`client_identity.profile_identity_table`).
+  - Raymundo's Volkswagen is his career of nearly forty years, not a client mandate. A career unit now keeps the name, which removes the one validation error of the run.
+- **Offline validation on the run's own data** (no generation):
+  - every deterministic fix reproduces on the real text;
+  - recalibrating the real verdict turns both Megacable findings into notes, and American Axle remains blocking, as it should;
+  - 983 Python tests passed, 612 Node tests passed (1 skipped), and TypeScript passed.
+- **Limits**:
+  - category, comparison and sector changes are prompt contracts: only a real run measures them;
+  - prompt caching is unchanged (diagnosis in the repair log).
+
 ## 1.0.101 — One client identity table, a public view of confidential matters, and a proportional B9 shape
 
 The investigation of 18 Nov 2026 found why B9 measured 0% first-pass in four of five recent runs while matters reached 92–99%. The causes were contracts no answer could satisfy, and rules that contradicted each other across layers. This version removes those causes in code.
