@@ -1,3 +1,23 @@
+## 1.0.111 — One delivery guarantee for development
+
+Point 1 of the independent architecture review (Fable 5.2, 19 Nov 2026).
+
+- **Problem:**
+  - 7 of 17 cases since 17 Nov stopped without documents.
+  - The code stops on doubt by default. Each stop was fixed with one more resume branch, and the observation route required an exact list of exhaustion conditions.
+- **Engine** (`development_delivery.guaranteed_delivery`):
+  - On a delivery-with-observations request, a complete, identity-bound and privacy-safe proposal is delivered. Every remaining finding becomes an observation, including unapplied or inapplicable corrections.
+  - Exhaustion bookkeeping no longer decides delivery.
+  - Legitimate stops remain: an incomplete draft, a foreign identity, a privacy finding, an unknown provider outcome or an invalid selection.
+- **Worker** (`runner.ts`):
+  - When a development rejection has no retry left, the job asks for delivery with observations automatically, once, instead of ending `failed`.
+  - No new generation is bought; a second exhausted rejection is a real stop, never a loop.
+- **Validation:**
+  - 1022 Python tests passed;
+  - Node: 634 passed, 1 skipped;
+  - tsc passed;
+  - the new worker test fails without the fix.
+
 ## 1.0.110 — A correction that cannot be applied never stops the case
 
 The DeForest validation run on v1.0.109 (19 Nov 2026, submission ffb88ba7) stopped in development with `DEVELOPMENT_REJECTED`.
