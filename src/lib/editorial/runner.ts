@@ -2,6 +2,7 @@ import {canResumeRetiredBudget} from './budget-continuation';
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { generatedContentHash } from './repair-progress';
 import { superviseArtifact } from './supervisor';
+import { FINAL_REVIEW_UNFINISHED } from './final-review-resume';
 import {fieldMethodCount} from './field-recovery';
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
@@ -169,6 +170,20 @@ export async function runJobStage(job:any) {
     const failure={stage,cursor:job.cursor,issue,trace,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};
     const plan=recoveryPlan({...job,issue,ledger:[...(job.ledger || []),failure]},code,process.env.RENDER_GIT_COMMIT || 'local');
     if(plan) {status='queued';retryAt=plan.retryAt;}
+    else if(stage==='artifact' && FINAL_REVIEW_UNFINISHED.has(code)) {
+      // v1.0.104 (Ramos Castillo 19-11): the final reviewer never stops a case.
+      // When it cannot return a valid verdict and its retry is spent, the
+      // rendered pair already saved is delivered with observations; no new
+      // paid call is bought and nothing is marked approved.
+      const saved=await prisma.submission.findUnique({where:{id:job.submissionId}}).catch(()=>null);
+      const pair=(saved?.chambersData as any)?.available_artifact;
+      if(saved && saved.userId===job.userId && pair?.base64 && pair?.audit_base64) {
+        await prisma.submission.updateMany({where:{id:saved.id,updatedAt:saved.updatedAt},data:{status:'DocumentsAvailable'}}).catch(()=>null);
+        status='completed';
+        supervision={version:1,action:'deliver',reason:'final_review_unavailable',findings:[],review_issue:code} as any;
+        issue=null;
+      }
+    }
   } finally {clearInterval(heartbeat);}
   const entry={stage,cursor:job.cursor,status,retry_at:retryAt?.toISOString(),supervision,generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=${retryAt},"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;

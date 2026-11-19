@@ -334,3 +334,24 @@ test('available documents do not make pending final-review repair reuse old deve
   assert.ok(job.ledger.reduce((sum,e)=>sum+(e.trace?.usage?.total_tokens || 0),0)>475);
  } finally {global.fetch=normalFetch;repairMode=false;}
 });
+test('v1.0.104: a final review that cannot finish delivers the saved pair instead of stopping',async()=>{
+ // Ramos Castillo 19-11: AI_REVIEW_INVALID twice left the case as a Draft with no visible documents.
+ reset();const normal=global.fetch;
+ try {
+  while(job.stage!=='artifact' && job.status!=='completed') {await stage();if(job.status!=='queued')break;}
+  assert.equal(job.stage,'artifact');assert.equal(job.status,'queued');
+  global.fetch=async(url,options)=>url.endsWith('/verify-rendered-package')
+   ?Response.json({success:false,code:'AI_REVIEW_INVALID',trace:[{role:'editor',usage:{total_tokens:150}}]},{status:502})
+   :normal(url,options);
+  await stage();
+  assert.equal(job.status,'queued');assert.equal(job.issue.code,'AI_REVIEW_INVALID');
+  assert.equal(submission.status,'DocumentsAvailable');
+  assert.ok(submission.chambersData.available_artifact.base64 && submission.chambersData.available_artifact.audit_base64);
+  await stage();
+  assert.equal(job.status,'completed');assert.equal(job.issue,null);
+  assert.equal(job.ledger.at(-1).supervision.reason,'final_review_unavailable');
+  assert.equal(submission.status,'DocumentsAvailable');
+  assert.equal(submission.chambersData.approved_artifact,null);
+  assert.equal(submission.chambersData.available_artifact.observation_status,'with_observations');
+ } finally {global.fetch=normal;}
+});

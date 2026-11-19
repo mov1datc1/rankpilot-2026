@@ -1,5 +1,6 @@
 import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { jobActivity } from './activity';
+import {canResumeFinalReview,FINAL_REVIEW_RESUME} from './final-review-resume';
 import {canContinueWithObservations} from './observations-continuation';
 import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
@@ -114,6 +115,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       const checkpoint=capacityRecoveryCheckpoint(last,current.chambersData);
       await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),review_checkpoint:checkpoint}}});
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${cursor},"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='needs_review' RETURNING *`;
+      return resumed[0] || last;
+    }
+    if(retry && canResumeFinalReview(last,current.chambersData,sourceHash)) {
+      const marker={stage:'artifact',cursor:last.cursor,status:FINAL_REVIEW_RESUME,worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }
     if(retry && canContinueWithObservations(last,current.chambersData,sourceHash)) {

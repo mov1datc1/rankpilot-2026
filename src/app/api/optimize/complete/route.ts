@@ -159,7 +159,10 @@ export async function POST(request: NextRequest) {
             retained.draft_artifact.input_hash=draftInputHash(submission,retained);
             retained.available_artifact={...retained.draft_artifact,review_revision:retained.draft_revision,
               observation_status:'with_observations',reviewed:false,input_hash:deliveryInputHash(submission,retained)};
-            const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:retained}});
+            // v1.0.104 (Ramos Castillo 19-11): the rendered pair is available
+            // with observations even when the final review could not finish;
+            // the status must say so, never leave the case as a Draft.
+            const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),status:'DocumentsAvailable',chambersData:retained}});
             if(released.count!==1) throw new Error('DRAFT_CONFLICT');
             return NextResponse.json({success:false,code:finalReview.code,...(finalReview.retryable===false?{retryable:false}:{}),error:finalReview.code==='AI_REVIEW_INVALID'?'RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.':'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
           }

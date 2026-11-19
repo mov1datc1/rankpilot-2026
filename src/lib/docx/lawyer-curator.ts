@@ -254,7 +254,12 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
       normalizeName(person.name).includes('maria carolina cano') ||
       (/tax|tributari/i.test(person.focus || person.key_focus || person.bio || candidacy?.category_rationale || '') && !/m&a|mergers/i.test(person.focus || person.key_focus || ''))
     );
-    const proposed = (candidacy?.recommendation === 'present' && !isTaxOrOffPractice) ? candidacy.suggested_ranking : (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
+    // v1.0.104 (Ángela, DeForest 19-11): a category RankPilot proposes is an
+    // internal editorial target for the Audit. Printed in the public B9 as
+    // "Suggested ranking: Band 5 candidate" it reads as a self-assigned
+    // ranking and the final judge rejected it as unsupported. Only a category
+    // the firm itself supplied in its input is printed.
+    const proposed = (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
     const suggestedRank = /^(?:category pending|categor[ií]a pendiente)$/i.test(String(proposed).trim()) || isPartner === true && /associate/i.test(proposed) ? '' : proposed;
