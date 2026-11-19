@@ -298,6 +298,10 @@ def role_payload(payload, role):
                     original.pop(key,None)
     for obligation in result.get('case_obligations', []):
         obligation['source_references']=[{'matter_id':m['id']} if m.get('id') else {'person':m.get('name') or m.get('fullName')} if m.get('name') or m.get('fullName') else {'source_quote':m.get('source_excerpt','')} for m in obligation.pop('sources',[])]
+    if result.get('case_obligations'):
+        from core.shared_rules import share_repeated_rules, USAGE
+        result['case_obligations'],rules=share_repeated_rules(result['case_obligations'])
+        if rules:result['shared_rules']=rules;result['shared_rules_usage']=USAGE
     package = result.get('package', result)
     if role not in ('writer','editor'):
         def remove_internal(value):

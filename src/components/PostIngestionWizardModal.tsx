@@ -373,10 +373,13 @@ export default function PostIngestionWizardModal({
 
               {(() => {
                 // v1.0.106: one checklist of what the case has, lacks and needs next.
-                const readiness = caseReadiness({lawyers: initialData.lawyers, matters: initialData.matters, filingDetails: initialData.filingDetails,
+                const readiness = caseReadiness({firmName: initialData.firmName, practiceArea: initialData.practiceArea, lawyers: initialData.lawyers, matters: initialData.matters, filingDetails: initialData.filingDetails,
                   b10Text: initialData.b10Text, sourceReports: initialData.sourceReports, scopeConfirmations: initialData.scopeConfirmations});
-                return <div role="status" style={{padding:'1rem',background:readiness.items.some(i=>i.kind==='missing')?'#FFFBEB':'#F0FDF4',border:'1px solid #E2E8F0',borderRadius:8}}>
+                const tone = readiness.verdict.status==='blocked' ? '#FEF2F2' : readiness.verdict.status==='limited' ? '#FFFBEB' : '#F0FDF4';
+                return <div role="status" style={{padding:'1rem',background:tone,border:'1px solid #E2E8F0',borderRadius:8}}>
                   <strong>Qué le falta a tu expediente</strong>
+                  <p style={{margin:'.5rem 0'}}><strong>{readiness.verdict.status==='blocked'?'Todavía no conviene generar':readiness.verdict.status==='limited'?'Puedes generar, con limitaciones':'Listo para generar'}.</strong> {readiness.verdict.summary}</p>
+                  {readiness.verdict.limitations.length ? <ul style={{margin:'0 0 .5rem',paddingLeft:'1.2rem'}}>{readiness.verdict.limitations.map((text, i) => <li key={i}>{text}</li>)}</ul> : null}
                   {readiness.items.length ? <ul style={{margin:'.5rem 0',paddingLeft:'1.2rem'}}>
                     {readiness.items.map((item, i) => <li key={i} style={{marginBottom:'.35rem'}}>{item.kind==='missing'?'Falta: ':item.kind==='doubt'?'Revisa: ':'Confirma: '}{item.text}</li>)}
                   </ul> : null}
