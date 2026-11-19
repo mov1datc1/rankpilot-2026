@@ -448,6 +448,15 @@ def execution_defects(package, strategy, proposal, letter, checks):
     if len(checks)!=len(expected) or {c.get('obligation_id') for c in checks}!=set(expected):
         raise ValueError('review diagnostic not grounded: case execution review omitted or duplicated obligations')
     norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
+    # v1.0.103 (Ramos Castillo 19-11): the reviewer chooses its source passage
+    # from execution_source_catalog, which is built only from this obligation's
+    # own sources but also splits form table cells and the stored register
+    # evidence. Those passages could never satisfy the literal binding below,
+    # so a leader check ("D5 José Pablo Ramos Castillo") had no valid answer
+    # and the final review failed twice. A passage from the obligation's own
+    # catalog is its own source evidence.
+    try:catalog=execution_source_catalog(package,strategy,proposal)
+    except ValueError:catalog={}
     defects=[]
     for check in checks:
         obligation=expected[check['obligation_id']];path=obligation['field']
@@ -457,7 +466,8 @@ def execution_defects(package, strategy, proposal, letter, checks):
         if not quote or quote not in norm(generated) or (rendered is not None and quote not in norm(rendered)):
             raise ValueError('review diagnostic not grounded: case execution review quote is not in its expected field and artifact')
         source=check.get('source_quote','')
-        bound=any(bind_quote(source,m) or (norm(source) and any(norm(source) in norm(m.get(k)) for k in ('bio','comments','key_focus','name','fullName','role'))) for m in obligation['sources'])
+        own=norm(source) and norm(source) in {norm(q) for q in catalog.get(obligation['id'],{}).values()}
+        bound=own or any(bind_quote(source,m) or (norm(source) and any(norm(source) in norm(m.get(k)) for k in ('bio','comments','key_focus','name','fullName','role'))) for m in obligation['sources'])
         if not bound or not check.get('reason') or check.get('status') not in ('met','failed'):
             raise ValueError('review diagnostic not grounded: case execution review lacks its own source evidence or valid decision: '+obligation['id'].split(':')[0]+':'+path)
         if check['status']=='failed':

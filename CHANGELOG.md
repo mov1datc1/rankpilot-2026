@@ -1,3 +1,20 @@
+## 1.0.103 — The final reviewer's own source passages are valid evidence
+
+The real Ramos Castillo run on v1.0.102 (19 Nov 2026, submission 730ccb99) stopped at the final review with `AI_REVIEW_INVALID` twice, although the editor call completed both times.
+
+- **Cause** (Render logs and offline reproduction on the run's data): `case execution review lacks its own source evidence or valid decision: leader:leadership`.
+  - With no lawyer profiles in the sources, the matter lead partners became additional leaders with a review obligation.
+  - The reviewer picks its source passage from `execution_source_catalog`, built only from that obligation's own sources. That catalog also splits form table cells and the stored register evidence.
+  - `execution_defects` accepted only passages it could bind literally in other fields. 7 of the 27 choices for leader 0 could never pass, including the natural one, «D5 José Pablo Ramos Castillo». No valid answer existed.
+  - The same mismatch existed for B10/C2 arguments, matters and comparisons, where other passages happened to be chosen.
+- **Fix** (`editorial_case.execution_defects`): a passage from the obligation's own catalog counts as its own source evidence. An invented or foreign passage still fails.
+- **Validation**:
+  - the new regression fails without the fix;
+  - 984 Python tests passed.
+- **Limits**:
+  - the stopped Ramos job is not retried automatically, because a deploy does not replenish its retry allowance;
+  - finishing it needs an explicit, separate authorization.
+
 ## 1.0.102 — Defects measured in the DeForest v1.0.101 real run
 
 The real DeForest run on v1.0.101 (18 Nov 2026, submission 520ba6a1) completed with no stops at 87.18% first-pass (Ángela on v1.0.100: 64.33%). This version fixes the causes of what still failed, using that run's own data.
