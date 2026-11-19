@@ -78,7 +78,13 @@ paragraphs (never start consecutive paragraphs with repetitive phrases such as
 role from the firm's result. Generalise private client identities and identifying
 metric combinations without deleting legal substance. A biography employer or
 association is not a client; generalisation requires an actual restriction for
-that entity/relationship. Bind each original profile unit/entity in
+that entity/relationship. profile_identities lists the profile names that ARE
+confidential registered clients: generalise each (decision=generalize, no name in
+submission_bio) and keep its legal work. A client named only in the profile with no
+publishable matter is generalised too. public_disclosure lists, per confidential
+mandate, the figures that identify it: never write those figures in submission_bio;
+state scale qualitatively (for example "a multi-million-dollar exposure", "a
+workforce of several thousand") while keeping the legal obstacle, action and result. Bind each original profile unit/entity in
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
 (never from another unit), copy source_quote literally, and for every retained
 credential copy public_quote verbatim from the actual resulting submission_bio.
@@ -95,7 +101,8 @@ ARCHITECTURE OF A NOMINATED B9 (the method the editorial owner applies):
    (for example development continuity, expropriation, boundaries). Open each
    theme with its most significant mandate: the client's problem, the legal
    obstacle, this lawyer's own action or strategy, and the achieved result or
-   exact current stage with its decisive scale. Related mandates in the same
+   exact current stage with its decisive scale (qualitative for a mandate in
+   public_disclosure). Related mandates in the same
    theme follow briefly. Never one paragraph per matter in list form.
 3. Career credentials (education, teaching, professional offices, prior
    employment) appear once, where they explain the expertise.
@@ -129,7 +136,9 @@ short original c2_source rather than shortening it), without two equivalent open
 service catalogue. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
-while preserving legal work and career credentials. A former employer, public
+while preserving legal work and career credentials. public_disclosure lists the
+client names and the exact figures of every confidential mandate: write none of
+them in B10 or C2; state scale qualitatively instead. A former employer, public
 office or professional association named in a lawyer's profile is a career fact,
 not a client: keep its name unless an explicit restriction covers it. When you
 state the size of the team, use department_size exactly: partners and other
@@ -150,6 +159,28 @@ corrected element must contain (allowed IDs, exact source records). Return the
 complete corrected unit in the same schema. Follow every expected item
 literally; keep every part of the previous answer that the errors do not concern. Remove a claim the original records do not support rather than
 inventing evidence for it. Do not change the selection, other units or sources.'''
+
+
+def privacy_faults(package, strategy, profile):
+    """v1.0.101: a B9's privacy postconditions, checked with its shape before review.
+
+    Same rules the development validator and reviewers apply: a confidential
+    registered client kept by name, or figures of a confidential mandate in
+    this public biography. Reported as exact expectations for the single unit
+    self-correction; the better of the two drafts is kept, never a stop.
+    """
+    from core.candidate_evidence import retained_confidential_clients, bind_profile_identities
+    from core.public_privacy import public_privacy_findings, metric_spans, metric_facts
+    bound=bind_profile_identities(copy.deepcopy(profile),package)
+    found=retained_confidential_clients(bound,package)
+    bio=bound.get('submission_bio','')
+    for finding in public_privacy_findings(package,strategy,{'candidates':[bound]}):
+        metrics={tuple(m) for m in finding['metrics']}
+        spans=[s for s in metric_spans(bio) if metric_facts(s) & metrics]
+        found.append('PRIVACY: submission_bio prints figures of confidential mandate '+finding['matter_id']+' ('
+                     +', '.join('"'+s+'"' for s in spans[:6])+'). State that scale qualitatively and keep the legal work, '
+                     'action and result; the exact figures remain in confidential section E.')
+    return found
 
 
 def recover_plan(package, strategy, plan, pending, correcting, source_owned):
@@ -530,6 +561,12 @@ def advance(state, invoke):
                 'privacy_register':construction_bindings.privacy_register(package),
                 'shared_decision':c,'source_obligations':person_obligations(state.get('case_requirements',{}),c['name']),
                 'eligible_support_ids':sorted(ids & eligible)}
+            # v1.0.101: names and figures that stay private, given BEFORE prose.
+            from core.client_identity import profile_identity_table
+            from core.public_privacy import public_disclosure
+            person=payload['package']['lawyers'][0] if payload['package']['lawyers'] else {}
+            payload['profile_identities']=profile_identity_table(person,package)
+            payload['public_disclosure']=public_disclosure(package,ids)
             if bindings is not None:payload['source_bindings']=bindings
         else:
             schema=strict_model('InstitutionalProse',model_fields(full,('b10','c2','institutional_execution')))
@@ -539,6 +576,8 @@ def advance(state, invoke):
                 'privacy_register':construction_bindings.privacy_register(package),
                 'shared_decisions':decision_snapshot(work),'strategy':strategy,
                 'department_size':department_size(package)}
+            from core.public_privacy import public_disclosure
+            payload['public_disclosure']=public_disclosure(package,selected)
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
@@ -621,7 +660,7 @@ def advance(state, invoke):
                 profile={**work['candidates'][unit['index']],**value}
                 profile,titled=biography_openings.place_title(profile,package)
                 profile,_=prose_rules.polish_candidate(profile,package)
-                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)
+                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
                 prior=(pending.get('shape_fallback') or {}).get(key)
                 if shape and not correcting:
                     # Ángela's B9 architecture, checked before review: one
@@ -631,7 +670,7 @@ def advance(state, invoke):
                     raise ValueError('; '.join(shape))
                 if correcting and prior and len(shape)>prior['faults']:
                     profile={**profile,**prior['fields']}
-                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)
+                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
                     pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
                 if shape:pending.setdefault('shape_observations',[]).extend(shape)
                 (pending.get('shape_fallback') or {}).pop(key,None)

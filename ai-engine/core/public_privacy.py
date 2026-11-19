@@ -92,6 +92,51 @@ def metric_facts(text):
         facts.add((family,str(number.normalize())))
     return facts
 
+SOURCE_KEYS = ('source_excerpt','rawNotes','summary','notes','description','value','completionDate','otherInfo')
+
+
+def is_private_matter(matter):
+    return (matter.get('publication_route')=='E' or matter.get('resolved_publication_status') in ('confidential','confirmation_required')
+            or matter.get('publish_status') in ('confidential','non_publishable','confirmation_required'))
+
+
+def metric_spans(text):
+    """Literal spans of the same metrics metric_facts() detects, in source order."""
+    text=str(text or '');spans=[]
+    for match in MONEY.finditer(text):
+        if match['currency'] or match['magnitude']:spans.append((match.start(),match.end()))
+    spans+=[(m.start(),m.end()) for m in re.finditer(r'(?<!\w)'+NUMBER+r'\s*%',text)]
+    for match in COUNT.finditer(text):
+        number=_number(match['number'])
+        if number is not None and number>=2 and not any(a<=match.start()<b for a,b in spans):
+            spans.append((match.start(),match.end()))
+    result=[]
+    for a,b in sorted(spans):
+        value=' '.join(text[a:b].split())
+        if value and value not in result:result.append(value)
+    return result
+
+
+def public_disclosure(package, matter_ids):
+    """Public view of each confidential mandate for the B9/B10/C2 writers (v1.0.101).
+
+    Depth with results and the confidential-metric rule collided: the writer
+    received the full matter and was then rejected for printing its figures.
+    The writer now receives, before prose, the names and exact figures that
+    must stay out of public sections. The source and section E are untouched;
+    public_privacy_findings() remains the postcondition.
+    """
+    from core.client_identity import client_aliases, register_names
+    view=[]
+    for matter in package.get('matters',[]):
+        if matter.get('id') not in matter_ids or not is_private_matter(matter):continue
+        source='\n'.join(str(matter.get(k) or '') for k in SOURCE_KEYS)
+        view.append({'matter_id':matter['id'],'client_names_not_public':client_aliases(register_names(matter)[:1]),
+                     'figures_not_public':metric_spans(source),
+                     'public_rule':'Describe this mandate as work for a confidential client; give its scale qualitatively. Legal problem, action, role and result stay.'})
+    return view
+
+
 def public_privacy_findings(package, strategy, proposal):
     fields={p:proposal.get(p,'') for p in ('b10','c2')}
     fields.update({f'candidates/{i}/submission_bio':c.get('submission_bio','')

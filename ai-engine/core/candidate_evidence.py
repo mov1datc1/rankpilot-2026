@@ -121,7 +121,53 @@ def profile_privacy_error(person, item, package=None):
         if matter and entity==quote and entity in [norm(matter.get(k)) for k in ('client','name','title')] and (
             matter.get('publication_route')=='E' or matter.get('resolved_publication_status') in ('confidential','confirmation_required')):
             return None
+        # v1.0.101: the profile spells the client its own way ("GeNi",
+        # "Scheaffler", "SKF"). The shared identity table binds that spelling
+        # to the registered confidential client; a profile-only client with no
+        # register matter and no permission is bound to itself.
+        # The cited register text itself stays literal: the profile spelling
+        # or a literal part of the registered name, never a new variant.
+        from core.client_identity import identity_basis, same_entity
+        bound=identity_basis(item.get('entity_name'),package)
+        registered=norm(bound['source_quote']) if bound else ''
+        if bound and bound['matter_id']==str(basis.get('matter_id') or '') and (
+                quote in (entity,registered) or (quote in registered and same_entity(quote,bound['source_quote']))):
+            return None
     return 'La restricción de la credencial no está vinculada a su perfil original o a la misma entidad restringida del registro.'
+
+
+def bind_profile_identities(candidate, package):
+    """Bind each profile client to the shared identity table before validation.
+
+    Only a client relationship is touched and only toward more privacy: a
+    generalisation receives its canonical register basis. Retained names,
+    employers, associations and every public word stay as the writer chose.
+    """
+    from core.client_identity import identity_basis
+    for item in candidate.get('profile_coverage',[]):
+        if item.get('relationship')!='client' or item.get('decision')!='generalize' or not norm(item.get('entity_name')):
+            continue
+        basis=item.get('privacy_basis') or {}
+        if basis.get('kind')=='profile_restriction':
+            continue
+        bound=identity_basis(item.get('entity_name'),package)
+        if bound:
+            item['privacy_basis']=bound
+    return candidate
+
+
+def retained_confidential_clients(candidate, package):
+    """Profile clients kept by name although the register marks them confidential."""
+    from core.client_identity import register_matches, is_confidential, is_publishable
+    found=[]
+    for item in candidate.get('profile_coverage',[]):
+        if item.get('relationship')!='client' or item.get('decision')!='retain':continue
+        matches=register_matches(item.get('entity_name'),package)
+        if matches and any(is_confidential(m) for m in matches) and not any(is_publishable(m) for m in matches):
+            found.append(f"PRIVACY: {item.get('entity_name')} is a confidential registered client (matter "
+                         f"{next(m['id'] for m in matches if is_confidential(m))}); use decision=generalize and describe it "
+                         "without its name in submission_bio, keeping the legal work and role.")
+    return found
 
 
 def profile_errors(person, candidate, package=None):

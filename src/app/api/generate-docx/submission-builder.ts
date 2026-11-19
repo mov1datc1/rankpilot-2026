@@ -828,11 +828,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   b10Text = sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned;
   b10Text = anonymizeConfidentialClients(b10Text, confNamesList, departmentCareerMentions(b10Text, lawyers), bioClients);
   b10Text = stripAuditVoice(b10Text);
-  // Strategic Primacy (Angela Castillo Directive): ensure opening paragraph leads with competitive differentiators
-  b10Text = b10Text.replace(
-    /^(DeForest[’']s\s+Labour\s+&\s+Employment\s+practice\s+is\s+known\s+for\s+advising\s+employers\s+whose\s+workforce\s+stability\s+is\s+integral\s+to\s+operational\s+continuity\.\s*The\s+team\s+combines\s+labour\s+advisory,\s+collective\s+labour\s+relations,\s+litigation,\s+social\s+security,\s+labour\s+compliance\s+and\s+workforce\s+governance\s+for\s+businesses\s+operating\s+in\s+labour-intensive\s+and\s+regulated\s+environments\.)/i,
-    "DeForest’s Labour & Employment practice is distinguished by high-stakes collective negotiations, constitutional amparo litigation, and the management of large-scale employer dispute portfolios where workforce stability directly impacts operational continuity. Across labour-intensive and regulated industries, the practice secures industrial continuity through complex collective bargaining, strike prevention, USMCA Rapid Response defense, post-acquisition workforce integration, and nationwide litigation platforms representing hundreds of active proceedings."
-  );
+  // v1.0.101: the reviewed B10 is printed as reviewed. A fixed DeForest
+  // opening used to replace it here with claims no reviewer had seen.
   // Keep the department narrative together instead of stranding its last paragraph.
   elements.push(pageStart());
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));

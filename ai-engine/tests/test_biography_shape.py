@@ -55,6 +55,17 @@ class ShapeRuleTests(unittest.TestCase):
         self.assertEqual(biography_shape.faults(self.candidate(LIST_BIO, 'do_not_present')), [])
         self.assertEqual(biography_shape.faults(self.candidate('Ana Ruiz led one matter.')), [])
 
+    def test_themes_each_opened_by_a_led_mandate_are_the_architecture_not_a_list(self):
+        # v1.0.101 (Eduardo, DeForest 18-11): 7 paragraphs, 4 themes each opened
+        # by a mandate he led, was rejected by the single-lawyer count.
+        bio = '\n\n'.join(['Ana Ruiz heads the Labour practice and advises employers facing collective disruption.' + FILLER]
+            + [f'Ana Ruiz {verb} the theme {i} mandate for an employer.' + FILLER * 2
+               for i, verb in enumerate(['led', 'represented', 'advised', 'defended'], start=1)]
+            + ['She teaches labour law.' + FILLER, 'This work shows sustained control of collective labour risk.'])
+        self.assertEqual(biography_shape.faults(self.candidate(bio)), [])
+        listed = bio.replace('Ana Ruiz represented', 'Ana Ruiz also represented').replace('Ana Ruiz advised', 'Ana Ruiz also advised')
+        self.assertIn('B9 SHAPE', biography_shape.faults(self.candidate(listed))[0])
+
     def test_form_vocabulary_is_read_as_the_natural_lead_verb(self):
         bio = LIST_BIO.replace('Ana Ruiz led', 'Ana Ruiz was named lead partner in').replace('Ana Ruiz leads', 'Ana Ruiz is named lead partner in')
         self.assertTrue(biography_shape.faults(self.candidate(bio)))
@@ -108,6 +119,15 @@ class ShapeConstructionTests(unittest.TestCase):
         self.assertEqual(names.count('OwnedBiography'), 2)
         feedback = calls[[i for i, n in enumerate(names) if n == 'OwnedBiography'][1]][1]['validator_feedback']
         self.assertIn('B9 SHAPE', feedback['errors'])
+
+    def test_writers_receive_private_names_and_figures_before_prose(self):
+        result, calls = self.run_with([])
+        self.assertTrue(result['development_validated'], result['errors'])
+        bio = next(c[1] for c in calls if c[0] == 'OwnedBiography')
+        self.assertIn('profile_identities', bio)
+        self.assertIn('public_disclosure', bio)
+        institution = next(c[1] for c in calls if c[0] == 'InstitutionalProse')
+        self.assertIn('public_disclosure', institution)
 
     def test_worse_correction_keeps_the_better_first_draft_and_continues(self):
         result, calls = self.run_with([['one'], ['one', 'two'], ['one']])

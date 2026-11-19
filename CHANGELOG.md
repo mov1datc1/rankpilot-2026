@@ -1,3 +1,32 @@
+## 1.0.101 — One client identity table, a public view of confidential matters, and a proportional B9 shape
+
+The investigation of 18 Nov 2026 found why B9 measured 0% first-pass in four of five recent runs while matters reached 92–99%. The causes were contracts no answer could satisfy, and rules that contradicted each other across layers. This version removes those causes in code.
+
+- **One client identity table** (`ai-engine/core/client_identity.py`, shared fixture `tests/fixtures/client-identities.json`).
+  - Lawyer profiles spell clients their own way: «GeNi», «Scheaffler», «SKF», «Volkswagen». The register says «GeNI de México, S.A de C.V.», «SCHAEFFLER», «SKF Industrial» and «Volkswagen de México and VW Financial Services».
+  - The profile validator required byte-identical names, so a correct generalization could never pass. In Ángela's run the repair ended up omitting four clients instead.
+  - The engine now uses the same alias rule as the Word renderer (`client-aliases.ts`). It also tolerates one transposed or changed letter in words of six or more letters.
+  - Before validation, a generalized profile client receives its canonical register basis. The cited register text stays literal; an invented variant such as «Example Energi» still fails.
+  - A client named only in a profile, with no publishable matter, is generalized with its own name as basis. This matches the v1.0.100 renderer rule.
+  - Code moves names only toward more privacy. Former employers, associations and publishable clients are never touched.
+- **The B9 writer receives the identity table before writing** (`editorial_construction.py`).
+  - `profile_identities` lists the profile names that are confidential register clients.
+  - A B9 that keeps one of them by name, or prints figures of a confidential mandate, is reported within the existing single self-correction of that biography. The better of the two drafts is kept, and the case never stops.
+- **Public view of confidential mandates** (`public_privacy.py`).
+  - The writers of B9, B10 and C2 receive `public_disclosure`: for each confidential mandate, its client names and the exact figures that must stay out of public sections, together with an instruction to state scale qualitatively.
+  - Depth with results no longer collides with the confidential-metrics rule. The figures stay in section E.
+- **The B9 shape follows the themes** (`biography_shape.py`).
+  - A theme opened by its strongest mandate is the requested architecture, not a list. Eduardo (13 mandates, 7 paragraphs, 4 themes) and Javier were rejected by a count calibrated on a single-lawyer case.
+  - A list is now several additive openers («also leads», «Finally,») or nearly every paragraph adding one more mandate.
+- **The Word prints the reviewed B10** (`submission-builder.ts`).
+  - A fixed DeForest opening («Strategic Primacy») replaced the reviewed first paragraph with claims no reviewer had seen. It is removed.
+- **Prompts aligned with the same policy**: development, repair and source review.
+- **Offline validation on Ángela's DeForest case of 18 Nov** (no generation):
+  - The writer table finds GeNi, Scheaffler, SKF, Volkswagen, Benteler and Cinemex for Eduardo, and Volkswagen for Raymundo. It finds no former employer.
+  - The public view covers all 20 core matters with 31 figures.
+  - 967 Python tests passed, 612 Node tests passed (1 skipped), and TypeScript passed.
+- **Limits**: first-pass improvement is expected but only a real run measures it. Measuring free deterministic corrections separately, and removing the remaining post-review renderer transformations, are still pending.
+
 ## 1.0.100 — Bio-only clients, former employers in B10/C2, value restatements and a voided final review
 
 Reviewing the delivered DeForest pair (18 Nov 2026, v1.0.99) found four deterministic causes. Each fix applies an answer the application already knows; none adds a paid call.
