@@ -46,7 +46,9 @@ document, so confidential client names may appear. Do not narrate system
 stages, declare approval or ask the user to fix generated wording.
 executive_assessment (about 220 words): filing recommendation, primary AND any
 secondary objective (pursue it, or say why it does not apply yet), objective versus
-verified position, main strength and limitation, and why the hero proves the
+the current position exactly as position_statement describes it (a declared or
+unmatched position is never "verified"; a supplied band or target is never
+"historical" or "previous" unless a source says so), main strength and limitation, and why the hero proves the
 case better than the strongest other selected mandate, using source-grounded
 qualitative criteria and no invented scores. Preserve the supplied target or
 explain a proposed change. Where actual retrieved peer commentary exists in
@@ -365,8 +367,10 @@ def audit_view(state, plan=None):
             'contribution_slots': person['contributions']})
     audit_obligations = [{'id': o['id'], 'field': o['field'], 'instruction': o['instruction'], 'sources': []}
                          for o in obligations(package, strategy, proposal) if o['output_scope'] == 'audit']
+    verification = state.get('ranking_verification') or package.get('ranking_verification') or {}
     return {'scope': scope,
-            'ranking_verification': state.get('ranking_verification') or package.get('ranking_verification') or {},
+            'position_statement': position_statement(package, verification),
+            'ranking_verification': verification,
             'lawyers': copy.deepcopy(package.get('lawyers', [])),
             'department_source': {'b10_source': package.get('b10_source', ''), 'c2_source': package.get('c2_source', '')},
             'internal_referee_notes': package.get('internal_referee_notes'),
@@ -404,6 +408,36 @@ def _comparison_line(item, text):
     return item['alternative'] + ' frente a ' + item['selected'] + ': ' + text.strip()
 
 
+VERIFIED_STATUSES = ('verified_match', 'verified_observation', 'verified_mismatch')
+VERIFIED_POSITION = re.compile(r'\b(la\s+)?posici[oó]n\s+verificada\b', re.I)
+
+
+def position_statement(package, verification):
+    """v1.0.112: the Audit writer receives the ranking position the judge will check.
+
+    Only an official table observation is a verified position. A firm's
+    declaration with no exact match stays a declaration, never "verified".
+    """
+    status = str((verification or {}).get('status') or '')
+    declared = str(package.get('current_band') or (verification or {}).get('declared_band') or '').strip()
+    if status in VERIFIED_STATUSES:
+        return {'kind': 'verified', 'status': status, 'text': str(verification.get('message') or '').strip()}
+    text = (f'Posición declarada por la firma: {declared}.' if declared else 'La firma no declaró una posición actual.')
+    if status == 'not_found':
+        text += (' La consulta acotada no encontró una coincidencia exacta en la tabla consultada; '
+                 'eso no confirma ni descarta reconocimiento en otras prácticas o ediciones.')
+    elif status:
+        text += ' La posición no está verificada contra la tabla oficial.'
+    return {'kind': 'declared', 'status': status or 'not_checked', 'text': text}
+
+
+def unverified_position_wording(text, verification):
+    """A position the official table did not confirm is not written as verified."""
+    if str((verification or {}).get('status') or '') in VERIFIED_STATUSES:
+        return text
+    return VERIFIED_POSITION.sub(lambda m: (m.group(1) or '') + 'posición declarada', text)
+
+
 MOVE_UP = re.compile(r'\b(?:move\s+up|climb|higher\s+(?:band|tier)|bands?/tiers?|subir|ascender|escalar)\b', re.I)
 UNRANKED = re.compile(r'\b(?:not\s+ranked|unranked|no\s+current|sin\s+(?:ranking|banda|clasificaci)|none|n/?a)\b', re.I)
 
@@ -435,7 +469,8 @@ def render(state, plan, content):
         reserve.append(gaps['other_reserves'].strip())
     sections = ([RESERVE_HEADING] + reserve if reserve else []) + (
         [EXCLUDED_HEADING, gaps['exclusions'].strip()] if str(gaps.get('exclusions') or '').strip() else [])
-    executive = content['executive_assessment'].strip()
+    executive = unverified_position_wording(content['executive_assessment'].strip(),
+        state.get('ranking_verification') or state['package'].get('ranking_verification') or {})
     line = objective_line(state['package'], executive)
     letter = {'executive_assessment': (executive + ' ' + line).strip() if line else executive, 'portfolio': portfolio,
               'leadership': '\n\n'.join(blocks), 'evidence_gaps': '\n'.join(sections),

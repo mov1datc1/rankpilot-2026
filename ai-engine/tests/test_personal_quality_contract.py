@@ -22,6 +22,8 @@ def complete_case():
         'alternative_category':'Category pending','alternative_comparison':'The supplied profile explicitly establishes new practice expansion; partnership alone would not support this category.',
         'counterevidence':'The confirmed partner title alone does not decide this category.'}
     c['suggested_ranking']='Up and Coming';c['recommendation']='present'
+    # v1.0.112: one decision; the rationale must agree with the proposed category.
+    c['category_rationale']='Up and Coming is supported by the documented practice-growth responsibility.'
     for index,work in [(3,'constitutional proceedings restored the right to defend'),(4,'collective representation proceedings prevented a stoppage')]:
         mid=f'm{index}';source=f'Sofia Vega led {work}.'
         p['matters'].append({'id':mid,'source_excerpt':source,'leadPartner':'Sofia Vega'})

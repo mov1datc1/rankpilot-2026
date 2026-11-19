@@ -42,7 +42,12 @@ a partner with proven leadership of relevant mandates. Decide each person on
 THEIR career stage: never give every partner the same category by default; compare a
 band target with Up and Coming for each nominated partner. Use Category pending
 with the specific undecided criterion and action when no defensible category is
-established. Preserve supplied objectives or explain a proposed change. Evaluate
+established. suggested_ranking, category_rationale and category_assessment state ONE
+decision: if your rationale concludes that the criterion is not established, the
+category is Category pending. Up and Coming growth_evidence must show developing
+reputation or contribution to practice growth (for example a new practice line,
+team or client base built, or recognition received); a description of expertise
+or seniority is career-stage evidence, not growth evidence. Preserve supplied objectives or explain a proposed change. Evaluate
 additional source leaders internally without inventing roster titles.'''
 PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
 
@@ -412,6 +417,24 @@ def reconcile_categories(plan, package=None):
             c['suggested_ranking']=fixed
             c['category_rationale']=str(c.get('category_rationale','')).replace(old,new)
         normalized=''.join(ch for ch in c.get('suggested_ranking','').casefold() if ch.isalpha())
+        # v1.0.112: the writer's own reasoned decision is the known answer. A
+        # rationale that concludes «Category pending» while the label names a
+        # category (DeForest v1.0.110: Up and Coming) is resolved as pending, the
+        # contradiction the final judge would otherwise flag in the Audit.
+        if normalized!='categorypending' and _re.match(r'\s*category\s+pending\b',str(c.get('category_rationale') or ''),_re.I):
+            previous=c.get('suggested_ranking','').strip()
+            criterion=('reputación en desarrollo o contribución al crecimiento de la práctica, criterio de Up and Coming'
+                       if normalized=='upandcoming' else f'el criterio de la categoría «{previous}»' if previous else
+                       'el criterio de una categoría concreta')
+            c['suggested_ranking']='Category pending'
+            c['category_missing_criterion']=str(c.get('category_missing_criterion') or '').strip() or \
+                f'La evidencia propia no acredita todavía {criterion}.'
+            c['recommended_action']=('Aportar evidencia propia del criterio pendiente y, con ella, decidir la categoría concreta; '
+                'mientras tanto, presentar la candidatura sin categoría.' if c.get('recommendation')=='present' else
+                'Aportar evidencia propia del criterio pendiente antes de decidir una categoría.')
+            if c.get('category_assessment'):
+                c['category_assessment']={**c['category_assessment'],'decision':'pending','criterion':'pending'}
+            continue
         if normalized!='establishedindividual':continue
         c['suggested_ranking']='Category pending'
         c['category_missing_criterion']='La madurez profesional descrita no identifica por sí sola una categoría concreta de la guía y edición objetivo.'
