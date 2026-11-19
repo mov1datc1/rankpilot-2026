@@ -56,7 +56,7 @@ from identity. Develop commercial purpose, legal obstacle, firm intervention,
 lawyer role and achieved result or actual stage. State the documented procedural
 status (e.g., ongoing, completed or pending resolution) inside the matter
 narrative itself whenever present in the source; when the source gives no status,
-state none (never "ongoing", "continues to" or "remains") — v1.0.108. Keep the tense
+state none (never "ongoing", "continues to" or "remains"). Keep the tense
 of every fact as the source gives it: an achieved result stays achieved, planned or
 prospective work ("will focus", "is expected to") stays planned, and an ordered act
 (an inspection or measure that was ordered) is not described as carried out. Never soften or hedge a sourced
@@ -70,7 +70,7 @@ about publication or what the source does not say. completion_status describes
 the documented stage only in neutral factual terms (never audit voice such as
 "not stated", "source does not explain", "pending confirmation" or "unresolved").
 Do not return new anchors or change the selected facts.
-DEPTH PROPORTIONAL TO THE EVIDENCE (Ángela, 19 Nov): a matter with rich
+DEPTH PROPORTIONAL TO THE EVIDENCE: a matter with rich
 source evidence is explained as the significant mandate it is, never compressed
 into a summary; a thin source is not padded. Develop, wherever the source
 supports it: the context and importance of the mandate; its legal, operational or
@@ -398,9 +398,19 @@ def schemas(package, strategy):
         'candidates':(list[decision],...), 'matters':(list[anchor],...)})
     return full, candidate, matter, plan
 
-def reconcile_categories(plan):
+def reconcile_categories(plan, package=None):
     """A professional maturity descriptor must not become a verified category."""
+    import re as _re
+    from core.candidate_evidence import table_categories, valid_band_label
+    table=table_categories(package) if package else None
     for c in plan.get('candidates', []):
+        # v1.0.109: a band number this ranking table does not use for individuals
+        # has a known answer: the table's lowest individual band.
+        label=c.get('suggested_ranking','');fixed=valid_band_label(label,table)
+        if fixed!=label:
+            old=_re.search(r'Band \d',label).group(0);new=_re.search(r'Band \d',fixed).group(0)
+            c['suggested_ranking']=fixed
+            c['category_rationale']=str(c.get('category_rationale','')).replace(old,new)
         normalized=''.join(ch for ch in c.get('suggested_ranking','').casefold() if ch.isalpha())
         if normalized!='establishedindividual':continue
         c['suggested_ranking']='Category pending'
@@ -670,7 +680,7 @@ def advance(state, invoke):
             if kind=='plan':
                 if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
                     value = reserve_comparisons.expand_plan(value, strategy)
-                value=reconcile_categories(value)
+                value=reconcile_categories(value,package)
                 value=recover_plan(package,strategy,value,pending,correcting,source_owned)
                 validate_plan(package,strategy,value)
                 work.update(value)

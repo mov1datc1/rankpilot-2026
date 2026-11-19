@@ -139,11 +139,8 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
           const clientName = topMatter.client || 'Client';
           const matterName = topMatter.title || topMatter.name || 'Flagship Mandate';
           heroMatter = `${clientName} – ${matterName}`;
-          if (clientName.toLowerCase().includes('schaeffler')) {
-            heroMatterRationale = 'High-stakes post-M&A workforce integration across multiple manufacturing facilities following the global Vitesco acquisition, demonstrating premier tier-1 corporate employment capability.';
-          } else if (clientName.toLowerCase().includes('bonatti')) {
-            heroMatterRationale = 'Strategic labor governance and collective dispute stability for multi-billion-dollar energy infrastructure developments.';
-          } else if (topMatter.description) {
+          // v1.0.109: no client-specific rationales; the matter's own description is used.
+          if (topMatter.description) {
             heroMatterRationale = topMatter.description.slice(0, 160) + '...';
           }
         }

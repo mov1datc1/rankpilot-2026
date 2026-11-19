@@ -30,6 +30,7 @@ def _plain(value):
 def clean_name(raw):
     """Name part of a client field: no 'Matter 1 -' header, URL or company description."""
     s = re.sub(r'^(?:publishable|confidential)\s+matter\s+\d+\s*[-—:]\s*', '', str(raw or '').strip(), flags=re.I)
+    s = re.sub(r'^(?:client|cliente)\s*:\s*', '', s, flags=re.I)  # form label kept by extraction
     s = re.sub(r'\s*\(?https?://[^\s)]+\)?', '', s).strip()
     if re.match(r'^(?:it is (?:a|an)|a (?:global|leading|major) (?:company|leader))\b', s, re.I):
         return ''

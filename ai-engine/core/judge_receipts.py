@@ -16,7 +16,15 @@ import json
 import os
 import unicodedata
 
-VERSION = 'judge-receipt-v1'
+VERSION = 'judge-receipt-v2'
+# Obligations whose verdict depends on more than their own output field (the
+# Audit against the Submission, C2 against B10, market and category checks):
+# their receipt binds to ALL generated text, so any repair re-opens them.
+CROSS_FIELD = ('editorial:', 'candidate:', 'comparison:', 'leader:')
+
+
+def enabled():
+    return os.environ.get('RANKPILOT_JUDGE_RECEIPTS', 'on').strip().casefold() not in ('off', '0', 'false')
 
 
 def _norm(value):
@@ -33,7 +41,14 @@ def digest(package, proposal, letter, obligation):
     from core.editorial_case import execution_output
     output, rendered = execution_output(package, proposal, letter, obligation['field'])
     sources = [s.get('id') or s.get('name') or s.get('fullName') or _norm(s.get('source_excerpt'))[:200] for s in obligation.get('sources', [])]
-    material = json.dumps({'output': _norm(output), 'rendered': _norm(rendered) if rendered is not None else None,
+    everything = None
+    if str(obligation.get('id', '')).startswith(CROSS_FIELD) or obligation['field'] in ('leadership', 'evidence_gaps', 'executive_assessment'):
+        generated = {'b10': proposal.get('b10'), 'c2': proposal.get('c2'), 'comparisons': proposal.get('comparisons'),
+                     'matters': [m.get('text') for m in proposal.get('matters', [])],
+                     'candidates': [[c.get(k) for k in ('submission_bio', 'suggested_ranking', 'recommendation', 'category_rationale')] for c in proposal.get('candidates', [])],
+                     'letter': {k: letter.get(k) for k in ('executive_assessment', 'portfolio', 'leadership', 'evidence_gaps', 'next_steps')}}
+        everything = hashlib.sha256(json.dumps(generated, sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
+    material = json.dumps({'output': _norm(output), 'rendered': _norm(rendered) if rendered is not None else None, 'all_generated': everything,
                            'instruction': _norm(obligation.get('instruction')), 'sources': sources,
                            'field': obligation['field']}, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(material.encode()).hexdigest()
@@ -47,7 +62,7 @@ def _signature(receipt, secret):
 def reusable(package, strategy, proposal, letter, receipts):
     """Obligation IDs whose signed MET verdict still binds to the current text."""
     secret = os.environ.get('AI_ENGINE_SERVICE_TOKEN')
-    if not secret or not receipts or proposal.get('version') not in ('editorial-development-v3', 'editorial-development-v4'):
+    if not enabled() or not secret or not receipts or proposal.get('version') not in ('editorial-development-v3', 'editorial-development-v4'):
         return []
     current = _full_obligations(package, strategy, proposal)
     valid = []
@@ -70,7 +85,7 @@ def reusable(package, strategy, proposal, letter, receipts):
 def issue(package, strategy, proposal, letter, checks, reused=(), previous=()):
     """Signed receipts for this round's MET checks plus the still-valid reused ones."""
     secret = os.environ.get('AI_ENGINE_SERVICE_TOKEN')
-    if not secret:
+    if not secret or not enabled():
         return []
     current = _full_obligations(package, strategy, proposal)
     receipts = [r for r in previous or [] if isinstance(r, dict) and r.get('obligation_id') in set(reused)]

@@ -18,6 +18,9 @@ USAGE = 'Obligation instructions cite shared rules as [Rn]; each [Rn] stands for
 def share_repeated_rules(obligations, key='instruction', min_count=2, min_length=60):
     """Return (obligations, rules). Inputs are never mutated."""
     items = copy.deepcopy(list(obligations or []))
+    import os
+    if os.environ.get('RANKPILOT_SHARED_RULES', 'on').strip().casefold() in ('off', '0', 'false'):
+        return items, {}
     split = [[s for s in SENTENCE.split(str(o.get(key) or '')) if s.strip()] if isinstance(o, dict) else [] for o in items]
     counts = {}
     for sentences in split:

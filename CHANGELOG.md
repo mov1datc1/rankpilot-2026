@@ -1,3 +1,32 @@
+## 1.0.109 — Audit hardening: real table categories, no hard-coded identities, switches and traceability
+
+Result of an independent audit of v1.0.101–v1.0.108 before the next real run.
+
+- **Categories come from the real ranking table** (`candidate_evidence.table_categories`).
+  - The guidance used «Band 5 candidate» as its example and every nominated partner received it. Chambers Labour & Employment Mexico ranks individuals in Bands 1–4 only; Band 5 exists for firms.
+  - The writer, the category reviewer and the plan now receive the individual categories the cached table actually uses, and choose only among them.
+  - A band number that table does not use for individuals is corrected in code to its lowest individual band.
+  - With no cached table, no band number is named («Entry-band candidate»).
+- **No firm, lawyer or client name drives behaviour in live code.** Removed:
+  - a firm-name fallback that printed fixed department heads with invented e-mail addresses;
+  - a spelling fix for one lawyer's surname;
+  - firm-name jurisdiction anchors;
+  - a person-name clause in the practice filter;
+  - client-specific hero rationales in the report page.
+  - A contract test keeps those files free of such names. Legacy modules that are no longer executed still contain examples and are listed for a separate cleanup.
+- **Visible defects**:
+  - a «Client:» form label kept by extraction is no longer printed as part of a client name (E0/E1), nor used in identity matching;
+  - the Spanish Audit no longer prints an English «No current individual ranking is verified…» sentence.
+- **The judge reviews the five written Audit sections, not the deterministic checklist** (section 6). A false positive there became critical findings no repair could fix and bought an extra judge round.
+- **Judge receipts (v1.0.108) are bound more strictly**: a verdict that depends on more than its own field (Audit against Submission, C2 against B10, comparisons) is tied to all generated text, so any repair re-opens it.
+- **Switches without a release**: `RANKPILOT_SHARED_RULES=off` and `RANKPILOT_JUDGE_RECEIPTS=off`.
+- **Traceability**: each field-review call records which fields it checked (path and digests, no content).
+- **Prompt hygiene**: internal history notes removed from prompt text.
+- **Validation**:
+  - 1016 Python tests passed;
+  - Node: 633 passed, 1 skipped;
+  - tsc passed.
+
 ## 1.0.108 — Second judge round reuses its own signed verdicts; results kept in B9 and matters; rate limits never freeze a case
 
 - **The final judge reuses its own MET verdicts on unchanged output** (`core/judge_receipts.py`).

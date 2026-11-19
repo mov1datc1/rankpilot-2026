@@ -138,7 +138,6 @@ export function cleanTablePipes(str: any): string {
 export function cleanLawyerNames(nameStr: string): string {
   // Formatting only. Names, spelling and surname order are source evidence.
   return String(nameStr || '')
-    .replace(/\bEduardo Garruño\b/g, 'Eduardo Garduño')
     .replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
 }
 
@@ -160,7 +159,8 @@ function sanitizeMatterSummary(rawText: string): string {
 }
 
 function cleanClientDescriptor(rawClient: string, matter?: any): string {
-  return cleanTablePipes(rawClient || '');
+  // v1.0.109: a form label kept by extraction ("Client: X") is template text, not part of the name.
+  return cleanTablePipes(String(rawClient || '').replace(/^\s*(?:client|cliente)\s*:\s*/i, ''));
 }
 
 /** Translation belongs to the reviewed writing stage, never a name-based renderer fallback. */
@@ -1138,20 +1138,12 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // Department heads
   const rawHeads = (dept.heads && dept.heads.length > 0)
     ? dept.heads
-    : (chambersData.departmentHeads || chambersData.filing_details?.heads || (
-        /deforest/i.test(firmName) ? [
-          { name: 'Eduardo Garduño', email: 'egarduno@deforest.law', phone: '' },
-          { name: 'Jaime Bustamante', email: 'jbustamante@deforest.law', phone: '' },
-          { name: 'Javier Atzin Vallejo', email: 'jvallejo@deforest.law', phone: '' },
-          { name: 'Raymundo Carreño', email: 'rcarreno@deforest.law', phone: '' },
-          { name: 'Edgar Barreto', email: 'ebarreto@deforest.law', phone: '' },
-          { name: 'Andrés Cabrera Gómez', email: 'acabrera@deforest.law', phone: '' },
-          { name: 'Erick Pérez', email: 'eperez@deforest.law', phone: '' }
-        ] : []
-      ));
+    // v1.0.109: department heads come only from the firm's own sources.
+    // A firm-name fallback with fixed people and e-mail addresses was removed.
+    : (chambersData.departmentHeads || chambersData.filing_details?.heads || []);
   const headRows = rawHeads.length > 0
     ? rawHeads.map((h: any) => [
-        (h.name || '').replace(/Garruño/g, 'Garduño'),
+        (h.name || ''),
         h.email || '',
         h.phone || ''
       ])

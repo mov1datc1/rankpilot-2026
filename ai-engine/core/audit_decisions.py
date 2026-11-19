@@ -64,7 +64,13 @@ def _current_position(text):
     """Spanish wording of the current-ranking field; never asserts a ranking."""
     value=' '.join(str(text or '').split()).rstrip('.')
     if not value:return 'sin verificación disponible'
-    if re.search(r'\b(?:not ranked|unranked|no current ranking|sin ranking)\b',value,re.I):
+    # v1.0.109: any English "no ... ranking ... verified" wording gets the same
+    # Spanish sentence (the Audit printed "No current individual ranking is
+    # verified in the supplied research" inside a Spanish document).
+    if re.search(r'\b(?:not ranked|unranked|no current ranking|sin ranking)\b',value,re.I) or (
+            re.search(r'\b(?:no|not|none)\b',value,re.I) and re.search(r'\b(?:ranking|ranked|rank)\b',value,re.I)
+            and re.search(r'\b(?:is|are|was|the|current|verified|supplied|found|individual)\b',value,re.I)
+            and not re.search(r'\b(?:se|una|la|el|de|en|que)\b',value,re.I)):
         return 'sin ranking declarado; la consulta acotada no encontró una coincidencia exacta, lo que no prueba ausencia en otras ediciones o prácticas'
     return value
 
