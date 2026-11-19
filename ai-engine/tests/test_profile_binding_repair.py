@@ -113,6 +113,9 @@ class ProfileBindingRepairTests(unittest.TestCase):
         fixed,failures=apply_valid_corrections(v,targets,projected,p,s)
         self.assertEqual(failures,{})
         self.assertIn('Head of Department',fixed['candidates'][0]['submission_bio'])
-        self.assertEqual(fixed['candidates'][0]['profile_coverage'][0]['privacy_basis'],c['profile_coverage'][0]['privacy_basis'])
+        # v1.0.101: the shared identity table binds the profile client to its
+        # own register entry instead of preserving the model's wrong matter.
+        self.assertEqual(fixed['candidates'][0]['profile_coverage'][0]['privacy_basis'],
+                         {'kind':'client_register','source_quote':'Example Energy','matter_id':'correct'})
 
 if __name__=='__main__':unittest.main()

@@ -15,6 +15,7 @@ VERSION = 'biography-shape-v1'
 MAX_PARAGRAPHS = 8
 MIN_WORDS = 250
 LEAD_VERB = r'(?:co-?)?(?:led|leads|represented|represents|advised|advises|acted|acts|handled|handles|defended|defends)'
+ADDITIVE = re.compile(r'\b(?:also|likewise|further|additionally)\s+' + LEAD_VERB + r'\b', re.I)
 LIST_MARKER = re.compile(r'^(?:Finally|Lastly|Additionally|In addition|Furthermore|Moreover)\b', re.I)
 
 
@@ -85,7 +86,15 @@ def faults(candidate):
     paras = paragraphs(bio)
     found = []
     leads = lead_openings(bio, name)
-    if len(leads) >= 4 or len(paras) > MAX_PARAGRAPHS:
+    # v1.0.101: a theme opened by its strongest mandate IS the architecture.
+    # Eduardo (13 mandates, 7 paragraphs, 4 themes each opened by a mandate he
+    # led) was rejected by the Ramos-calibrated count. A list is several
+    # additive openers ("also leads", "Finally,") or nearly every paragraph
+    # being one more mandate, not four themes.
+    additive = len([i for i in leads if LIST_MARKER.match(paras[i]) or ADDITIVE.search(' '.join(first_sentence(paras[i]).split()[:14]))])
+    body = max(1, len(paras) - 1)
+    listed = len(leads) >= 4 and (additive >= 2 or len(leads) >= max(5, round(0.8 * body)))
+    if listed or len(paras) > MAX_PARAGRAPHS:
         sample = '; '.join('"' + ' '.join(first_sentence(paras[i]).split()[:9]) + ' …"' for i in leads[:4])
         found.append(
             f'B9 SHAPE: {name} has {len(paras)} paragraphs and {len(leads)} open with another mandate the lawyer led'
@@ -93,7 +102,8 @@ def faults(candidate):
             'positions the lawyer in this practice; the same mandates grouped into two to four legal themes, each opened by '
             'its most significant mandate (client problem, legal obstacle, own action, achieved result or exact current '
             f'stage) with related mandates following briefly; credentials once; one factual close. At most {MAX_PARAGRAPHS} '
-            'paragraphs, no "Finally,"/"Additionally," list markers. Keep every fact, number, status and mandate.')
+            'paragraphs, no "Finally,"/"Additionally," list markers. Keep every fact, status and mandate; figures of a '
+            'confidential mandate stay qualitative.')
     repeats = repeated_sentences(bio)
     if repeats:
         found.append('B9 REPETITION: the same content is stated twice: ' + '; '.join(

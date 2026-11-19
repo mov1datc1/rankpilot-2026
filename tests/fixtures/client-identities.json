@@ -1,0 +1,14 @@
+{
+  "note": "Shared by ai-engine/core/client_identity.py and src/lib/docx/client-aliases.ts (v1.0.101). Fictional and anonymised register shapes.",
+  "aliases": [
+    {"client": "GeNI de México, S.A de C.V.", "includes": ["GeNI de México, S.A de C.V.", "GeNI"]},
+    {"client": "SKF Industrial", "includes": ["SKF Industrial", "SKF"]},
+    {"client": "Volkswagen de México and VW Financial Services", "includes": ["Volkswagen de México", "VW Financial Services", "Volkswagen"]},
+    {"client": "Grupo Alfa", "includes": ["Grupo Alfa", "Alfa"]},
+    {"client": "Example Foods (EFX)", "includes": ["Example Foods (EFX)", "EFX"]}
+  ],
+  "excludes": [
+    {"client": "Grupo Alfa", "not": ["Grupo"]},
+    {"client": "Banco Example", "not": ["Banco"]}
+  ]
+}
