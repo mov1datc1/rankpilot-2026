@@ -1,3 +1,25 @@
+## 1.0.112: Writers receive what the final judge enforces
+
+Point 2 of the independent architecture review: give writers the rules that reviewers enforce.
+
+Two judge findings recurred across real runs: 3 of the 5 critical findings in DeForest v1.0.110, plus the Ramos «historical reference» finding.
+
+- **Individual category is one decision.**
+  - **Cause:** a writer's own rationale concluded «Category pending» while the category field kept a named category. The writer gave Up and Coming as the category, and its listed growth evidence only described the lawyer's expertise.
+  - **Plan writer:** now told that ranking, rationale and assessment state one decision, and that growth evidence must show developing reputation or practice growth.
+  - **`reconcile_categories`:** resolves a contradiction like this as pending (known answer). It adds the missing criterion and action in Spanish and keeps the candidacy.
+- **The Audit never calls an unconfirmed position "verified".**
+  - **Cause:** the Audit task asked for the "verified position" even when the table search found no match.
+  - **Audit writer:** now receives a code-built `position_statement` (declared vs officially observed) and is told not to call a supplied band historical unless a source says so.
+  - **Code guard:** rewrites «posición verificada» to «posición declarada» unless the table confirmed it.
+- **Offline replay on saved runs:**
+  - DeForest v1.0.110: exactly the flagged category and sentence change.
+  - Ángela's approved case: unchanged.
+- **Validation:**
+  - Python: 1029 tests passed (7 new);
+  - Node: 634 tests passed, 1 skipped;
+  - tsc passed.
+
 ## 1.0.111 — One delivery guarantee for development
 
 Point 1 of the independent architecture review (Fable 5.2, 19 Nov 2026).
