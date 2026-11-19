@@ -156,8 +156,7 @@ class CompleteDevelopmentDeliveryTests(unittest.TestCase):
             lambda s:s.update(selection_review_validated=False),
             lambda s:s.update(development_reusable=False),
             lambda s:s.update(field_review_attempts={'candidates/0':1}),
-            lambda s:s.update(repair_continuation={'pending_groups':['candidates/0']}),
-            lambda s:s['repair_report'].update(unresolved=['A source answer is needed'])]
+            lambda s:s.update(repair_continuation={'pending_groups':['candidates/0']})]
         for change in changes:
             s=self.fixture();change(s)
             self.assertIsNone(retain_complete_development(s))

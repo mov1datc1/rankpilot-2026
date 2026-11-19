@@ -20,10 +20,14 @@ def retain_complete_development(state, result=None):
     local_exhausted=(bool(failed) and report.get('surgical_retries')==1
         and report.get('residual_requests',0)>0
         and all(p in report.get('retry_paths',[]) for p in failed))
+    # v1.0.110 (never stop, RP13): a correction the repairer itself declares it
+    # cannot apply is exhausted, not a reason to stop. It is retained as an
+    # observation; completeness, identities and privacy are still required below.
+    declared_unresolved=bool(failed) and bool(report.get('unresolved'))
     if (current.get('repair_continuation')
         or not current.get('selection_validated') or not current.get('selection_review_validated')
-        or not current.get('development_reusable') or report.get('unresolved')
-        or not (semantic_exhausted or local_exhausted)
+        or not current.get('development_reusable')
+        or not (semantic_exhausted or local_exhausted or declared_unresolved)
         or unknown_repair_usage(current.get('trace',[]))):
         return None
     proposal=current['development']
@@ -33,7 +37,7 @@ def retain_complete_development(state, result=None):
         'development_delivery_ready':True,'development_repair_unlocatable':False,
         'development_observations':list(dict.fromkeys(findings)),
         'repair_continuation':None,'errors':[]}
-    if local_exhausted and not semantic_exhausted and current.get('field_review_enabled'):
+    if (local_exhausted or declared_unresolved) and not semantic_exhausted and current.get('field_review_enabled'):
         # Local proof defects must not skip independent semantic review or
         # buy another copy of the same exhausted contract correction.
         from core.field_review import schedule
