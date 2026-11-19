@@ -38,7 +38,9 @@ For each lawyer decide nomination, proposed category, reason, personally attribu
 support and remaining action. Do not equate maturity descriptors with directory
 categories or unverified targets with current recognition. Apply
 category_methodology when supplied: a specific band target is a valid proposal for
-a partner with proven leadership of relevant mandates. Use Category pending
+a partner with proven leadership of relevant mandates. Decide each person on
+THEIR career stage: never give every partner the same category by default; compare a
+band target with Up and Coming for each nominated partner. Use Category pending
 with the specific undecided criterion and action when no defensible category is
 established. Preserve supplied objectives or explain a proposed change. Evaluate
 additional source leaders internally without inventing roster titles.'''
@@ -63,7 +65,20 @@ material anchors meaningfully, not as a list of quotations. Never insert advice
 about publication or what the source does not say. completion_status describes
 the documented stage only in neutral factual terms (never audit voice such as
 "not stated", "source does not explain", "pending confirmation" or "unresolved").
-Do not return new anchors or change the selected facts.'''
+Do not return new anchors or change the selected facts.
+DEPTH PROPORTIONAL TO THE EVIDENCE (Ángela, 19 Nov): a matter with rich
+source evidence is explained as the significant mandate it is, never compressed
+into a summary; a thin source is not padded. Develop, wherever the source
+supports it: the context and importance of the mandate; its legal, operational or
+regulatory complexity; the concrete challenges the client faced; the firm's
+intervention and strategy; and the results obtained and why they matter. There is
+no fixed word count in either direction. selection_rationale states why each
+matter was selected for this submission: every strategic element named there
+must remain explicit in the narrative, never diluted into a generic statement.
+selection_rationale is internal: never mention selection, the portfolio, reserves or
+other matters in the narrative; show the strategic element through the facts.
+Name the client consistently with its register name; never narrate how the source
+spells or describes it.'''
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
@@ -135,7 +150,10 @@ mechanisms and outcomes; and (4) integrate department leadership and bench depth
 (confirmed heads, team architecture and distinct practitioner roles/credentials
 grounded in lawyers and shared_decisions, without inventing partner status or
 rankings). C2 argues once for the requested coverage with distinct supported
-reasons developed with concrete evidence (same 1,000-word maximum, expanding a
+reasons developed with concrete evidence, in an assertive institutional voice: state
+the practice's capabilities as firm facts and make the coverage request plainly once,
+never with deferential formulas such as "respectfully submits" or "merits
+consideration" (same 1,000-word maximum, expanding a
 short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
 service catalogue. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
@@ -542,7 +560,9 @@ def advance(state, invoke):
                 'matter_id':(Literal[tuple(ids)],...),**model_fields(matter,('text','completion_status'))})],...)})
             task=MATTER_TASK;payload={'package':{**common,'matters':[m for m in package['matters'] if m['id'] in ids]},
                 'field_contracts':{i:contracts(package,strategy)[i] for i in ids},
-                'evidence_plan':[m for m in work['matters'] if m['matter_id'] in ids], 'thesis':strategy.get('thesis','')}
+                'evidence_plan':[m for m in work['matters'] if m['matter_id'] in ids], 'thesis':strategy.get('thesis',''),
+                'selection_rationale':{d['matter_id']:d.get('rationale','') for d in strategy.get('matters',[]) if d.get('matter_id') in ids},
+                **({'hero_rationale':work.get('hero_rationale','')} if strategy.get('hero_matter_id') in ids else {})}
             if source_owned:
                 bindings=construction_bindings.matter_bindings(payload['evidence_plan'])
                 schema=construction_bindings.matter_schema(matter,bindings)

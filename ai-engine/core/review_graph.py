@@ -447,6 +447,19 @@ def invoke_role(state, role, schema, instruction, payload):
                 'budget_check_code':error.code}
             error.trace_history=list(state.get('trace',[]))+[error.trace]
             raise
+        # v1.0.105 (DeForest 19-11 15:50): an explicit billing rejection (HTTP
+        # 429 insufficient_quota) is a KNOWN outcome: the provider refused the
+        # request and billed nothing. Report it as such so the case resumes when
+        # credit returns, instead of being frozen as an unknown outcome.
+        if any(term in str(error).lower() for term in ('insufficient_quota','credit_balance_exhausted','no credits remaining','billing_hard_limit')):
+            failure = EditorialResponseError('provider credit exhausted: insufficient_quota', {
+                'role':role,'seconds':round(time.monotonic()-started,3),
+                'usage':{'input_tokens':0,'output_tokens':0,'total_tokens':0},'usage_status':'rejected_unbilled',
+                'provider_rejection':'insufficient_quota',
+                'prompt_version':_RULES['version'],'prompt_revision':_RULES.get('prompt_revision',_RULES['version'])
+            })
+            failure.trace_history = list(state.get('trace', [])) + [failure.trace]
+            raise failure from error
         # The request may have reached the provider even without a response.
         # Never manufacture zero tokens or buy another call on this evidence.
         failure = EditorialResponseError('provider outcome unknown', {

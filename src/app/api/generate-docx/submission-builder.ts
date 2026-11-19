@@ -674,6 +674,10 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   const b6DataRows: TableRow[] = [];
   if (lawyers.length > 0) {
+    // v1.0.105 (Ángela 19-11): a developed B9 keeps its own paragraphs in the
+    // Word (Eduardo: 7 paragraphs were printed as one 737-word block).
+    const bioParagraphs = (text: string) => String(text || '').split(/\n\s*\n/).map(s => s.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean)
+      .map((s, i, all) => new Paragraph({ children: [txt(s, { size: 18 })], spacing: { after: i === all.length - 1 ? 80 : 120 } }));
     for (const l of lawyers) {
       const bioParts: Paragraph[] = [];
       const normLawyerName = String(l.name || '').toLowerCase().trim();
@@ -681,14 +685,14 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (rawUrl) bioParts.push(para(rawUrl, { size: 18 }));
       if (l.currentRank) bioParts.push(para(`Current ranking: ${l.currentRank}`, { size: 18, spacing: { before: 100, after: 40 } }));
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
-      if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
+      // v1.0.105 (Ángela 19-11): the focus label was printed with no content after it.
       const existingBio = (l.comments || l.bio || '').trim();
       if (l.comments) {
         const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList, l.career, bioClients));
-        bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
+        bioParts.push(...bioParagraphs(cleanComments));
       } else if (l.bio) {
         const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList, l.career, bioClients));
-        bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
+        bioParts.push(...bioParagraphs(cleanBio));
       }
       if (l.standoutWork) {
         const cleanWork = stripAuditVoice(anonymizeConfidentialClients(String(l.standoutWork), confNamesList, [], bioClients)).trim();
