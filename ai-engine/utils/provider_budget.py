@@ -6,9 +6,18 @@ from dataclasses import dataclass, field
 BILLING_REJECTION=('insufficient_quota','credit_balance_exhausted','no credits remaining','billing_hard_limit')
 
 
+RATE_LIMIT=('rate_limit_exceeded','rate limit reached')
+
+
 def billing_rejection(error):
     """An explicit HTTP 429 billing refusal: the provider billed nothing."""
     return any(term in str(error).lower() for term in BILLING_REJECTION)
+
+
+def rate_limited(error):
+    """v1.0.108: an HTTP 429 request-rate refusal (not billing): nothing was billed."""
+    text=str(error).lower()
+    return not billing_rejection(error) and any(term in text for term in RATE_LIMIT)
 from langchain_openai import ChatOpenAI
 
 
@@ -27,6 +36,7 @@ class RequestBudget:
     spent_tokens: int = 0
     uncertain: bool = False
     credit_exhausted: bool = False
+    rate_limited: bool = False
     last_stop: dict = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 
@@ -36,6 +46,7 @@ class RequestBudget:
 
     def stop_if_blocked(self):
         if self.credit_exhausted:self.halt('AI_CREDIT_EXHAUSTED')
+        if self.rate_limited:self.halt('AI_RATE_LIMITED')
         if self.uncertain:self.halt('PROVIDER_OUTCOME_UNKNOWN')
 
     def admit(self, input_tokens, output_limit):
@@ -66,8 +77,9 @@ class RequestBudget:
     def fail(self, error, reserved=0):
         """A billing refusal is a known, unbilled outcome; anything else is unknown."""
         with self.lock:
-            if billing_rejection(error):
-                self.credit_exhausted=True
+            if billing_rejection(error) or rate_limited(error):
+                if billing_rejection(error):self.credit_exhausted=True
+                else:self.rate_limited=True
                 if self.remaining is not None:self.remaining+=reserved
             else:
                 self.uncertain=True

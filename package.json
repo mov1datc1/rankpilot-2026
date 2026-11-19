@@ -1,6 +1,6 @@
 {
   "name": "rankpilot",
-  "version": "1.0.107",
+  "version": "1.0.108",
   "private": true,
   "scripts": {
     "dev": "next dev",

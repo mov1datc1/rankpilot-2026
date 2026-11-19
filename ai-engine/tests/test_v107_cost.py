@@ -66,3 +66,27 @@ class IdenticalUnitIsNeverReviewedTwice(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class BiographyWriterReceivesMandateResults(unittest.TestCase):
+    """v1.0.108: most B9 failures were an achieved result omitted or rewritten as an aim."""
+    def test_bio_payload_carries_the_plan_results_of_this_lawyers_mandates(self):
+        import copy as _copy
+        from core.editorial_construction import advance, bio_task
+        from test_editorial_construction import ConstructionTests
+        case=ConstructionTests();st,v=case.fixture();calls=[]
+        advance(st,case.provider(v,calls))
+        payload=next(p for name,p in calls if name=='OwnedBiography')
+        own={m['id'] for m in payload['package']['matters']}
+        self.assertTrue(payload['mandate_results'])
+        self.assertTrue(set(payload['mandate_results'])<=own)
+        self.assertTrue(all(isinstance(q,list) and q for q in payload['mandate_results'].values()))
+        self.assertIn('never rewrite an achieved result as an aim',bio_task())
+
+
+class MatterTenseAndStatusFidelity(unittest.TestCase):
+    """v1.0.108: matter failures from invented 'ongoing' status and changed tense (DeForest, Ramos)."""
+    def test_matter_writer_keeps_status_and_tense_as_the_source_gives_them(self):
+        from core.editorial_construction import MATTER_TASK
+        for phrase in ('when the source gives no status,\nstate none','an achieved result stays achieved','stays planned','is not described as carried out'):
+            self.assertIn(phrase,MATTER_TASK)

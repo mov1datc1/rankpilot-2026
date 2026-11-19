@@ -43,8 +43,14 @@ export function hasUnknownProviderUsage(ledger:any[]=[]) {
  * resumes on its own once the administrator tops up, never re-buying work. */
 export const CREDIT_RECHECK_MS=15*60*1000;
 export const CREDIT_RECHECKS=48;
+export const RATE_LIMIT_RETRIES=5;
 export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{retryAt:Date;attempt:number}|null {
   if(hasUnknownProviderUsage(job.ledger)) return null;
+  if(code==='AI_RATE_LIMITED') {
+    // v1.0.108: a request-rate refusal bills nothing; wait and retry (1, 2, 3, 4, 5 min).
+    const waits=(job.ledger || []).filter((e:any)=>e.issue?.code==='AI_RATE_LIMITED').length;
+    return waits>RATE_LIMIT_RETRIES ? null : {retryAt:new Date(now+60000*Math.max(1,waits)),attempt:waits};
+  }
   if(code==='AI_CREDIT_EXHAUSTED') {
     const checks=(job.ledger || []).filter((e:any)=>e.issue?.code==='AI_CREDIT_EXHAUSTED').length;
     return checks>CREDIT_RECHECKS ? null : {retryAt:new Date(now+CREDIT_RECHECK_MS),attempt:checks};

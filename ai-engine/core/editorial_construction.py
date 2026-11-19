@@ -55,7 +55,11 @@ D is public: respect actual permissions, including a restricted value distinct
 from identity. Develop commercial purpose, legal obstacle, firm intervention,
 lawyer role and achieved result or actual stage. State the documented procedural
 status (e.g., ongoing, completed or pending resolution) inside the matter
-narrative itself whenever present in the source. Never soften or hedge a sourced
+narrative itself whenever present in the source; when the source gives no status,
+state none (never "ongoing", "continues to" or "remains") — v1.0.108. Keep the tense
+of every fact as the source gives it: an achieved result stays achieved, planned or
+prospective work ("will focus", "is expected to") stays planned, and an ordered act
+(an inspection or measure that was ordered) is not described as carried out. Never soften or hedge a sourced
 achieved result into a mere aim (write "preserved" rather than "sought to
 preserve" when achieved), and retain sourced strategic significance or precedent.
 If confidentialityEvidence.client_register and the narrative disagree on a
@@ -95,7 +99,14 @@ paragraphs (never start consecutive paragraphs with repetitive phrases such as
 role from the firm's result. Generalise private client identities and identifying
 metric combinations without deleting legal substance. A biography employer or
 association is not a client; generalisation requires an actual restriction for
-that entity/relationship. profile_identities lists the profile names that ARE
+that entity/relationship. mandate_results lists, per mandate of this lawyer, the
+decisive source passages the shared plan selected. Every mandate you mention keeps
+its achieved result or exact current stage from them, in the same sentence or the
+next; never rewrite an achieved result as an aim ("designed to", "aimed at",
+"to maintain"). When several secondary mandates share a sentence, give each its own
+result clause instead of a bare list; to respect the paragraph limit, shorten the
+description, never the result (qualitative where public_disclosure lists the figure).
+profile_identities lists the profile names that ARE
 confidential registered clients: generalise each (decision=generalize, no name in
 submission_bio) and keep its legal work. A client named only in the profile with no
 publishable matter is generalised too. public_disclosure lists, per confidential
@@ -354,7 +365,7 @@ def decision_snapshot(proposal):
 def source_key(state):
     # Transport-generated documents and review receipts are not original inputs.
     excluded={'rendered_artifact','rendered_audit','rendered_candidate_bios',
-              'editorial_development','_verified_field_obligations','field_review_receipts'}
+              'editorial_development','_verified_field_obligations','field_review_receipts','judge_receipts','_judge_receipts_reused'}
     return digest({'package':{k:v for k,v in state['package'].items() if k not in excluded},
                    'strategy':state['strategy']})
 
@@ -592,6 +603,13 @@ def advance(state, invoke):
             person=payload['package']['lawyers'][0] if payload['package']['lawyers'] else {}
             payload['profile_identities']=profile_identity_table(person,package)
             payload['public_disclosure']=public_disclosure(package,ids)
+            # v1.0.108: the decisive passages the shared plan chose for each of
+            # this person's mandates (results, stage, scale). The B9 writer had
+            # to rediscover them in long records and lost them when grouping
+            # (DeForest/Ramos: most depth/personal_case failures were an
+            # omitted achieved result or a result rewritten as an aim).
+            payload['mandate_results']={m['matter_id']:m.get('decisive_source_quotes',[]) for m in work.get('matters',[])
+                                        if m.get('matter_id') in ids and m.get('decisive_source_quotes')}
             if bindings is not None:payload['source_bindings']=bindings
         else:
             schema=strict_model('InstitutionalProse',model_fields(full,('b10','c2','institutional_execution')))
