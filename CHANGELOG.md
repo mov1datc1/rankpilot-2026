@@ -1,3 +1,39 @@
+## 1.0.105 — Ángela's DeForest feedback (19 Nov) without regressing what she praised
+
+Ángela called her DeForest run on v1.0.102 "by far the best result" she has seen: the strategic Audit, the selection, B10 and C2. This version keeps those capabilities unchanged and applies her improvement points.
+
+- **Matter narratives** (`editorial_construction.MATTER_TASK`):
+  - Depth is proportional to the evidence: a rich source is explained as the significant mandate it is, never compressed; a thin source is not padded. Narratives in her run carried about 50% of their source.
+  - They cover context and importance, complexity, the client's challenges, the firm's strategy and the results with their relevance.
+  - The writer now receives `selection_rationale`, the strategist's reason for selecting each matter (plus the hero rationale for the hero), so the strategic elements the Audit identifies stay explicit in the narrative. That reason stays internal: the narrative never mentions selection, the portfolio or other matters.
+  - The client is named consistently with its register name.
+- **Source-integrity checks in the Audit** (`src/lib/audit/integrity-checks.ts`, section «6. Verificaciones antes de presentar»). They ask for confirmation, never change a value and never block delivery. Calibrated on her run, they flag exactly:
+  - Art Human: a value in the millions with cents, unrelated to the narrative;
+  - Cinemex: the value versus a MXN 60.5 million exposure;
+  - the American Axle name variant;
+  - 4 partners declared in B2 versus 5 partner profiles.
+  - On Ramos they flag the value with no currency. No other DeForest or Ramos matter is flagged.
+- **Categories calibrated per person** (Chambers guidance, plan): each nominated partner's band target is compared with Up and Coming according to their own career stage; no partner gets a category by default.
+- **C2 in an assertive institutional voice**: capabilities are stated as facts and the coverage request is made plainly once, never as "respectfully submits" or "merits consideration". This matches the existing voice rules.
+- **Word formatting**:
+  - a developed B9 keeps its paragraphs (Eduardo's 7 paragraphs were printed as one 737-word block);
+  - the empty «Key areas of focus:» label is removed;
+  - a value with no currency is printed as supplied, never with «[CONFIRM CURRENCY & NATURE…]».
+- **Matter value**: reviewers know the stated value is printed in D3/E3, so its absence from the narrative is not an omission; a distinct economic concept still belongs in the narrative.
+- **Credit exhaustion is not a frozen case** (`review_graph.invoke_role`, `recovery.recoveryPlan`).
+  - An HTTP 429 `insufficient_quota` rejection bills nothing and is now recorded as such (`AI_CREDIT_EXHAUSTED`, zero usage). It used to be recorded as an unknown outcome that could never be retried.
+  - The worker rechecks every 15 minutes for up to 12 hours and the case resumes once credit is restored. Any other provider failure remains an unknown outcome.
+- **Unchanged on purpose**:
+  - the Audit's five reviewed sections, selection and hero logic, B10 and C2 content rules;
+  - the 1,000-word maximum for B9/B10/C2 (confirmed by Jonathan);
+  - the privacy rules.
+- **Validation**:
+  - 991 Python tests passed;
+  - Node: 621 passed, 1 skipped;
+  - tsc passed;
+  - the integrity checks and the stated changes were reproduced on the real DeForest and Ramos data, with no generation.
+- **Limits**: deeper narratives add some output tokens per matter batch. Narrative depth and category calibration are prompt contracts that only a real run measures.
+
 ## 1.0.104 — The final reviewer never stops a case; generated categories stay in the Audit
 
 Ángela's DeForest run on v1.0.102 (19 Nov 2026, submission a04de62f) measured 95.3% first-pass and delivered both documents with observations. The final judge rejected it for «Suggested ranking: Band 5 candidate» printed in the public B9. The Ramos Castillo run stopped with no visible documents when the final review could not return a valid verdict.

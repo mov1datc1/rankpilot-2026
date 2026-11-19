@@ -45,3 +45,14 @@ test('contact and interview rows do not substitute for biography rows',()=>{
  const xml='<w:tr><w:tc><w:p><w:t>Sofia Vega</w:t></w:p></w:tc><w:tc><w:p><w:t>sofia@example.test</w:t></w:p></w:tc></w:tr>';
  assert.deepEqual(wordTableProfiles(xml,['Sofia Vega']),{});
 });
+test('v1.0.105: a developed B9 keeps its own paragraphs in the Word and prints no empty label',async()=>{
+ // Ángela 19-11: Eduardo's 7-paragraph B9 was printed as one 737-word block, after an empty "Key areas of focus:".
+ const bio='Sofia Vega leads the employment practice.\n\nShe negotiated the collective agreement that prevented a strike.\n\nShe teaches labour law.';
+ const data={lawyers:[{name:'Sofia Vega',isPartner:true,bio,focus:'labour law'}],matters:[],enhanced_b10:'The practice handles negotiations.',enhanced_c2:'The firm requests coverage.',editorial_development:{version:'editorial-development-v4',candidates:[{name:'Sofia Vega',recommendation:'develop',submission_bio:bio}]},canonical_matter_selection:{core_matter_ids:[],hero_matter_id:null}};
+ const doc=buildSubmissionDoc('Synthetic Firm','Tax',data,{targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',matters:[]},'optimized');
+ const xml=await (await JSZip.loadAsync(await Packer.toBuffer(doc))).file('word/document.xml').async('string');
+ const paragraphs=[...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(m=>[...m[0].matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(x=>x[1]).join(''));
+ for(const sentence of ['Sofia Vega leads the employment practice.','She negotiated the collective agreement that prevented a strike.','She teaches labour law.'])
+  assert.ok(paragraphs.includes(sentence),sentence);
+ assert.ok(!paragraphs.some(p=>/^Key areas of focus:\s*$/.test(p)));
+});

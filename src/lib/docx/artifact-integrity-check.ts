@@ -174,9 +174,10 @@ export function validateAndSanitizeValue(
       val = `MXN ${val} (disputed exposure / mandate value)`;
     } else if (/\b(?:USD|US\$|d[oó]lares)\b/i.test(summaryText)) {
       val = `USD ${val}`;
-    } else {
-      val = `${val} [CONFIRM CURRENCY & NATURE: e.g. MXN / USD litigation exposure]`;
     }
+    // v1.0.105 (Ramos Castillo 19-11): with no currency in the source, the value
+    // is printed exactly as supplied. An instruction placeholder in brackets is
+    // never written into the delivered Word; the question stays an observation.
   }
 
   return { sanitizedValue: val };

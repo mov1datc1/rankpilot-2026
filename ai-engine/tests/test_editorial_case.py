@@ -115,6 +115,12 @@ class EditorialCaseTests(unittest.TestCase):
         leader['source_quote']='Luis Prado was appointed managing partner.'
         with self.assertRaisesRegex(ValueError,'own source'):
             execution_defects(p,s,v,letter,checks)
+    def test_v105_matter_review_knows_the_value_is_printed_in_its_own_field(self):
+        # Ramos Castillo 19-11: the reviewer demanded the MXN 70,000 matter value in the narrative.
+        p,s,v=fixture();v['version']='editorial-development-v4'
+        texts=[o['instruction'] for o in obligations(p,s,v) if o['id'].startswith('matter:')]
+        self.assertTrue(texts)
+        self.assertTrue(all('D3/E3 field' in t for t in texts))
     def test_exact_word_cannot_be_replaced_by_old_proposal(self):
         p,s,v=fixture();p['rendered_artifact']='Different final text'
         o=obligations(p,s,v)[0]

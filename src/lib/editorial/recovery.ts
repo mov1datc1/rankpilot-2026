@@ -38,8 +38,17 @@ export function hasUnknownProviderUsage(ledger:any[]=[]) {
     (Number(trace.usage?.unknown_calls || 0)>0 || trace.usage_status==='unknown' || trace.usage_status==='partial_unknown' || (trace.calls || []).some(unknown));
   return ledger.some(entry=>unknown(entry.trace));
 }
+/** v1.0.105: an explicit billing rejection bills nothing. Check for restored
+ * credit every 15 minutes for up to 12 hours, then stop checking; the case
+ * resumes on its own once the administrator tops up, never re-buying work. */
+export const CREDIT_RECHECK_MS=15*60*1000;
+export const CREDIT_RECHECKS=48;
 export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{retryAt:Date;attempt:number}|null {
   if(hasUnknownProviderUsage(job.ledger)) return null;
+  if(code==='AI_CREDIT_EXHAUSTED') {
+    const checks=(job.ledger || []).filter((e:any)=>e.issue?.code==='AI_CREDIT_EXHAUSTED').length;
+    return checks>CREDIT_RECHECKS ? null : {retryAt:new Date(now+CREDIT_RECHECK_MS),attempt:checks};
+  }
   if(!recoverable.has(code) || job.issue?.owner==='user' || job.issue?.retryable===false || job.cursor>=40 || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger) || authorizedReviewUsed(job.ledger)) return null;
   // Waiting out a lease cannot establish whether the provider already billed
   // or finished a call. Do not buy another generation on an unknown outcome.

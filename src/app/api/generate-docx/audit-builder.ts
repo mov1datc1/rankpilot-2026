@@ -5,6 +5,7 @@ import {
 import { curateMatters } from '@/lib/docx/matter-curator';
 import { normalizeLetterSections } from '@/lib/audit/letter-sections';
 import { resolveCountryJurisdiction } from './submission-builder';
+import { integrityChecks } from '@/lib/audit/integrity-checks';
 
 const NAVY = '1B365D';
 const GRAY = '475569';
@@ -93,6 +94,12 @@ export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, a
     // Runtime diagnostics belong to the Studio observations, not the executive
     // letter. Preserve the five reviewed sections exactly; never append raw
     // field paths, rejected quotations or repair instructions to the Word.
+    // v1.0.105: source-integrity questions for the user (not diagnostics) are
+    // listed after them, only when detected; they never change a value.
+    const checks = integrityChecks(data, Array.isArray(data.matters) ? data.matters : (submission.matters || []));
+    if (checks.length) sections.push(sectionTitle('6. Verificaciones antes de presentar'),
+      p('Controles automáticos sobre los datos fuente. No bloquean la entrega; confirma cada punto antes de presentar.'),
+      ...checks.map(text => p(text)));
     return new Document({title: `RankPilot Strategic Audit - ${firmName}`,creator:'RankPilot',sections:[{children:sections}]});
   }
   if (data.editorial_review && !letterData) {
