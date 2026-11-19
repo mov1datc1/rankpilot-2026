@@ -22,6 +22,7 @@ import {
 import { ExtractionIssues } from '@/components/ExtractionIssues';
 import { FilingFields } from '@/components/FilingFields';
 import { filingDetailsGaps } from '@/lib/audit/filing-details';
+import { caseReadiness } from '@/lib/audit/case-readiness';
 import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
 import { lawyerInputPending, pendingExtractionIssues, publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
@@ -53,6 +54,7 @@ export interface PostIngestionWizardModalProps {
     filingReviewed?: boolean;
     sourceFactReview?: any;
     sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[]; source_reconciliation?: {status:string} }[];
+    scopeConfirmations?: { field: string; selected: string; detected: string; source: string }[];
     draftRevision?: number;
     firmName?: string;
     practiceArea?: string;
@@ -369,6 +371,18 @@ export default function PostIngestionWizardModal({
                 </div>
               </div>
 
+              {(() => {
+                // v1.0.106: one checklist of what the case has, lacks and needs next.
+                const readiness = caseReadiness({lawyers: initialData.lawyers, matters: initialData.matters, filingDetails: initialData.filingDetails,
+                  b10Text: initialData.b10Text, sourceReports: initialData.sourceReports, scopeConfirmations: initialData.scopeConfirmations});
+                return <div role="status" style={{padding:'1rem',background:readiness.items.some(i=>i.kind==='missing')?'#FFFBEB':'#F0FDF4',border:'1px solid #E2E8F0',borderRadius:8}}>
+                  <strong>Qué le falta a tu expediente</strong>
+                  {readiness.items.length ? <ul style={{margin:'.5rem 0',paddingLeft:'1.2rem'}}>
+                    {readiness.items.map((item, i) => <li key={i} style={{marginBottom:'.35rem'}}>{item.kind==='missing'?'Falta: ':item.kind==='doubt'?'Revisa: ':'Confirma: '}{item.text}</li>)}
+                  </ul> : null}
+                  <p style={{margin:0}}><strong>Siguiente paso:</strong> {readiness.nextStep}</p>
+                </div>;
+              })()}
               {!!initialData.sourceReports?.length && <div className="review-decision">
                 <strong>Fuentes leídas: {initialData.sourceReports.length}</strong>
                 {initialData.sourceReports.map((source, index) => <div key={index} style={{marginTop: '.5rem', fontSize: '.8rem'}}>

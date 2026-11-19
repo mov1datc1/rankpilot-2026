@@ -24,6 +24,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createSubmission } from '@/app/actions/submissions';
 import { createClient } from '@/utils/supabase/client';
 import PremiumSelect from '@/components/PremiumSelect';
+import { matchPracticeArea } from '@/lib/audit/analysis-scope';
 import { 
   EDITORIAL_DIRECTORIES,
   REGIONS, 
@@ -269,9 +270,12 @@ function BuilderContent() {
   const changeToDetectedScope = () => {
     const item = scopeAsk?.question?.items?.find((i:any)=>i.field==='practice_area');
     const detected = item?.detected?.[0];
-    if (detected && (PRACTICE_AREAS as readonly string[]).includes(detected)) setPracticeArea(detected);
+    // v1.0.106: map through the scope aliases; never claim a change that did not happen.
+    const target = matchPracticeArea(detected, PRACTICE_AREAS as readonly string[]);
+    if (target) setPracticeArea(target);
     setScopeAsk(null);
-    setErrorMessage(detected && item ? `Cambiamos la práctica a «${detected}». Revisa los filtros y vuelve a pulsar construir.` : 'Revisa los filtros y vuelve a pulsar construir.');
+    setErrorMessage(target ? `Cambiamos la práctica a «${target}». Revisa los filtros y vuelve a pulsar construir.`
+      : detected ? `«${detected}» no corresponde a ninguna práctica de la lista. Selecciónala manualmente y vuelve a pulsar construir.` : 'Revisa los filtros y vuelve a pulsar construir.');
   };
 
   return (
