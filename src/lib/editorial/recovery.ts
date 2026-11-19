@@ -46,7 +46,7 @@ export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{
   if(uncertain.has(code)) return null;
   // One retry per stage/cursor. Deploying a fix never replenishes this allowance.
   const resetAt=(job.ledger || []).reduce((idx:number,e:any,i:number)=>(
-    e.status==='construction_plan_recovery_requested' || e.status==='post_construction_repair_requested'
+    e.status==='construction_plan_recovery_requested' || e.status==='post_construction_repair_requested' || e.status==='final_review_resume_requested'
     || (e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor) && e.status==='queued' && !e.issue && typeof e.output_hash==='string')
   )?i:idx,-1);
   const failures=(resetAt>=0?(job.ledger || []).slice(resetAt+1):(job.ledger || [])).filter((e:any)=>e.issue && e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor));

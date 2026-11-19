@@ -15,12 +15,14 @@ test('career and professional association mentions cannot become invented client
  assert.doesNotMatch(anonymizeConfidentialClients('She advised Example Motors as an in-house employee.',['Example Motors']),/confidential client/);
  assert.match(anonymizeConfidentialClients('The firm advises Example Motors.',['Example Motors']),/advises a confidential client/);
 });
-test('an unspecified pending category stays internal rather than being printed as a nomination',()=>{
+test('a generated category stays internal; only a category the firm supplied is printed',()=>{
  const lawyers=[{name:'Sofia Vega',isPartner:true,bio:'Sofia is a Partner.'}];
  const data={editorial_development:{version:'editorial-development-v4',candidates:[{name:'Sofia Vega',recommendation:'present',suggested_ranking:'Category pending',submission_bio:'Sofia is a Partner with a documented career.'}]}};
  assert.equal(curateLawyers(lawyers,[],'Firm','Tax','Mexico',data)[0].suggestedRank,'');
+ // v1.0.104: the final judge rejected "Suggested ranking: Band 5 candidate" in the public B9.
  data.editorial_development.candidates[0].suggested_ranking='Band 5 candidate';
- assert.equal(curateLawyers(lawyers,[],'Firm','Tax','Mexico',data)[0].suggestedRank,'Band 5 candidate');
+ assert.equal(curateLawyers(lawyers,[],'Firm','Tax','Mexico',data)[0].suggestedRank,'');
+ assert.equal(curateLawyers([{...lawyers[0],suggestedRank:'Up and Coming'}],[],'Firm','Tax','Mexico',{})[0].suggestedRank,'Up and Coming');
  for(const version of ['v1','v2','v3','v4'])assert.ok(supportedDevelopment({version:'editorial-development-'+version}));
 });
 test('final profile projection is taken from the exact Word after anonymization',async()=>{

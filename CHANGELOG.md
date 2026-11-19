@@ -1,3 +1,23 @@
+## 1.0.104 — The final reviewer never stops a case; generated categories stay in the Audit
+
+Ángela's DeForest run on v1.0.102 (19 Nov 2026, submission a04de62f) measured 95.3% first-pass and delivered both documents with observations. The final judge rejected it for «Suggested ranking: Band 5 candidate» printed in the public B9. The Ramos Castillo run stopped with no visible documents when the final review could not return a valid verdict.
+
+- **The final reviewer never stops a case** (`runner.ts`, `optimize/complete/route.ts`).
+  - When the final review cannot return a valid verdict (invalid diagnostic, output limit, unavailable or unknown provider outcome) and its bounded retry is spent, the rendered pair already saved is delivered with observations.
+  - The job ends `completed` and the case shows «DocumentsAvailable».
+  - No paid call is added and nothing is marked approved. A call still in progress is never treated as finished.
+- **A stopped final review can be resumed** (`final-review-resume.ts`, `enqueue(retry)`).
+  - A case stopped only for that reason requeues that one review once, over the same sources and saved drafts.
+- **Generated categories stay in the Audit** (`lawyer-curator.ts`).
+  - A category RankPilot proposes (e.g. «Band 5 candidate») is an internal editorial target. The public B9 no longer prints it as «Suggested ranking»; only a category the firm itself supplied is printed.
+  - This replaces the earlier behaviour that printed a specific proposed category: the Chambers B9 form has no such field, and the final judge rejected it as unsupported.
+- **The final judge knows the category methodology** (`review_graph.py`): an Audit proposed category such as «Band 5 candidate» is an internal editorial target, not a claim of current or predicted ranking, when tied to documented leadership and stated without a verified ranking.
+- **Validation**:
+  - 984 Python tests passed;
+  - Node: 615 passed, 1 skipped;
+  - tsc passed;
+  - the new runner regression fails without the fix.
+
 ## 1.0.103 — The final reviewer's own source passages are valid evidence
 
 The real Ramos Castillo run on v1.0.102 (19 Nov 2026, submission 730ccb99) stopped at the final review with `AI_REVIEW_INVALID` twice, although the editor call completed both times.
