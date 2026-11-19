@@ -605,19 +605,26 @@ def review_parallel():
     except ValueError:return 1
 
 
+def reviewed(units):
+    """v1.0.109: which fields a review call checked (path, unit hash, digest of what
+    the model saw). No content. Lets a repeated review be explained from the trace."""
+    return {'reviewed_fields':[{'field':u['field'],'hash':u['hash'][:12],
+        'seen':digest({'output':u.get('output'),'obligations':[o.get('id') for o in u['obligations']]})[:12]} for u in units]}
+
+
 def run_reviews(state,invoke_role,groups):
     """[(units, (result, trace_entry) | exception)] for independent review groups."""
     def call(units):
         try:
             result,trace=invoke_role({**state,'trace':[]},'field_reviewer',contract(units),TASK,review_payload(units))
             entry=trace[-1] if trace else {'role':'field_reviewer','usage':{'unknown_calls':1},'usage_status':'unknown'}
-            return result,{**entry,**({'parallel_batch':len(groups)} if len(groups)>1 else {})}
+            return result,{**entry,**reviewed(units),**({'parallel_batch':len(groups)} if len(groups)>1 else {})}
         except Exception as error:
             return error
     if len(groups)==1:
         # A single review keeps its original semantics: errors propagate.
         result,trace=invoke_role({**state,'trace':list(state.get('trace',[]))},'field_reviewer',contract(groups[0]),TASK,review_payload(groups[0]))
-        return [(groups[0],(result,trace[-1] if trace else {'role':'field_reviewer','usage':{'unknown_calls':1},'usage_status':'unknown'}))]
+        return [(groups[0],(result,{**(trace[-1] if trace else {'role':'field_reviewer','usage':{'unknown_calls':1},'usage_status':'unknown'}),**reviewed(groups[0])}))]
     import contextvars
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=len(groups)) as pool:

@@ -12,13 +12,8 @@ export function resolveCountryJurisdiction(
 ): string {
   const firmLower = (firmName || chambersData?.firm_name || chambersData?.firmName || '').toLowerCase();
 
-  // Known institutional firm jurisdiction anchors
-  if (firmLower.includes('araquereyna') || firmLower.includes('araque reyna')) {
-    return 'Venezuela';
-  }
-  if (firmLower.includes('deforest')) {
-    return 'Mexico';
-  }
+  // v1.0.109: no firm-name anchors. Jurisdiction comes from the matters'
+  // own indicators and the scope the user selected, for any firm.
 
   // 1. Check matters linguistic and institutional indicators first
   const matters = submission?.matters || chambersData?.matters || [];

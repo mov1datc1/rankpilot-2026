@@ -121,7 +121,11 @@ export async function POST(request: NextRequest) {
         const auditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},review.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
         auditBuffer=await Packer.toBuffer(auditDoc);
         const auditArchive=await JSZip.loadAsync(auditBuffer);
-        const renderedAudit=wordXmlText(await auditArchive.file('word/document.xml')!.async('string'));
+        // v1.0.109: section 6 is a deterministic checklist for the user, not generated
+        // prose. A false positive there became critical findings no repair could fix
+        // and bought an extra judge round (Ramos Real Estate). The judge reviews the
+        // five written sections; the checklist stays in the delivered Word.
+        const renderedAudit=wordXmlText(await auditArchive.file('word/document.xml')!.async('string')).split('6. Verificaciones antes de presentar')[0].trimEnd();
         const archive=await JSZip.loadAsync(buffer);
         const parts=Object.keys(archive.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${wordXmlText(await archive.files[name].async('string'))}`))).join('\n');

@@ -251,7 +251,6 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     const isPartner = booleanOrUnknown(person.isPartner, person.is_partner);
     const candidacy = chambersData?.editorial_development?.candidates?.find((c: any) => normalizeName(c.name) === normalizeName(person.name));
     const isTaxOrOffPractice = practiceArea.toLowerCase().includes('corporate') && (
-      normalizeName(person.name).includes('maria carolina cano') ||
       (/tax|tributari/i.test(person.focus || person.key_focus || person.bio || candidacy?.category_rationale || '') && !/m&a|mergers/i.test(person.focus || person.key_focus || ''))
     );
     // v1.0.104 (Ángela, DeForest 19-11): a category RankPilot proposes is an

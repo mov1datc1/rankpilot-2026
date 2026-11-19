@@ -12,7 +12,43 @@ CONTRACT = 'candidate-profile-v1'
 # an established partner, so the model wrote "Established Individual", which is
 # not a Chambers category and was forced to Category pending (DeForest v1.0.101:
 # all three nominated partners pending, category:fit failed 3/3).
-CHAMBERS_CATEGORY_GUIDANCE = {'source_url':'https://chambers.com/submissions/rankings-explained','guidance':'Choose an evidenced specific category as a proposed target, not a predicted or current recognition. Categories: Band N candidate (a specific band) for partners with proven leadership of relevant mandates and established career standing; for a practice or person not yet ranked, propose the lower band the evidence can defend (for example Band 5 candidate) and say in category_rationale that it is an editorial target, not a prediction or current recognition. Up and Coming for developing reputation and contribution to firm growth; a partner title does not by itself rule it out. Associates to Watch and Star Associate are associate categories, incompatible with confirmed partnership. "Established Individual" and other maturity descriptors are not Chambers categories. Calibrate each person on their own career stage (Ángela, 19 Nov: a band was given to every partner by default): compare a band target with Up and Coming for every nominated partner and record that comparison in category_assessment. A band fits established standing (head of practice, long senior career, senior professional offices, sustained leadership of major mandates); Up and Coming fits a partner whose market reputation is still developing and who is building the practice. Use Category pending only when neither a band nor Up and Coming can be argued from the evidence.'}
+CHAMBERS_CATEGORY_GUIDANCE = {'source_url':'https://chambers.com/submissions/rankings-explained','guidance':'Choose an evidenced specific category as a proposed target, not a predicted or current recognition. Categories: Band N candidate (a specific band) for partners with proven leadership of relevant mandates and established career standing; for a person not yet ranked, propose the lowest INDIVIDUAL band of the table and say in category_rationale that it is an editorial target, not a prediction or current recognition. table_categories, when supplied, lists the individual categories this exact ranking table uses (individual bands can differ from firm bands): choose only among them. When it is not supplied, do not name a band number: write Entry-band candidate. Up and Coming for developing reputation and contribution to firm growth; a partner title does not by itself rule it out. Associates to Watch and Star Associate are associate categories, incompatible with confirmed partnership. "Established Individual" and other maturity descriptors are not Chambers categories. Calibrate each person on their own career stage: compare a band target with Up and Coming for every nominated partner and record that comparison in category_assessment. A band fits established standing (head of practice, long senior career, senior professional offices, sustained leadership of major mandates); Up and Coming fits a partner whose market reputation is still developing and who is building the practice. Use Category pending only when neither a band nor Up and Coming can be argued from the evidence.'}
+def table_categories(package):
+    """Individual categories the cached ranking table for this guide, practice and
+    jurisdiction actually uses (v1.0.109), or None when no table is cached.
+
+    The guidance used "Band 5 candidate" as its example and every nominated
+    partner received it, but Chambers Labour & Employment Mexico ranks
+    individuals in Bands 1-4 only (Band 5 exists for firms). A category is
+    proposed only among the table's own individual categories.
+    """
+    import json, os
+    try:
+        from utils.benchmark_cache import CACHE_DIR, _sanitize_key
+        directory=str((package or {}).get('directory') or '');practice=str((package or {}).get('practice_area') or '')
+        jurisdiction=str((package or {}).get('ranking_jurisdiction') or (package or {}).get('jurisdiction') or (package or {}).get('guide_region') or '').split('—')[-1].strip()
+        if 'chambers' not in directory.casefold() or not practice or not jurisdiction:return None
+        for name in dict.fromkeys((directory,directory.split('&')[0].strip(),'chambers')):
+            path=os.path.join(CACHE_DIR,_sanitize_key(name,practice,jurisdiction)+'.json')
+            if not os.path.exists(path):continue
+            with open(path,encoding='utf-8') as handle:data=json.load(handle)
+            found=(data.get('structure') or {}).get('individual_categories') or list(dict.fromkeys(
+                i.get('band') for i in data.get('individuals',[]) if isinstance(i,dict) and i.get('band')))
+            return [str(c) for c in found if c] or None
+    except Exception:
+        return None
+    return None
+
+
+def valid_band_label(label, categories):
+    """The same proposal with a band the table really has: an individual band
+    number the table does not use becomes the table's lowest individual band."""
+    bands=sorted(int(m.group(1)) for c in categories or [] for m in [re.fullmatch(r'Band (\d)',str(c).strip())] if m)
+    match=re.search(r'\bBand (\d)\b',str(label or ''))
+    if not bands or not match or int(match.group(1)) in bands:return label
+    return str(label).replace(match.group(0),f'Band {bands[-1]}')
+
+
 MATERIAL_ROLE=re.compile(r'\b(?:served|worked|appointed|director|counsel|president|chair(?:man|person)?|head of|partner|professor|degree|qualified|admitted|licen[cs]ed|presidente|socio|consejero|comisi[oó]n)\b',re.I)
 
 def norm(value):
