@@ -91,6 +91,7 @@ export async function runJobStage(job:any) {
   let generatedHash:string|null=null;
   let retryAt:Date|null=null;
   let supervision:ReturnType<typeof superviseArtifact>|null=null;
+  let ledgerStatus:string|null=null;
   try {
     const submission=await prisma.submission.findUnique({where:{id:job.submissionId},include:{matters:true}});
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
@@ -170,6 +171,14 @@ export async function runJobStage(job:any) {
     const failure={stage,cursor:job.cursor,issue,trace,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};
     const plan=recoveryPlan({...job,issue,ledger:[...(job.ledger || []),failure]},code,process.env.RENDER_GIT_COMMIT || 'local');
     if(plan) {status='queued';retryAt=plan.retryAt;}
+    else if(stage==='development' && code==='DEVELOPMENT_REJECTED' && issue?.owner==='rankpilot'
+      && !(job.ledger || []).some((e:any)=>e.status==='delivery_observations_requested')) {
+      // v1.0.111: the single delivery guarantee. When the bounded corrections are
+      // spent, ask ONCE for delivery with observations instead of stopping; the
+      // engine delivers any complete, privacy-safe draft. No new generation is
+      // bought: the next step only assembles what is saved.
+      status='queued';retryAt=new Date(Date.now()+1000);ledgerStatus='delivery_observations_requested';
+    }
     else if(stage==='artifact' && FINAL_REVIEW_UNFINISHED.has(code)) {
       // v1.0.104 (Ramos Castillo 19-11): the final reviewer never stops a case.
       // When it cannot return a valid verdict and its retry is spent, the
@@ -185,6 +194,6 @@ export async function runJobStage(job:any) {
       }
     }
   } finally {clearInterval(heartbeat);}
-  const entry={stage,cursor:job.cursor,status,retry_at:retryAt?.toISOString(),supervision,generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
+  const entry={stage,cursor:job.cursor,status:ledgerStatus || status,retry_at:retryAt?.toISOString(),supervision,generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=${retryAt},"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;
 }

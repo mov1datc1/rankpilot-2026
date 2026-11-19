@@ -68,3 +68,29 @@ def complete_proposal_findings(current):
         return development_errors(package,strategy,proposal)
     except (ValueError,TypeError,KeyError,AttributeError):
         return None
+
+
+def guaranteed_delivery(state):
+    """v1.0.111: the one delivery guarantee for development (RP13).
+
+    Reached only on an explicit delivery-with-observations request, after the
+    bounded automatic corrections. A COMPLETE, identity-bound and privacy-safe
+    proposal is delivered with every remaining finding as an observation; no
+    exhaustion bookkeeping can stop it. Incomplete, foreign-identity or
+    privacy-unsafe drafts, an unknown provider outcome or an invalid selection
+    still stop: those are the legitimate reasons not to deliver.
+    """
+    from core.editorial_repair import unknown_repair_usage
+    if (not state.get('selection_validated') or not state.get('selection_review_validated')
+            or not state.get('development') or unknown_repair_usage(state.get('trace',[]))):
+        return None
+    findings=complete_proposal_findings(state)
+    if findings is None:
+        return None
+    report=state.get('repair_report') or {}
+    pending=[f'Corrección no aplicada: {p}' for p in report.get('failed_paths') or []]
+    pending+=[f'Corrección no aplicable: {u}' for u in report.get('unresolved') or []]
+    observations=list(dict.fromkeys([*state.get('development_observations',[]),*findings,*pending]))
+    return {'development':state['development'],'development_validated':False,'development_delivery_ready':True,
+            'development_repair_unlocatable':False,'development_observations':observations,
+            'repair_continuation':None,'errors':[],'delivery_guarantee':'complete_proposal_with_observations'}

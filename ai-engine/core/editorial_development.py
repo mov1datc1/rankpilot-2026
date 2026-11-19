@@ -439,7 +439,14 @@ def develop_proposal(state):
         if complete is not None:
             return {**complete,'delivery_observations_requested':False}
         from core.field_review import retain_observations
-        return {**retain_observations(state),'delivery_observations_requested':False}
+        retained=retain_observations(state)
+        if retained.get('errors'):
+            # v1.0.111: the single delivery guarantee. Any complete, privacy-safe
+            # proposal is delivered with observations instead of stopping.
+            from core.development_delivery import guaranteed_delivery
+            guaranteed=guaranteed_delivery(state)
+            if guaranteed is not None:retained=guaranteed
+        return {**retained,'delivery_observations_requested':False}
     if state.get('legacy_development_recovery'):
         from core.legacy_development_recovery import resume_legacy_development
         return resume_legacy_development(state)

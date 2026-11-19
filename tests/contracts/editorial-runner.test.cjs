@@ -355,3 +355,27 @@ test('v1.0.104: a final review that cannot finish delivers the saved pair instea
   assert.equal(submission.chambersData.available_artifact.observation_status,'with_observations');
  } finally {global.fetch=normal;}
 });
+test('v1.0.111: an exhausted development rejection asks once for delivery with observations instead of stopping',async()=>{
+ reset();const normal=global.fetch;let asked=null;
+ try {
+  await stage(); // selection
+  assert.equal(job.stage,'development');
+  global.fetch=async(url,options)=>{
+   if(url.endsWith('/review-step')) {
+    const payload=JSON.parse(options.body);
+    if(payload.stage==='development' && !payload.state.delivery_observations_requested)
+     return Response.json({success:false,code:'DEVELOPMENT_REJECTED',error:'Voz auditora en Submission: candidates/6/submission_bio',trace:[{role:'repair',usage:{total_tokens:10}}]},{status:502});
+    if(payload.stage==='development') asked=true;
+   }
+   return normal(url,options);
+  };
+  for(let i=0;i<3 && job.ledger.at(-1)?.status!=='delivery_observations_requested';i++){job.leaseUntil=null;await stage();}
+  assert.equal(job.status,'queued');
+  assert.equal(job.ledger.at(-1).status,'delivery_observations_requested');
+  await stage();
+  assert.equal(asked,true);
+  assert.notEqual(job.status,'failed');
+  // Asked only once: a second exhausted rejection is a real stop, never a loop.
+  assert.equal(job.ledger.filter(e=>e.status==='delivery_observations_requested').length,1);
+ } finally {global.fetch=normal;}
+});
