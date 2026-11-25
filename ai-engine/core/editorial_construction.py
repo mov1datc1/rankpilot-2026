@@ -206,11 +206,14 @@ sophistication and relevance of the recent work; (b) the specific evidence that
 distinguishes the practice and, where the sources ask for individual recognition,
 each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
 aspiration, stated once at the end as the consequence of the argument. Take the
-aspiration from the supplied target and from any category the firm itself requests
-for a lawyer; name a band only when one is supplied. The practice aspiration is
-stated once; a category the firm requests for a named lawyer is stated once for
-that lawyer, in that same closing paragraph, after their evidence has been argued
-in (b). Never open with the request,
+practice aspiration from the supplied target; name a band only when one is supplied.
+An individual category comes ONLY from shared_decisions: a lawyer whose
+recommendation is present and whose suggested_ranking is a concrete category is
+named with exactly that category, once, in that same closing paragraph, after
+their evidence has been argued in (b). A lawyer whose decision is Category pending,
+develop or do_not_present receives no category or recognition request in C2, even
+when the firm's own text asks for one: the Audit explains that decision. The
+practice aspiration is stated once. Never open with the request,
 never say that the firm is unranked, new to the ranking or seeking first-time
 recognition, and close on capability, results and track record. Adapt this order
 to the candidacy and its evidence; it is not a template. State capabilities as firm

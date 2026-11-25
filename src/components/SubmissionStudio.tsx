@@ -4489,6 +4489,8 @@ export default function SubmissionStudio({
           sourceReports: chambersData.source_reports || [],
           scopeConfirmations: chambersData.scope_confirmations || [],
           sourceFactReview: chambersData.source_fact_review,
+          researchPeriod: chambersData.research_period || null,
+          deadline: (submission as any).deadline || null,
           draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
           practiceArea: (() => {
@@ -4510,9 +4512,10 @@ export default function SubmissionStudio({
           const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,reviewIssueMessage:focusedReview?.message,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
           const result=await updateSubmissionValidatedData(submission.id,{...changes,auditActionId:auditAction?.id});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{...data.filingDetails,filing_reviewed:!!data.filingReviewed,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,source_fact_review:data.sourceFactReview}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{...data.filingDetails,filing_reviewed:!!data.filingReviewed,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,source_fact_review:data.sourceFactReview}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),...(!data.correctionOnly && data.researchPeriod?{research_period:{...data.researchPeriod,source:'User-confirmed submission instructions'}}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
+          if(!data.correctionOnly && data.researchPeriod){setPeriodFrom(data.researchPeriod.from);setPeriodTo(data.researchPeriod.to);}
           setShowValidationWizard(false);
           setReviewLawyersFirst(false);
           setFocusedReview(undefined);

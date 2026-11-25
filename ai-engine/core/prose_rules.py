@@ -119,6 +119,35 @@ def _verb(match, rest):
     return f'{adv}{verb} {rest}' if rest else f'{adv}{verb} '
 
 
+_LEAD_NOUN = re.compile(r'(?<!co-)(?<!co)\blead(?P<sep>-|\s)partner(?P<plural>s?)\b', re.I)
+_REGISTER_LEAD = re.compile(r'\b(?P<be>is|was)\s+' + _FREQ + r'(?P<adv>(?:also|likewise|further)\s+)?(?:(?:named|recorded|listed|identified|designated)\s+(?:as\s+)?)?(?:the\s+|an?\s+)?lead(?:-|\s)partner\b(?=\s+(?:in|on|for)\b)', re.I)
+
+
+def source_lead(text, package, subject=None):
+    """v1.0.117: natural_lead that knows who leads alone and who co-leads.
+
+    The rewrite "is (listed as) lead partner on X" -> "leads X" was written when
+    public prose named no client. Once B10/C2 name them, "leads" for a mandate
+    with three lead partners is a false statement (real run: the judge's only
+    critical). Sentence by sentence, with exact client and lawyer names only:
+    every named mandate co-led -> the co-lead form; some led alone and some
+    co-led -> "is a lead partner on", true of both; otherwise unchanged behaviour.
+    """
+    from core.fact_sheet import lead_scope
+    out = []
+    for piece in re.split(r'(?<=[.!?])(\s+)', str(text or '')):
+        if piece and not piece.isspace() and re.search(r'lead(?:-|\s)partner', piece, re.I):
+            scope = lead_scope(piece, package, subject)
+            if scope == 'shared':
+                piece = _LEAD_NOUN.sub(lambda m: f"co-lead{m.group('sep')}partner{m.group('plural')}", piece)
+            elif scope == 'mixed':
+                piece = _REGISTER_LEAD.sub(lambda m: f"{m.group('be')} {m.group('adv') or ''}a lead partner", piece)
+                out.append(piece)
+                continue
+        out.append(natural_lead(piece) if piece and not piece.isspace() else piece)
+    return ''.join(out)
+
+
 def natural_lead(text):
     """Replace form vocabulary for the lead role with a natural verb; same facts."""
     out = str(text or '')
@@ -264,11 +293,11 @@ def polish_candidate(candidate, package):
     """Apply the B9 rules; bindings stay literal or the field keeps its prior text."""
     original = copy.deepcopy(candidate)
     result = copy.deepcopy(candidate)
-    result['submission_bio'] = strip_hedges(natural_lead(result.get('submission_bio', '')))
+    result['submission_bio'] = strip_hedges(source_lead(result.get('submission_bio', ''), package, candidate.get('name')))
     for key in ('submission_case_coverage', 'profile_coverage'):
         for item in result.get(key) or []:
             if isinstance(item.get('public_quote'), str):
-                item['public_quote'] = strip_hedges(natural_lead(item['public_quote']))
+                item['public_quote'] = strip_hedges(source_lead(item['public_quote'], package, candidate.get('name')))
     result, titled = place_headship(result, package)
     result, shared = shared_identity(result)
     result, moved, unresolved = rebind(result)
@@ -298,7 +327,7 @@ def polish_proposal(package, proposal):
             matter['text'] = text
             report['fields'].append({'path': f'matters/{i}/text', 'changed': True})
     for key in ('b10', 'c2'):
-        text = strip_hedges(natural_lead(result.get(key, '')))
+        text = strip_hedges(source_lead(result.get(key, ''), package))
         if text and text != result.get(key):
             result[key] = text
             report['fields'].append({'path': key, 'changed': True})
@@ -307,7 +336,7 @@ def polish_proposal(package, proposal):
         for field, quote_key in (('b10', 'b10_quote'), ('c2', 'c2_quote')):
             quote = link.get(quote_key)
             if isinstance(quote, str) and quote and _norm(quote) not in _norm(result.get(field)):
-                fixed = strip_hedges(natural_lead(quote))
+                fixed = strip_hedges(source_lead(quote, package))
                 if _norm(fixed) in _norm(result.get(field)):
                     link[quote_key] = fixed
                 else:
