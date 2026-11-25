@@ -5,10 +5,14 @@
     {"client": "SKF Industrial", "includes": ["SKF Industrial", "SKF"]},
     {"client": "Volkswagen de México and VW Financial Services", "includes": ["Volkswagen de México", "VW Financial Services", "Volkswagen"]},
     {"client": "Grupo Alfa", "includes": ["Grupo Alfa", "Alfa"]},
-    {"client": "Example Foods (EFX)", "includes": ["Example Foods (EFX)", "EFX"]}
+    {"client": "Example Foods (EFX)", "includes": ["Example Foods (EFX)", "EFX"]},
+    {"client": "Editores Ejemplo, C.A.", "includes": ["Editores Ejemplo, C.A.", "Editores Ejemplo"]}
   ],
   "excludes": [
     {"client": "Grupo Alfa", "not": ["Grupo"]},
-    {"client": "Banco Example", "not": ["Banco"]}
+    {"client": "Banco Example", "not": ["Banco"]},
+    {"client": "Editores Ejemplo, C.A.", "not": ["C.A."]},
+    {"client": "Servicios Ejemplo, S. de R.L. de C.V.", "not": ["S. de R.L. de C.V.", "C.V."]},
+    {"client": "Example Holdings, LLC", "not": ["LLC"]}
   ]
 }

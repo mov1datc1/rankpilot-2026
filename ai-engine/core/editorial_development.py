@@ -125,6 +125,11 @@ AUDIT_VOICE = re.compile(
     r"is\s+named\s+as\s+lead|"
     r"(?:is|are|was|were)\s+(?:also\s+|further\s+)?(?:listed|recorded)\s+(?:as|among)\s+(?:an?\s+|the\s+|one\s+of\s+)?(?:\w+\s+)?(?:co-?)?lead|"
     r"attributed\s+in\s+the\s+records?|"
+    # v1.0.115 (real run): internal attribution reasoning restated in a B9.
+    r"the\s+(?:sources?|records?)\s+(?:attributes?|assigns?)|"
+    r"the\s+sources?\s+support\s+(?:his|her|their)|"
+    r"(?:his|her|their)\s+documented\s+(?:mandate\s+|practice\s+|matter\s+)?roles?|"
+    r"as\s+the\s+actors?\s+for\s+the\s+underlying|"
     r"(?:is|are)\s+recorded\s+(?:separately|with\s+an?\s+(?:date|value))|"
     r"invites\s+researcher\s+dialogue|"
     r"would\s+welcome\s+researcher\s+dialogue|"

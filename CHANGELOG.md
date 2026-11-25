@@ -1,3 +1,14 @@
+## 1.0.115: Four defects found in the first real run of 1.0.114
+
+Surgical, deterministic where possible; no new model call. Found by comparing a real tax case run on 1.0.114 with the same case on 1.0.112.
+
+- **A company form is never a confidential identity.**
+  - **Cause:** a confidential client registered as "Name, C.A." was split at the comma and "C.A." became an alias. The Word renderer then replaced the "C.A." of every publishable client in B9 with "a confidential entity" (7 of the 10 critical findings of the final review). The exception existed for "S.A." only.
+  - **Change:** bare company forms (C.A., S.A. de C.V., S. de R.L., LLC, Ltd, GmbH and similar) are never aliases, in the renderer and in the engine's shared identity table.
+- **Register voice in B9 and C2.** "a listed lead partner", "listed leadership", "is listed as a member of the matter team" and "is listed in leadership roles" are rewritten to the plain role. Sentences that restate internal attribution reasoning ("the source attributes…", "the record assigns…", "her documented role…") are detected as audit voice, and the B9 writer is told not to restate the shared decision's counterevidence.
+- **Own evidence for an individual category.** A literal register passage that names the lawyer (forms shorten names) and official commentary retrieved for that lawyer's own verified directory profile are accepted as that lawyer's evidence. They were rejected as "another person", which stopped development and paid for repairs in every run of this case.
+- **External comparison in the Audit.** One concrete contrast for each retrieved peer profile that has commentary; the Audit no longer says a retrieved commentary does not permit a comparison.
+
 ## 1.0.114: Loose documents (option B) can be generated without a department description
 
 First step of the strategic-diagnosis work asked for after a real option B test (six loose documents, no profiles, no department text). Deterministic changes only; no new model call.
