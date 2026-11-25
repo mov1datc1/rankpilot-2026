@@ -207,6 +207,8 @@ distinguishes the practice and, where the sources ask for individual recognition
 each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
 aspiration, stated once at the end as the consequence of the argument. Take the
 practice aspiration from the supplied target; name a band only when one is supplied.
+When the supplied target is a first recognition, state it simply as recognition in
+the practice and guide, without the words "first-time" or "for the first time".
 An individual category comes ONLY from shared_decisions: a lawyer whose
 recommendation is present and whose suggested_ranking is a concrete category is
 named with exactly that category, once, in that same closing paragraph, after

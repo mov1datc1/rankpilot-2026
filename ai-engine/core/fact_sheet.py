@@ -26,7 +26,12 @@ target and, when present, the current nomination decisions. Wherever your text
 states one of these facts it must agree with fact_sheet: a lawyer "leads" a mandate
 only when it is in leads_alone, "co-leads" it when it is in co_leads, and took part
 in it when it is in team_member; a client is confidential only when its publication
-is confidential; a category is stated only as the current decision gives it.
+is confidential; a category is stated only as the current decision gives it; a
+department head is named only with the words case.department_heads gives, and when
+an entry carries not_confirmed_as the form gives an incomplete name and does not
+confirm that the head is that fully named lawyer: state what that lawyer leads in
+the mandates and do not write who heads or leads the department or practice,
+neither with the incomplete name nor with the longer one.
 fact_sheet adds no fact about the legal work and never replaces the sources for the
 substance of a mandate.''')
 REVIEW_RULE = RULE + (''' When reviewing, a statement about one of these facts that
@@ -83,6 +88,40 @@ def matter_roles(package):
             'lead': [roster.get(roster_match(n, roster), n) for n in lead],
             'lead_roster': lead_roster,
             'team_roster': [key for key in dict.fromkeys(roster_match(n, roster) for n in team) if key and key not in lead_roster]}
+    return result
+
+
+def department_heads(package):
+    """Each head exactly as the form names them.
+
+    v1.0.119, real run 75b8ade5: the form named the head by given names only and
+    the mandates named a lead partner whose full name begins with them. B10 and C2
+    wrote that the fully named lawyer heads the department and the judge rejected
+    both: the form does not say they are the same person. Code does not decide it
+    either. It records the name as written and, when a longer known name contains
+    it, says that the identity is not confirmed; the wizard asks the user to
+    complete the name before the case runs.
+    """
+    package = package or {}
+    heads = [' '.join(str(h.get('name')).split()) for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
+             if isinstance(h, dict) and len(identity(h.get('name'))) > 2 and identity(h.get('name')) not in _EMPTY]
+    known = {}
+    for profile in package.get('lawyers', []):
+        name = profile.get('name') or profile.get('fullName')
+        if identity(name):
+            known.setdefault(identity(name), ' '.join(str(name).split()))
+    for matter in package.get('matters', []):
+        for name in listed_names(matter.get('leadPartner') or matter.get('lead_partner')):
+            known.setdefault(identity(name), name)
+    result = []
+    for head in dict.fromkeys(heads):
+        key, entry = identity(head), {'name': head}
+        if key not in known:
+            words = set(key.split())
+            longer = [name for other, name in known.items() if words < set(other.split())]
+            if longer:
+                entry['not_confirmed_as'] = longer
+        result.append(entry)
     return result
 
 
@@ -146,6 +185,9 @@ def build(package, strategy=None, development=None, person=None):
         size = {k: details.get(v) for k, v in (('partners', 'num_partners'), ('other_lawyers', 'num_lawyers')) if str(details.get(v) or '').strip()}
         if size:
             case['department_size'] = size
+        named = department_heads(package)
+        if named:
+            case['department_heads'] = named
         if case:
             sheet['case'] = case
     return sheet

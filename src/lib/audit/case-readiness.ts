@@ -1,5 +1,6 @@
 import { filingDetailsGaps } from './filing-details';
 import { integrityChecks } from './integrity-checks';
+import { inputDoubts } from './input-doubts';
 import { editorialPreparationIssues, matterSourceText } from './preparation-input';
 
 /**
@@ -109,6 +110,9 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
     items.push({ kind: 'doubt', text: `«${c.source}» indica ${c.field === 'practice_area' ? 'la práctica' : c.field === 'jurisdiction' ? 'la jurisdicción' : 'la guía'} «${c.detected}»; elegiste continuar con «${c.selected}». Revisa que su contenido corresponda a esa práctica.` });
   for (const text of integrityChecks({ numPartners: input.filingDetails?.numPartners, lawyers }, matters))
     items.push({ kind: 'check', text });
+  // v1.0.119: what the application understood about roles and headship, said before the case runs.
+  for (const doubt of inputDoubts({ lawyers, matters, departmentHeads: input.filingDetails?.departmentHeads }))
+    items.push(doubt);
   const verdict = readinessVerdict(input);
   // The next step follows the verdict, so it never invites generating a case
   // that Studio would not prepare.

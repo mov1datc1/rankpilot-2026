@@ -1,8 +1,8 @@
-import { stableHash } from './contracts';
 import { targetedRepair } from './jobs';
 import { mayRepairAutomatically } from './repair-progress';
 import { needsDiagnosticReview, recoveryPlan, editorialTokenBudget, spentTokens, authorizedExtension, hasUnknownProviderUsage } from './recovery';
-import {FIELD_RECOVERY_CONTRACT,fieldRecoveryPlan,type RepairStrategy} from './field-recovery';
+import {FIELD_RECOVERY_CONTRACT,fieldRecoveryPlan,findingFingerprint,type RepairStrategy} from './field-recovery';
+export {findingFingerprint};
 
 type Decision = {
   version: 1;
@@ -16,14 +16,6 @@ type Decision = {
   repair_strategy?: RepairStrategy;
   repair_fields?: string[];
 };
-
-/** Track a disputed fact, not the reviewer's changing explanation. Evidence
- * remains in the source-bound checkpoint; the ledger stores only fingerprints. */
-export function findingFingerprint(defect:any):string {
-  const text=(value:any)=>String(value ?? '').replace(/\s+/g,' ').trim();
-  return stableHash(Object.fromEntries(['code','owner','scope','matter_id','field_path',
-    'source_quote','artifact_quote','conflict_resolution'].map(key=>[key,text(defect[key])])));
-}
 
 /** Runs in the durable worker before any further paid correction. It delegates
  * semantic work to the existing source-bound repairer and independent reviewer;

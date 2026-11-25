@@ -38,11 +38,31 @@ test('unknown usage and the same cumulative token cap still stop paid recovery',
  j.ledger=[{trace:{usage:{total_tokens:editorialTokenBudget()}}}];
  assert.equal(superviseArtifact(j,data(),'commit').reason,'token_budget');
 });
-test('early field repairs and final document repairs share one allowance',()=>{
- const d=data();d.review_checkpoint.state.field_review_attempts={'candidates/0/submission_bio':1};
- assert.equal(superviseArtifact(job(),d,'commit').repair_strategy,'source_reconstruction');
- d.review_checkpoint.state.field_review_attempts['candidates/0/submission_bio']=2;
- assert.equal(superviseArtifact(job(),d,'commit').reason,'field_recovery_exhausted');
+test('the judge\'s exact correction is applied even when drafting already repaired that field',()=>{
+ // v1.0.119, real run 7dcf6fc6: drafting had repaired C2 once, the judge's first finding went
+ // straight to a whole reconstruction and its second, different finding was delivered uncorrected.
+ const d=data(),j=job();d.review_checkpoint.state.field_review_attempts={'candidates/0/submission_bio':1};
+ const first=superviseArtifact(j,d,'commit');assert.equal(first.repair_strategy,'targeted_correction');
+ j.ledger.push({supervision:first});d.review_checkpoint.state.field_review_attempts['candidates/0/submission_bio']=2;
+ d.final_artifact_review.judge.defects=[{...defect(),artifact_quote:'Sofia leads the mandate.',source_quote:'Lead partners: Ana Ruiz and Sofia Vega.'}];
+ const second=superviseArtifact(j,d,'commit');assert.equal(second.action,'repair');assert.equal(second.repair_strategy,'targeted_correction');
+ j.ledger.push({supervision:second});d.review_checkpoint.state.field_review_attempts['candidates/0/submission_bio']=3;
+ d.final_artifact_review.judge.defects=[{...defect(),artifact_quote:'A third different sentence.'}];
+ assert.equal(superviseArtifact(j,d,'commit').reason,'field_recovery_exhausted');
+});
+test('a field where drafting used both methods gets one judge correction, not two',()=>{
+ const d=data(),j=job();d.review_checkpoint.state.field_review_attempts={'candidates/0/submission_bio':2};
+ const only=superviseArtifact(j,d,'commit');assert.equal(only.repair_strategy,'targeted_correction');
+ j.ledger.push({supervision:only});d.review_checkpoint.state.field_review_attempts['candidates/0/submission_bio']=3;
+ d.final_artifact_review.judge.defects=[{...defect(),artifact_quote:'Another sentence.'}];
+ assert.equal(superviseArtifact(j,d,'commit').reason,'field_recovery_exhausted');
+});
+test('judge-ordered corrections stop after three cycles in one job, whatever the fields',()=>{
+ const d=data(),j=job();
+ for(let i=0;i<3;i++){d.final_artifact_review.judge.defects=[{...defect(),field_path:`candidates/${i}/submission_bio`}];
+  const decision=superviseArtifact(j,d,'commit');assert.equal(decision.action,'repair');j.ledger.push({supervision:decision});}
+ d.final_artifact_review.judge.defects=[{...defect(),field_path:'candidates/3/submission_bio'}];
+ assert.equal(superviseArtifact(j,d,'commit').reason,'field_recovery_exhausted');
 });
 test('source questions, unlocated diagnostics and independent approval retain their distinct outcomes',()=>{
  const d=data();d.final_artifact_review.judge.defects=[{...defect(),owner:'user'}];
@@ -56,7 +76,12 @@ test('source questions, unlocated diagnostics and independent approval retain th
 test('whole-candidate method counts cover descendants without consuming a separate sibling field',()=>{
  const {fieldRecoveryPlan}=require('../../src/lib/editorial/field-recovery.ts');
  const defect={owner:'rankpilot',severity:'critical',scope:'submission',field_path:'candidates/0/submission_bio',artifact_quote:'A claim.'};
- assert.equal(fieldRecoveryPlan([],[defect],{'candidates/0':2}).reason,'field_recovery_exhausted');
- assert.equal(fieldRecoveryPlan([],[{...defect,field_path:'candidates/0'}],{'candidates/0/submission_bio':2}).reason,'field_recovery_exhausted');
+ const {obligationKey:key,findingFingerprint}=require('../../src/lib/editorial/field-recovery.ts');
+ const ordered=target=>[{supervision:{action:'repair',recovery_contract:'field-recovery-v1',obligation_keys:[key(target)],repair_strategy:'targeted_correction',findings:[findingFingerprint({...target,artifact_quote:'Earlier claim.'})]}}];
+ // Drafting's whole-candidate attempts count for the descendant: one judge correction remains, then none.
+ assert.equal(fieldRecoveryPlan([],[defect],{'candidates/0':2}).strategy,'targeted_correction');
+ assert.equal(fieldRecoveryPlan(ordered(defect),[defect],{'candidates/0':3}).reason,'field_recovery_exhausted');
+ const whole={...defect,field_path:'candidates/0'};
+ assert.equal(fieldRecoveryPlan(ordered(whole),[whole],{'candidates/0/submission_bio':3}).reason,'field_recovery_exhausted');
  assert.equal(fieldRecoveryPlan([],[{...defect,field_path:'candidates/0/category_rationale'}],{'candidates/0/submission_bio':2}).strategy,'targeted_correction');
 });
