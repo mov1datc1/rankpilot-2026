@@ -68,9 +68,59 @@ def drop_restated_sentences(text, protected=()):
                     i+=1
                 continue
             i+=1
-        if len(sentences)!=before:
-            paragraphs[p]=' '.join(sentences)
+        touched=len(sentences)!=before
+        # v1.0.116 (real run): a repair that may only ADD text introduced its new
+        # sentence by repeating the opening of the next one ("X is one of the lead
+        # partners on Y. The department prepared Z. X is one of the lead partners
+        # on Y, where …"). The short sentence is word for word the opening of the
+        # longer one, so removing it loses nothing; the longer one takes its place
+        # so the paragraph still introduces the mandate before the addition.
+        # A piece that continues in lower case ("… S.A. in Venezuela") is part of
+        # the same sentence and is never separated from it.
+        whole=[]
+        for piece in sentences:
+            if whole and piece[:1].islower():whole[-1]+=' '+piece
+            else:whole.append(piece)
+        strip=lambda s:norm(s).rstrip('.!?;:, ')
+        i=0
+        while i<len(whole):
+            short=strip(whole[i])
+            owner=next((j for j,other in enumerate(whole) if j!=i and len(short.split())>=8
+                        and norm(other).startswith(short) and len(norm(other))>len(short)+1
+                        and not norm(other)[len(short)].isalnum()),None)
+            if owner is not None:
+                trial=list(whole)
+                if owner>i:trial[i]=trial[owner];del trial[owner]
+                else:del trial[i]
+                candidate='\n'.join(paragraphs[:p]+[' '.join(trial)]+paragraphs[p+1:])
+                if keeps_quotes(candidate):
+                    whole=trial;changed=touched=True;continue
+            i+=1
+        if touched:
+            paragraphs[p]=' '.join(whole)
     return '\n'.join(paragraphs) if changed else text
+
+
+def drop_restated_with_bindings(text, quotes=()):
+    """drop_restated_sentences, also when an output quotation contains the repetition.
+
+    v1.0.116 (real run): the quotation bound to a repaired B9 was the whole
+    paragraph, repeated sentence included, so protecting it kept the repetition.
+    The same removal is applied to that quotation; the change is made only if
+    every quotation is still a literal passage of the result. Returns the text
+    and {old quotation: new quotation} for the bindings that moved with it.
+    """
+    literal=lambda s:' '.join(str(s or '').split())
+    text=drop_restated_sentences(text,quotes)
+    free=drop_restated_sentences(text,())
+    if free==text:return text,{}
+    moved={}
+    for quote in quotes:
+        if not literal(quote) or literal(quote) not in literal(text) or literal(quote) in literal(free):continue
+        fixed=drop_restated_sentences(quote,())
+        if fixed==quote or literal(fixed) not in literal(free):return text,{}
+        moved[quote]=fixed
+    return free,moved
 
 
 def repetition_fields(proposal):

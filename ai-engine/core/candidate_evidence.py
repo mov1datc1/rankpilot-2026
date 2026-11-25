@@ -269,3 +269,37 @@ def category_error(candidate):
         if label!='category pending' or not norm(candidate.get('category_missing_criterion')) or not norm(candidate.get('recommended_action')):
             return 'Categoría pendiente sin criterio concreto y acción'
     return None
+
+
+def individual_verification_sources(package, name):
+    """v1.0.116: what the application itself verified in the directory about
+    THIS lawyer, as a source record for the category review.
+
+    The reviewer of category_rationale received the lawyer and their mandates
+    only, so a category the application had verified in the official table was
+    reported as "no verified official observation" (real run, three times).
+    Only a verified observation with an observed category, and commentary of the
+    lawyer's own retrieved profile, are included; never another person's.
+    """
+    from core.role_evidence import identity
+    target=identity(name)
+    verification=(package or {}).get('ranking_verification') or {}
+    if not target or not isinstance(verification,dict):return []
+    lines=[]
+    for item in verification.get('individuals') or []:
+        if not isinstance(item,dict) or identity(item.get('lawyer_name'))!=target:continue
+        if not str(item.get('status') or '').startswith('verified') or not str(item.get('observed_band') or '').strip():continue
+        evidence=item.get('evidence') or {}
+        scope=', '.join(str(v) for v in (item.get('directory'),evidence.get('guide'),
+            ('edition '+str(evidence['edition'])) if evidence.get('edition') else None,
+            ' '.join(str(v) for v in (item.get('practice_area'),item.get('jurisdiction')) if v)) if v)
+        lines.append(f"Official directory observation retrieved by the application ({scope}): {item.get('lawyer_name')} is ranked as {str(item['observed_band']).strip()}.")
+    for profile in ((verification.get('profile_research') or {}).get('profiles') or []):
+        subject=profile.get('subject') or {}
+        if profile.get('status')!='retrieved' or subject.get('kind')!='individual' or identity(subject.get('name'))!=target:continue
+        for comment in profile.get('commentary') or []:
+            text=' '.join(str((comment or {}).get('text') or '').split())
+            if text:lines.append('Official commentary on this lawyer\'s own directory profile: '+text)
+    if not lines:return []
+    return [{'source_label':'Official directory observation of this lawyer (ranking_verification)',
+             'source_excerpt':'\n'.join(dict.fromkeys(lines))}]

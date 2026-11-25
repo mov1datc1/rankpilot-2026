@@ -1,3 +1,23 @@
+## 1.0.116: C2 and B9 causes found by reading the code against a real run
+
+No new model call. Each change removes a cause seen in the real tax case run on 1.0.115 and, for the first two, in every stored run since 1.0.87.
+
+- **C2: the writer and the reviewer now agree on individual aspirations.**
+  - **Cause:** the writer was told to take the aspiration from any category the firm requests for a lawyer; the reviewer required the aspiration "at most once". The C2 stated a band objective for two lawyers, the reviewer marked it critical and the repair deleted both.
+  - **Change:** the practice aspiration is stated once; a category requested for a named lawyer is stated once for that lawyer in the closing paragraph, and the reviewer no longer treats it as a repeated request. The repair task no longer says "C2 requests coverage directly".
+- **B10 and C2 name publishable clients.**
+  - **Cause:** the biography task said a publishable client keeps its name; the B10/C2 task only carried rules to generalise. No stored run names a single publishable client in C2.
+  - **Change:** the same rule as B9: publishable clients are named behind the decisive evidence; only clients of confidential matters are generalised. A value marked confidential is never stated, not even as an order of magnitude (B9, B10 and C2).
+- **The category review receives the official observation.** The reviewer of a lawyer's category saw the lawyer and their mandates but not what the application had verified in the directory, and reported a verified category as unverified (three times, two repair calls). It now receives that lawyer's verified observation and the commentary of their own profile; never another person's.
+- **Repetition added by a repair is removed.**
+  - **Cause:** a repair may only add text around bound quotations; it introduced its addition by repeating the opening of the next sentence, and the quotation that contained the repetition protected it.
+  - **Change:** a sentence that is word for word the opening of another sentence of the same paragraph is kept once, and the quotation moves with it when it stays literal. The repair task says to integrate additions without restating a sentence or a headship.
+- **Leading a matter is not a second headship.** "co-leads the matter, in which the Tax Department advises" was counted as a headship statement and bought a self-correction that came back worse.
+- **Register voice in B10 and C2.** The B10/C2 task now carries the plain-role instruction B9 already had. "is repeatedly listed as lead partner on", "is listed on lead roles", "is listed on … mandates", "is observed in the scoped Chambers … profile" and "the portfolio records" are rewritten to the fact; "listed on the stock exchange" is untouched.
+- **A B9 answered with a link only is said before generating.** When the form gives a web link instead of a biography, the readiness summary names those lawyers and says their B9 will be written from mandates only. It never blocks.
+
+Not changed: prompt caching (0 % is structural: explicit mode without breakpoints, a schema unique to each call, a writer static block under the 1,024-token minimum) and a C2 plan of its own; both need a larger redesign.
+
 ## 1.0.115: Four defects found in the first real run of 1.0.114
 
 Surgical, deterministic where possible; no new model call. Found by comparing a real tax case run on 1.0.114 with the same case on 1.0.112.

@@ -109,9 +109,9 @@ def faults(candidate):
         found.append('B9 REPETITION: the same content is stated twice: ' + '; '.join(
             '"' + ' '.join(a.split()[:12]) + ' …" / "' + ' '.join(b.split()[:12]) + ' …"' for a, b in repeats[:2])
             + '. Keep it once, where it explains the expertise.')
-    from core.prose_rules import HEAD_FUNCTION
+    from core.prose_rules import headship_matches
     heads = [s for s in re.split(r'(?<=[.!?])\s+', ' '.join(bio.split()))
-             if any(re.search(r'\b(?:department|practice)\b', m.group(0), re.I) for m in HEAD_FUNCTION.finditer(s))]
+             if any(re.search(r'\b(?:department|practice)\b', m.group(0), re.I) for m in headship_matches(s))]
     if len(heads) >= 2:
         found.append('B9 HEADSHIP: the department headship is stated ' + str(len(heads)) + ' times; state it once, in the '
                      'opening, and use the other sentences for the work itself.')

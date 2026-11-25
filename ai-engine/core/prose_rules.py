@@ -13,7 +13,10 @@ import unicodedata
 
 VERSION = 'prose-rules-v1'
 
-_ADV = r'(?P<adv>(?:also|likewise|further|again|similarly)\s+)?'
+# v1.0.116: a frequency adverb ("is repeatedly listed as lead partner on") belongs to
+# the register wording and goes with it; the plural of the mandates already says it.
+_FREQ = r'(?:(?:repeatedly|regularly|consistently|frequently|often|routinely)\s+)?'
+_ADV = _FREQ + r'(?P<adv>(?:also|likewise|further|again|similarly)\s+)?'
 _ROLE = r'(?:named|recorded|listed|identified|designated)\s+(?:as\s+)?(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner'
 LEAD_PATTERNS = [
     # "X was named lead partner when …" -> "X led the matter when …"
@@ -29,8 +32,8 @@ EXTRA_LEAD = [
     # v1.0.115 (real run): "a listed lead partner", "her listed leadership",
     # "his listed lead role" -> the role itself, without the register adjective.
     (re.compile(r'\b(?:listed|recorded|documented)\s+(?=(?:co-?)?lead(?:-|\s)partners?\b|(?:co-?)?lead(?:ership)?\s+roles?\b|leadership\b)', re.I), ''),
-    # "is listed in leadership roles on" -> "holds leadership roles on"
-    (re.compile(r'\b(?P<be>is|are|was|were)\s+(?:listed|named|recorded)\s+in\s+(?P<what>(?:a\s+)?lead(?:ership)?\s+roles?)\b', re.I),
+    # "is listed in/on leadership roles on" -> "holds leadership roles on"
+    (re.compile(r'\b(?P<be>is|are|was|were)\s+' + _FREQ + r'(?:listed|named|recorded)\s+(?:in|on)\s+(?P<what>(?:a\s+)?lead(?:ership)?\s+roles?)\b', re.I),
      lambda m: f"{ {'is': 'holds', 'are': 'hold'}.get(m.group('be').lower(), 'held')} {m.group('what')}"),
     # v1.0.110: "is (also) listed as a team member on" -> "is (also) a team member on".
     # Form vocabulary for participation; the voice rules reject it and a bound
@@ -79,6 +82,20 @@ EXTRA_LEAD = [
                 r'(?=(?:an?\s+|the\s+|one\s+of\s+(?:the\s+)?(?:\w+\s+)?)?(?:(?:co-?)?lead(?:-|\s)partners?|team\s+members?|members?\s+of\s+the\s+(?:matter\s+)?team)\b)', re.I),
      lambda m: f"{m.group('be')}{m.group('adv') or ''} {'among ' if m.group('link').lower() == 'among' else ''}"),
 ]
+# v1.0.116 (real run, B10/C2): "X is listed on significant Tax mandates", "is listed on
+# matters involving …". Being on the record of a mandate is acting on it; a company
+# "listed on the stock exchange" has no mandate noun and an article, and is untouched.
+LISTED_ON = re.compile(r'\b(?P<be>is|are|was|were)\s+' + _FREQ + r'(?P<adv>(?:also|likewise|further)\s+)?listed\s+on\s+'
+                       r'(?!(?:the|a|an|its|their|his|her)\b)(?!(?:[\w-]+\s+){0,4}(?:exchanges?|markets?|bourse|registr(?:y|ies)|registers?|index|nasdaq|nyse)\b)'
+                       r'(?=[^.;:!?]*?\b(?:matters?|mandates?|engagements?)\b)', re.I)
+# Research vocabulary that is not public prose: "is observed in the scoped Chambers …
+# profile as", "the portfolio records tax analysis on".
+RESEARCH_VOICE = [
+    (re.compile(r'\bscoped\s+(?=(?:official\s+)?(?:Chambers|Legal\s*500)\b)', re.I), ''),
+    (re.compile(r'\b(?P<be>is|are|was|were)\s+observed\s+in\s+(?=the\s+(?:[\w&-]+\s+){0,2}(?:Chambers|Legal\s*500)\b)', re.I),
+     lambda m: f"{m.group('be')} recognised in "),
+    (re.compile(r'\b(?P<art>[Tt]he)\s+portfolio\s+records\b'), lambda m: f"{m.group('art')} portfolio includes"),
+]
 TAIL_LEAD = re.compile(r'\b(?P<who>[A-ZÁÉÍÓÚÑ][\w’\'-]+)\s+is\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\.')
 
 HEDGES = [
@@ -110,6 +127,9 @@ def natural_lead(text):
     for pattern, repl in EXTRA_LEAD:
         out = pattern.sub(repl, out)
     out = TAIL_LEAD.sub(lambda m: f"{m.group('who')} {'co-leads' if m.group('co') else 'leads'} the matter.", out)
+    out = LISTED_ON.sub(lambda m: f"{m.group('adv') or ''}{ {'is': 'acts', 'are': 'act'}.get(m.group('be').lower(), 'acted')} on ", out)
+    for pattern, repl in RESEARCH_VOICE:
+        out = pattern.sub(repl, out)
     return re.sub(r'[ \t]{2,}', ' ', out)
 
 
@@ -137,10 +157,21 @@ def _norm(value):
 HEAD_FUNCTION = re.compile(r'\b(?:head(?:s)?\s+(?:of\s+)?|leads?\s+|leading\s+|responsible\s+for\s+)(?:[\w’&,-]+\s+){0,8}(?:department|practice|areas?|group|team)\b|\b(?:department(?:al)?|practice)\s+(?:head|leader)\b|\bhead\s+of\s+(?:the\s+)?(?:firm|department)\b', re.I)
 
 
+# v1.0.116: "co-leads the matter, in which the Tax Department advises" leads a
+# mandate, not the department. It was counted as a second headship statement and
+# bought a self-correction that came back worse (real run).
+MANDATE_OBJECT = re.compile(r'\b(?:matters?|mandates?|representations?|engagements?|cases?|disputes?|transactions?|proceedings?|advice)\b', re.I)
+
+
+def headship_matches(text):
+    """Passages that state a department/practice headship, never a mandate led."""
+    return [m for m in HEAD_FUNCTION.finditer(str(text or '')) if not MANDATE_OBJECT.search(m.group(0))]
+
+
 def states_headship(bio, practice=''):
     """A headship counts when it names the department/practice or this practice area."""
     keys = [w for w in re.findall(r'[\w’]{4,}', _fold(practice)) if w not in ('practice', 'department', 'law')]
-    for match in HEAD_FUNCTION.finditer(str(bio or '')):
+    for match in headship_matches(bio):
         text = _fold(match.group(0))
         if re.search(r'\b(?:department|practice)\b', text) or any(k in text for k in keys):
             return True
