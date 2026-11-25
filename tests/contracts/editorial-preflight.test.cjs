@@ -25,9 +25,10 @@ test('department-source requirement is early and does not promise generation whi
  const matter={id:'m',client:'Fictional Employer',rawNotes:source};
  const missing={...data,original_b10:'',enhanced_b7:'Generated prose is not source evidence.'};
  assert.equal(preparationInputIssues(missing,[matter]).length,0);
- assert.match(editorialPreparationIssues(missing,[matter]).join(' '),/Revisar expediente/);
+ // v1.0.114: a missing department description is a limitation, never a block.
+ assert.deepEqual(editorialPreparationIssues(missing,[matter]),[]);
  const readiness=calculateEvidenceReadiness([matter],[],'');
- assert.equal(readiness.canOptimize,false);assert.doesNotMatch(readiness.warnings.join(' '),/IA.*estructur/);
+ assert.equal(readiness.canOptimize,true);assert.match(readiness.warnings.join(' '),/B10 se construirá de forma preliminar/);assert.doesNotMatch(readiness.warnings.join(' '),/IA.*estructur/);
  assert.deepEqual(editorialPreparationIssues({...missing,confirmed_source_b10:'User-supplied department facts.'},[matter]),[]);
 });
 test('only configured editorial targets start, while historical sources from other guides remain usable in option B',()=>{

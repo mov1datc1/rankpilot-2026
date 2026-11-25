@@ -62,7 +62,13 @@ export function integrityChecks(data: any, matters: any[] = []): string[] {
     const values = moneyAmounts(rawValue);
     const narrative = String(m.summary || m.rawNotes || '');
     if (rawValue && /(?<![A-Z])\$\s*\d/.test(rawValue) && !/\b(?:US\$|USD|MXN|EUR|pesos|d[oó]lares)\b/i.test(rawValue))
-      checks.push(`El valor de ${label(m)} («${rawValue}») no indica la moneda. Confírmala antes de presentar.`);
+    {
+      // v1.0.114: ask with the context the same matter already gives.
+      const context = moneyAmounts(narrative).filter(a => TO_USD[a.currency] && a.value >= 1000).slice(0, 2);
+      checks.push(context.length
+        ? `El valor de ${label(m)} («${rawValue}») no indica la moneda, y su narrativa menciona ${context.map(a => a.raw).join(' y ')}. Confirma si el valor está en ${context[0].currency} y es esa cuantía exacta, o si corresponde a otro concepto.`
+        : `El valor de ${label(m)} («${rawValue}») no indica la moneda. Confírmala antes de presentar.`);
+    }
     // A value stated in two currencies (e.g. "MXN 11,775,193.22 (Approx USD
     // 65,353,319.98)") must describe the same figure: Ramos Real Estate.
     const priced = values.filter(v => TO_USD[v.currency]);

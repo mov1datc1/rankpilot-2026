@@ -70,7 +70,8 @@ export function calculateEvidenceReadiness(matters:any[]=[],lawyers:any[]=[],b10
   const count=(key:'hasClient'|'hasValue'|'hasOutcome'|'hasLeadPartner')=>matterStatuses.filter(m=>!m[key]).length;
   const missingElements={totalMatters:matters.length,mattersWithoutClient:count('hasClient'),mattersWithoutValue:count('hasValue'),mattersWithoutOutcome:count('hasOutcome'),mattersWithoutLeadPartner:count('hasLeadPartner'),missingLawyers:!lawyers.length,missingB10:!b10Text.trim()};
   if(!matters.length)blockers.push('Añade al menos un asunto con su fuente antes de redactar.');
-  if(!String(b10Text || '').trim())blockers.push('Añade la descripción del departamento para fundamentar su presentación.');
+  // v1.0.114: not a blocker; the B10 is built preliminarily from the documented matters.
+  if(!String(b10Text || '').trim())warnings.push('Falta la descripción del departamento: el B10 se construirá de forma preliminar solo con los asuntos acreditados. Añádela para un resultado más completo.');
   if(matters.length && matters.some(m=>!matterSourceText(m)))blockers.push('Falta describir el trabajo realizado en las fuentes de los asuntos incompletos.');
   if(missingElements.mattersWithoutClient)warnings.push(`${missingElements.mattersWithoutClient} asunto(s) requieren identificar al cliente o su descripción autorizada.`);
   if(missingElements.mattersWithoutOutcome)warnings.push(`${missingElements.mattersWithoutOutcome} asunto(s) no indican su estado actual. Si siguen pendientes, indícalo; no necesitas inventar un resultado.`);
