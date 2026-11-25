@@ -271,6 +271,26 @@ def category_error(candidate):
     return None
 
 
+def firm_request_sources(package):
+    """v1.0.118: the firm's own overview, coverage request and objectives.
+
+    A category rationale may cite what the firm itself asks for a lawyer ("at
+    least Band 2 for …"). The category reviewer did not receive that text and
+    reported the request as unsupported (real run, two lawyers).
+    """
+    package=package or {}
+    parts=[]
+    for label,key in (('Department overview supplied by the firm','b10_source'),('Coverage request supplied by the firm','c2_source')):
+        text=' '.join(str(package.get(key) or '').split())
+        if text:parts.append(label+': '+text)
+    objectives=package.get('objectives') or {}
+    for label,key in (('Primary objective supplied by the firm','primary'),('Secondary objective supplied by the firm','secondary')):
+        text=' '.join(str(objectives.get(key) or '').split()) if isinstance(objectives,dict) else ''
+        if text:parts.append(label+': '+text)
+    if not parts:return []
+    return [{'source_label':'Firm overview, coverage request and objectives (original)','source_excerpt':'\n'.join(parts)}]
+
+
 def individual_verification_sources(package, name):
     """v1.0.116: what the application itself verified in the directory about
     THIS lawyer, as a source record for the category review.

@@ -1,3 +1,12 @@
+## 1.0.118: The category review receives the firm's own request
+
+No new model call.
+
+- **Category review.** A category rationale may cite what the firm itself asks for a lawyer. The reviewer did not receive the firm's overview, coverage request or objectives and reported that request as unsupported (real run on 1.0.116, two lawyers). It now receives them as a source; a request remains a request, never a verified ranking.
+- **Fact sheet while writing.** During construction the nomination decisions live in the shared plan, not yet in the saved proposal; the sheet given to the B10/C2 writer and to each biography now carries them.
+- **Shared headship.** With several department heads the sheet says "one of N department heads, with …", so a biography does not write "Head of" for one of them.
+- **C2 argues with named mandates and results.** Tested unit by unit on a stored real case (one call each, no full run): with the sheet, C2 stated leadership correctly but turned abstract to avoid repeating B10. The task now says that what differs from B10 is the function, not the evidence; and the sheet says that a confidential matter value does not restrict results or percentages.
+
 ## 1.0.117: One record of confirmed facts for every writer and reviewer
 
 After a real run on 1.0.116 failed the final review, the judge's findings of sixteen stored runs were compared. They change family with every version, and almost all are facts the application already holds in structured form (publication status, who leads and who co-leads, declared and verified rankings, the decided category). Each writer received the raw register and derived them again. No new model call.

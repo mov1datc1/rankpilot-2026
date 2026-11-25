@@ -219,7 +219,12 @@ recognition, and close on capability, results and track record. Adapt this order
 to the candidacy and its evidence; it is not a template. State capabilities as firm
 facts, never with deferential formulas such as "respectfully submits" (same 1,000-word maximum, expanding a
 short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
-service catalogue. Use actual retrieved peer evidence only within its scope; never
+service catalogue. What must differ from B10 is the function, not the evidence: C2 argues
+with the same decisive mandates, each named by its publishable client and stated with
+its documented result or exact stage (for example an audit that closed with a
+resolution at 1% of the assessment), because a named mandate with its result is the
+proof of the argument and a generic description ("a completed audit") is not. Do
+not restate B10's sentences; use the fact to draw the conclusion B10 does not draw. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
 while preserving legal work and career credentials. public_disclosure lists the

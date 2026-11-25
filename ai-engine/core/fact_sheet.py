@@ -97,10 +97,11 @@ def build(package, strategy=None, development=None, person=None):
         matters = [m for m in matters if target in roles[m.get('id')]['lead_roster'] + roles[m.get('id')]['team_roster']]
     label = {m.get('id'): ' '.join(str(m.get('client') or m.get('name') or m.get('id')).split()).strip(' |') for m in matters}
     clients = [{'matter_id': m.get('id'), 'client': label[m.get('id')], 'publication': publication(m),
-                **({'value': 'confidential: never stated, not even as a range'} if re.match(r'\s*confiden', str(m.get('value') or ''), re.I) else {}),
+                **({'value': 'the amount of the matter value is confidential: never state that amount, not even as a range. Results, percentages and the other documented facts of the mandate are not restricted by this'} if re.match(r'\s*confiden', str(m.get('value') or ''), re.I) else {}),
                 **({'selection': dispositions[m.get('id')]} if dispositions.get(m.get('id')) else {})} for m in matters]
-    heads = {identity(h.get('name')) for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
-             if isinstance(h, dict)}
+    head_names = [str(h.get('name')).strip() for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
+                  if isinstance(h, dict) and identity(h.get('name'))]
+    heads = {identity(n) for n in head_names}
     verified = {}
     for item in ((package.get('ranking_verification') or {}).get('individuals') or []):
         if isinstance(item, dict) and str(item.get('status') or '').startswith('verified') and str(item.get('observed_band') or '').strip():
@@ -116,7 +117,9 @@ def build(package, strategy=None, development=None, person=None):
         if profile.get('role') or profile.get('title'):
             entry['title'] = profile.get('role') or profile.get('title')
         if key in heads:
-            entry['department_head'] = True
+            # A shared headship is stated as shared: "one of the heads", never "the head".
+            others = [n for n in head_names if identity(n) != key]
+            entry['department_head'] = ('one of ' + str(len(heads)) + ' department heads, with ' + ' and '.join(others)) if others else 'sole department head'
         declared = profile.get('current_ranking') or profile.get('currentRank')
         if declared:
             entry['declared_ranking'] = str(declared) + ' (declared by the firm, not verified)'
@@ -162,7 +165,11 @@ def for_call(state, role, payload):
         person = (payload.get('shared_decision') or {}).get('name')
     if role == 'development' and state.get('rag_unit') == 'matters':
         return None
-    return build(package, state.get('strategy'), state.get('development'), person)
+    # While the units are being written the decisions live in the shared plan.
+    decisions = state.get('development') or payload.get('shared_decisions')
+    if not decisions and isinstance(payload.get('shared_decision'), dict):
+        decisions = {'candidates': [payload['shared_decision']]}
+    return build(package, state.get('strategy'), decisions, person)
 
 
 def lead_scope(sentence, package, subject=None):
