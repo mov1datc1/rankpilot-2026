@@ -4,7 +4,7 @@ from pydantic import ConfigDict, Field, create_model
 
 WRITING_TASK = '''Write a concise internal executive Audit in Spanish from the
 CURRENT shared_decisions, development and original sources, in the schema fields.
-Use approximately 1200–1800 words total, proportionate to evidence, without filler.
+Use approximately 1800–2600 words total, proportionate to evidence, without filler.
 executive_assessment: filing recommendation, objective versus verified position,
 main strength/limitation and comparative hero rationale. Where actual retrieved
 peer commentary exists, contrast concrete capabilities with the source-backed
@@ -64,6 +64,13 @@ def _current_position(text):
     """Spanish wording of the current-ranking field; never asserts a ranking."""
     value=' '.join(str(text or '').split()).rstrip('.')
     if not value:return 'sin verificación disponible'
+    # v1.0.113: the firm's own declaration for this lawyer is stated as declared.
+    # The Audit printed "sin ranking declarado" for lawyers declared "Ranked".
+    if re.search(r'\bdeclared\b',value,re.I) and not re.search(r'\b(?:se|una|la|el|de|en|que)\b',value,re.I):
+        if re.search(r'\b(?:not ranked|unranked)\b',value,re.I):
+            return 'la firma lo declara sin ranking; la consulta acotada no encontró una coincidencia exacta, lo que no prueba ausencia en otras ediciones o prácticas'
+        if re.search(r'\branked\b',value,re.I):
+            return 'la firma lo declara rankeado, sin indicar categoría; la consulta acotada no encontró una coincidencia exacta de persona y firma, lo que no confirma ni descarta ese ranking'
     # v1.0.109: any English "no ... ranking ... verified" wording gets the same
     # Spanish sentence (the Audit printed "No current individual ranking is
     # verified in the supplied research" inside a Spanish document).

@@ -65,6 +65,13 @@ EXTRA_LEAD = [
     # "X has been (the) lead partner on/in/for Y" -> "X has led Y"
     (re.compile(r'\bhas\s+(?P<adv>(?:also|likewise)\s+)?been\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>on|in|for)\s+'),
      lambda m: f"has {m.group('adv') or ''}{'co-led' if m.group('co') else 'led'} {'the work for ' if m.group('prep') == 'for' else ''}"),
+    # v1.0.113: any remaining registry verb about a role ("is listed as a lead
+    # partner, alongside Y, on", "is listed as one of three lead partners", "is
+    # listed among the team members"). The role is a fact about the lawyer, not
+    # about how a form lists it: the registry verb goes, every fact stays.
+    (re.compile(r'\b(?P<be>is|are|was|were)(?P<adv>\s+(?:also|likewise|further))?\s+(?:listed|named|recorded|identified|designated|shown)\s+(?P<link>as|among)\s+'
+                r'(?=(?:an?\s+|the\s+|one\s+of\s+(?:the\s+)?(?:\w+\s+)?)?(?:(?:co-?)?lead(?:-|\s)partners?|team\s+members?|members?\s+of\s+the\s+team)\b)', re.I),
+     lambda m: f"{m.group('be')}{m.group('adv') or ''} {'among ' if m.group('link').lower() == 'among' else ''}"),
 ]
 TAIL_LEAD = re.compile(r'\b(?P<who>[A-ZÁÉÍÓÚÑ][\w’\'-]+)\s+is\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\.')
 

@@ -29,7 +29,9 @@ LEADERS_LABEL = 'Otros líderes de asunto evaluados internamente:'
 RESERVE_HEADING = '**Asuntos en reserva**'
 EXCLUDED_HEADING = '**Asuntos excluidos del portafolio**'
 LINE = '— '
-WORD_LIMIT = 1800
+# v1.0.113: the internal Audit must explain every portfolio decision; the former
+# 1,800-word ceiling forced shortcuts such as «mayor escala» and grouped exclusions.
+WORD_LIMIT = 2600
 REVIEW_SECONDS, REPAIR_SECONDS, RECHECK_SECONDS = 75, 90, 60
 
 TASK = '''Write the internal executive Audit in Spanish from the CURRENT shared
@@ -56,17 +58,24 @@ ranking_verification, contrast concrete capabilities with this portfolio; a
 table-only or absent retrieval permits a precise scoped limitation, never an
 invented market comparison or forecast.
 portfolio: one required slot per selected matter in the supplied order. Write
-one or two compact sentences (maximum 55 words): the legal problem, the firm's
-intervention and the achieved result or actual current stage, with decisive
-scale. The application prints the number and client name before your sentence.
+two or three compact sentences within the slot's stated maximum: the legal
+problem, the firm's intervention and the achieved result or actual current stage,
+with decisive scale; then WHY it holds this place in the portfolio, from the
+strategy rationale and the sources: legal complexity, strategic and economic
+impact, result obtained, currency, and what it adds to the positioning of this
+practice. The value of an asset alone is not competitive relevance; no scores. The application prints the number and client name before your sentence.
 leadership: one required object per person. argument (80-130 words) explains
 why this person, their career credentials and the scope and limits of their
 personal evidence. Do not restate the nomination or category; the application
 prints them with any pending criterion. contributions has one required slot per
 personally attributed mandate used in that person's CURRENT B9: ONE compact
-sentence (maximum 40 words) stating the person's own role and the achieved
-result or actual pending stage of THAT mandate, consistent with its b9_passage
-and source quote. Team membership is not leadership or a personal result. A
+sentence (maximum 40 words) stating the person's role exactly as sourced (líder
+del asunto, colíder, integrante del equipo) and, as a separate clause, what the
+firm did and the achieved result or actual pending stage of THAT mandate
+("Lidera el asunto; el despacho obtuvo la suspensión definitiva"), consistent with
+its b9_passage and source quote. Never give the person a verb of personal
+execution (condujo, dirigió, presentó, promovió, obtuvo) unless the source
+attributes that act to them by name. Team membership is not leadership or a personal result. A
 Lead partner form heading identifies the responsible lawyer; write "líder del
 asunto" and never "socio" or "partner" unless partner status is confirmed in
 the supplied profile. additional has one slot per further matter leader: the
@@ -75,10 +84,12 @@ that person in this filing with its reason, and the one missing fact that would
 change it. Never invent a public profile or title for them.
 evidence_gaps: comparisons has one required slot per client-visible reserve
 comparison: concrete sourced differences on BOTH sides (legal mechanism, scope
-or quantity with its concept, and ongoing/completed status). Never write menor
+or quantity with its concept, and ongoing/completed status), ending with the
+concrete reason the selected matter was preferred and what would change that
+decision. Never write menor
 escala, mayor escala or an unqualified hierarchy. other_reserves is one
-sentence on the remaining reserves, or an empty string. exclusions (maximum 120
-words) gives the actual reasons, distinguishing practice relevance, represented
+sentence on the remaining reserves, or an empty string. exclusions (maximum 240
+words) names every excluded matter, alone or in a named group, with its actual reason, distinguishing practice relevance, represented
 client side, strategic thesis and genuinely missing evidence; empty when no
 matter is excluded. A reserve can have sufficient evidence and lose on
 comparative value.
@@ -92,8 +103,9 @@ REVIEW_TASK = '''Review only these internal Audit units, written in Spanish, bef
 document assembly. For EACH obligation judge whether the actual Audit passage
 executes its rule against the supplied original anchors and, for a personal
 contribution, the person's CURRENT B9 passage. The Audit is compact by design:
-one accurate sentence stating the person's own role and the achieved result or
-actual pending stage executes a personal obligation. Do not demand B9-level
+one accurate sentence stating the person's sourced role and, separately, what the
+firm did with the achieved result or actual pending stage executes a personal
+obligation; leading a matter is not personally performing each act. Do not demand B9-level
 development, arbitrary length or facts absent from the supplied anchors. Mark
 failed only for a concrete material violation: an omitted decisive result or
 stage, a wrong actor or professional title (a Lead partner form heading does
@@ -298,18 +310,18 @@ def budgets(plan):
     """Per-slot word budgets that keep the whole Audit near its executive limit."""
     contributions = sum(len(p['contributions']) for p in plan['people'])
     people = max(len(plan['people']), 1)
-    return {'portfolio': max(15, min(55, 420 // max(len(plan['portfolio']), 1))),
+    return {'portfolio': max(30, min(80, 900 // max(len(plan['portfolio']), 1))),
             'argument': max(45, min(130, 520 // people)),
             'contribution': max(12, min(40, 450 // max(contributions, 1))),
             'leader': max(25, min(60, 150 // max(len(plan['leaders']), 1))),
-            'comparison': max(20, min(60, 230 // max(len(plan['comparisons']), 1)))}
+            'comparison': max(35, min(80, 500 // max(len(plan['comparisons']), 1)))}
 
 
 def letter_schema(plan):
     from core.review_graph import NextAction
     words = budgets(plan)
     portfolio = _strict('AuditPortfolio', {key: _text(
-        f"Contribution of {item['client']} to the case in compact Spanish (maximum {words['portfolio']} words).", words['portfolio'] * 11)
+        f"Contribution of {item['client']} to the case in compact Spanish (maximum {words['portfolio']} words): problem, intervention, result or stage, then why it holds this place in the portfolio (complexity, impact, result, currency, contribution to the practice positioning; asset value alone is not relevance).", words['portfolio'] * 11)
         for key, item in plan['portfolio'].items()})
     people = {}
     for person in plan['people']:
@@ -317,8 +329,8 @@ def letter_schema(plan):
             'career credentials and scope/limits of personal evidence. Do not restate nomination or category.', words['argument'] * 11)}
         if person['contributions']:
             fields['contributions'] = (_strict('AuditContributions_' + person['key'], {key: _text(
-                f"ONE compact Spanish sentence (maximum {words['contribution']} words) for " + item['client'] + ': this person\'s own role and the '
-                'achieved result or actual pending stage, consistent with the supplied B9 passage.', words['contribution'] * 11)
+                f"ONE compact Spanish sentence (maximum {words['contribution']} words) for " + item['client'] + ': this person\'s sourced role (líder del asunto, colíder or integrante del equipo) and, as a separate clause, what the firm did and the '
+                'achieved result or actual pending stage, consistent with the supplied B9 passage. No verb of personal execution unless the source attributes the act to the person by name.', words['contribution'] * 11)
                 for key, item in person['contributions'].items()}), ...)
         people[person['key']] = (_strict('AuditPerson_' + person['key'], fields), ...)
     if plan['leaders']:
@@ -327,11 +339,11 @@ def letter_schema(plan):
             'asunto, explicit decision not to nominate in this filing with its reason, and the missing fact that would change it.', 650)
             for key, item in plan['leaders'].items()}), ...)
     gaps = {'other_reserves': (str, Field(max_length=500, description='One Spanish sentence on reserves without an individual comparison; empty string if none.')),
-            'exclusions': (str, Field(max_length=1200, description='Actual exclusion reasons in Spanish (maximum 120 words); empty string when nothing is excluded.'))}
+            'exclusions': (str, Field(max_length=2400, description='Every excluded matter, alone or in a named group, with its actual reason, in Spanish (maximum 240 words); empty string when nothing is excluded.'))}
     if plan['comparisons']:
         gaps['comparisons'] = (_strict('AuditComparisons', {key: _text(
             f"Concrete sourced tradeoff in Spanish (maximum {words['comparison']} words) between selected " + item['selected'] + ' and reserve '
-            + item['alternative'] + ', with facts and status on BOTH sides. No menor/mayor escala.', words['comparison'] * 11)
+            + item['alternative'] + ', with facts and status on BOTH sides, ending with why the selected matter was preferred and what would change that. No menor/mayor escala.', words['comparison'] * 11)
             for key, item in plan['comparisons'].items()}), ...)
     return _strict('ConstructedAudit', {
         'executive_assessment': _text('Executive verdict in Spanish (about 220 words).', 2600),
@@ -804,7 +816,7 @@ def repair(state, plan, content, defects, invoke, trace):
     if not targets:
         return content, [], trace
     keys = {f'R{i+1:02d}': path for i, path in enumerate(targets)}
-    limits = {'executive_assessment': 2600, 'argument': 1600, 'exclusions': 1200, 'other_reserves': 500}
+    limits = {'executive_assessment': 2600, 'argument': 1600, 'exclusions': 2400, 'other_reserves': 500}
     schema = _strict('AuditSlotRepair', {key: _text('Corrected Spanish text for ' + str(targets[path]['label']) + '.',
                      limits.get(path.split('/')[-1], 700)) for key, path in keys.items()})
     payload = {'slots': {key: {'slot': path, **targets[path]} for key, path in keys.items()},
