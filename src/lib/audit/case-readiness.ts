@@ -27,6 +27,21 @@ export type ReadinessInput = {
  * never disagree. Missing administrative fields never lower the verdict: they
  * are needed to file with the directory, not to build a sound Audit/Submission.
  */
+/**
+ * v1.0.116: the directory form lets a firm answer B9 with a web link instead of
+ * a biography. RankPilot does not read that link, so the lawyer reaches the
+ * writer with mandates only: no career, education or offices held (real run:
+ * five of five lawyers). Said before generating, never a block.
+ */
+const PROFILE_TEXT = ['bio', 'comments', 'key_focus', 'standout_work', 'standoutWork', 'credentials', 'professional_roles'];
+export function lawyersWithLinkOnly(lawyers: any[]): string[] {
+  return (lawyers || []).filter(l => /https?:\/\//i.test(String(l?.url || ''))
+    && !PROFILE_TEXT.some(k => String(l?.[k] || '').replace(/https?:\/\/\S+/gi, '').trim()))
+    .map(l => String(l?.name || l?.fullName || '').trim()).filter(Boolean);
+}
+const linkOnlyText = (names: string[], total: number) =>
+  `${names.length} de ${total} abogado(s) traen en B9 solo un enlace, sin texto de biografía (${names.join(', ')}). RankPilot no lee el enlace: su B9 se redactará únicamente con los asuntos, sin trayectoria, formación ni cargos. Pega el texto de su perfil en el apartado de abogados para un B9 completo.`;
+
 export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
   const matters = input.matters || [], lawyers = input.lawyers || [];
   const blocking = editorialPreparationIssues({ firm_name: input.firmName, practice_area: input.practiceArea, original_b10: input.b10Text }, matters);
@@ -36,6 +51,8 @@ export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
   const limitations: string[] = [];
   if (!String(input.b10Text || '').trim()) limitations.push('No hay descripción de origen del departamento: el B10 y el C2 se construirán de forma preliminar solo con los asuntos acreditados, sin estructura, cargos ni capacidades que las fuentes no documenten. Revísalos con especial cuidado o añade la descripción.');
   if (!lawyers.length) limitations.push('El Submission saldrá sin B9 y el Audit sin estrategia individual por abogado; la cartera, el B10 y el C2 sí se desarrollan completos.');
+  const linkOnly = lawyersWithLinkOnly(lawyers);
+  if (linkOnly.length) limitations.push(linkOnlyText(linkOnly, lawyers.length));
   if (matters.length < 5) limitations.push(`Con ${matters.length} asunto(s) la cartera es corta: el Audit tendrá poco margen para elegir, comparar y justificar el asunto principal.`);
   if ((input.scopeConfirmations || []).length) limitations.push('Una fuente corresponde a otra práctica: su contenido solo se usará si es pertinente a la práctica elegida.');
   if (limitations.length)
@@ -73,6 +90,8 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
   const lawyers = input.lawyers || [], matters = input.matters || [];
   if (!lawyers.length)
     items.push({ kind: 'missing', text: 'No encontramos perfiles de abogados en tus fuentes. Sin ellos la sección B9 quedará vacía y no habrá candidaturas individuales: sube sus biografías o pega el texto de sus perfiles.' });
+  const linkOnly = lawyersWithLinkOnly(lawyers);
+  if (linkOnly.length) items.push({ kind: 'missing', text: linkOnlyText(linkOnly, lawyers.length) });
   if (!String(input.b10Text || '').trim())
     items.push({ kind: 'missing', text: 'Falta una descripción del departamento (base del B10). No impide generar: el B10 se construirá de forma preliminar a partir de los asuntos. Para un resultado más completo, pega un texto sobre la práctica, sus sectores y su equipo.' });
   const gaps = filingDetailsGaps(input.filingDetails || {});

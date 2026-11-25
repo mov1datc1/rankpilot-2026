@@ -60,3 +60,17 @@ test('v1.0.114: the currency question uses the amounts the narrative already sta
  const checks=integrityChecks({},[{id:'a',client:'Example Packaging',value:'$3,400,000.00',summary:'The authority imposed fines of MXN 3,474,240 on the plant.'}]);
  assert.equal(checks.length,1);assert.match(checks[0],/no indica la moneda, y su narrativa menciona MXN 3,474,240\. Confirma si el valor está en MXN/);
 });
+test('v1.0.116: a B9 answered with a link only is said before generating and never blocks',()=>{
+ const {lawyersWithLinkOnly}=require('../../src/lib/audit/case-readiness.ts');
+ const matters=Array.from({length:12},(_,i)=>({id:'m'+i,client:'Client '+i,value:'',summary:'Work.'}));
+ const lawyers=[{name:'Sofia Vega',url:'Sofia Vega |https://example.com/lawyers/sofia-vega |Y |Y |',bio:''},
+  {name:'Ana Ruiz',url:'https://example.com/lawyers/ana-ruiz',bio:'Ana Ruiz has advised on tax audits since 2004.'},
+  {name:'Luis Soto',url:'',bio:''},{name:'Eva Mora',url:'https://example.com/eva',bio:'https://example.com/eva'}];
+ assert.deepEqual(lawyersWithLinkOnly(lawyers),['Sofia Vega','Eva Mora']);
+ const r=caseReadiness({firmName:'Example Firm',practiceArea:'Tax',lawyers,matters,b10Text:'Practice.',filingDetails:{departmentName:'X',numPartners:'1',numLawyers:'2',contacts:[{name:'A',email:'a@x'}],departmentHeads:[{name:'A'}]},sourceReports:[{source:'a.docx',matter_count:12}]});
+ assert.equal(r.verdict.status,'limited');
+ assert.match(r.verdict.limitations.join(' '),/2 de 4 abogado\(s\) traen en B9 solo un enlace.*Sofia Vega, Eva Mora.*RankPilot no lee el enlace/);
+ assert.match(r.items.map(i=>i.kind+':'+i.text).join('\n'),/missing:2 de 4 abogado/);
+ assert.match(r.nextStep,/RankPilot generará con lo disponible/);
+ assert.deepEqual(lawyersWithLinkOnly([{name:'A',isPartner:true}]),[]);
+});

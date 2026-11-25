@@ -250,11 +250,13 @@ def bind_development(package, proposal):
     proposal=copy.deepcopy(proposal)
     # Canonicalize generated presentation before binding and validation, never
     # after returning development_validated. Source evidence stays verbatim.
-    from core.editorial_repetition import drop_restated_sentences
+    from core.editorial_repetition import drop_restated_with_bindings
     for field in ('b10','c2'):
         if field in proposal:
             quotes=[link.get(field+'_quote','') for link in proposal.get('institutional_execution',[])]
-            proposal[field]=drop_restated_sentences(sanitize_narrative_voice(proposal[field]),quotes)
+            proposal[field],moved=drop_restated_with_bindings(sanitize_narrative_voice(proposal[field]),quotes)
+            for link in proposal.get('institutional_execution',[]):
+                if link.get(field+'_quote') in moved:link[field+'_quote']=moved[link[field+'_quote']]
     register={m['id']:m for m in package.get('matters',[])}
     for draft in proposal.get('matters',[]):
         for field in ('text','completion_status'):
@@ -269,7 +271,10 @@ def bind_development(package, proposal):
         if 'submission_bio' in candidate:
             quotes=[item.get('public_quote','') for key in ('profile_coverage','submission_case_coverage')
                     for item in candidate.get(key,[]) or []]
-            candidate['submission_bio']=drop_restated_sentences(sanitize_narrative_voice(candidate['submission_bio']),quotes)
+            candidate['submission_bio'],moved=drop_restated_with_bindings(sanitize_narrative_voice(candidate['submission_bio']),quotes)
+            for key in ('profile_coverage','submission_case_coverage'):
+                for item in candidate.get(key,[]) or []:
+                    if item.get('public_quote') in moved:item['public_quote']=moved[item['public_quote']]
         # Binding evidence must not rewrite the biography after its quotations
         # have been generated. Head/partner claims belong to sourced drafting
         # and independent review, not an unconditional text substitution.

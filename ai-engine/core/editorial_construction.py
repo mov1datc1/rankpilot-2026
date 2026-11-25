@@ -132,6 +132,8 @@ publishable matter is generalised too. public_disclosure lists, per confidential
 mandate, the figures that identify it: never write those figures in submission_bio;
 state scale qualitatively (for example "a multi-million-dollar exposure", "a
 workforce of several thousand") while keeping the legal obstacle, action and result.
+A matter VALUE marked confidential is different: never state it, not even as a
+range or an order of magnitude ("seven-figure"), whether or not its client is named.
 A client_sector entry governs how you label that client's business: when disputed,
 give no sector or industry label ("a confidential client"). Bind each original profile unit/entity in
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
@@ -205,7 +207,10 @@ distinguishes the practice and, where the sources ask for individual recognition
 each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
 aspiration, stated once at the end as the consequence of the argument. Take the
 aspiration from the supplied target and from any category the firm itself requests
-for a lawyer; name a band only when one is supplied. Never open with the request,
+for a lawyer; name a band only when one is supplied. The practice aspiration is
+stated once; a category the firm requests for a named lawyer is stated once for
+that lawyer, in that same closing paragraph, after their evidence has been argued
+in (b). Never open with the request,
 never say that the firm is unranked, new to the ranking or seeking first-time
 recognition, and close on capability, results and track record. Adapt this order
 to the candidacy and its evidence; it is not a template. State capabilities as firm
@@ -217,7 +222,18 @@ identifying combinations of geography, transaction details and private metrics
 while preserving legal work and career credentials. public_disclosure lists the
 client names and the exact figures of every confidential mandate: write none of
 them in B10 or C2; state scale qualitatively instead; a disputed client_sector gets
-no sector label. A former employer, public
+no sector label. privacy_register gives the
+publication status of every matter: a client whose matter is publishable keeps its
+name in B10 and C2 and is never called confidential. Name the publishable clients
+behind the decisive evidence (a concrete mandate with its client and result proves
+more than an anonymous description); generalise only the clients of confidential
+matters. A matter value marked confidential is never stated, not even as a range
+or an order of magnitude, whether or not its client is named. State roles and
+recognition as facts about the lawyer or the firm (leads, co-leads, heads, is
+ranked): never describe how a record, form, table or profile lists, names, records
+or observes them ("is listed as", "is listed on", "is observed in", "the portfolio
+records", "scoped"), and never comment on what the evidence does or does not
+establish. A former employer, public
 office or professional association named in a lawyer's profile is a career fact,
 not a client: keep its name unless an explicit restriction covers it. When you
 state the size of the team, use department_size exactly: partners and other
