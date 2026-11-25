@@ -40,10 +40,10 @@ class C2WriterAndReviewerAgree(unittest.TestCase):
         rule = next(o for o in obligations(state['package'], state['strategy'], proposal)
                     if o['id'] == 'editorial:c2_distinct_argument')['instruction']
         self.assertIn('practice ranking aspiration at most once', rule)
-        self.assertIn('requests for a named lawyer is a different aspiration', rule)
+        self.assertIn('current shared decision for a nominated lawyer is a different aspiration', rule)
         self.assertIn('is not a repeated request', rule)
         flat = ' '.join(INSTITUTION_TASK.split())
-        self.assertIn('a category the firm requests for a named lawyer is stated once for that lawyer, in that same closing paragraph', flat)
+        self.assertIn('once, in that same closing paragraph', flat)
 
     def test_repair_no_longer_tells_c2_to_request_coverage(self):
         self.assertNotIn('C2 requests coverage directly', REPAIR_TASK)

@@ -386,6 +386,13 @@ def prompt_cache_key(role):
 def invoke_role(state, role, schema, instruction, payload):
     from core.editorial_reasoning import reasoning_guidance, REASONING_VERSION
     instruction += '\n' + reasoning_guidance(role)
+    # v1.0.117: one record of the confirmed facts for every writer and reviewer,
+    # instead of each one deriving them again from the raw register.
+    from core import fact_sheet
+    sheet = fact_sheet.for_call(state, role, payload)
+    if sheet:
+        payload = {**payload, 'fact_sheet': sheet}
+        instruction += '\n' + (fact_sheet.REVIEW_RULE if role in ('field_reviewer', 'editor') else fact_sheet.RULE)
     started = time.monotonic()
     purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer', 'diagnostic_reviewer', 'field_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
     package = state.get('package', {})

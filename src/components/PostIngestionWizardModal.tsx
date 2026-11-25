@@ -27,6 +27,7 @@ import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
 import { lawyerInputPending, pendingExtractionIssues, publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
+import { initialResearchPeriod, validResearchPeriod } from '@/lib/audit/research-period';
 
 export interface PostIngestionWizardModalProps {
   isOpen: boolean;
@@ -46,8 +47,11 @@ export interface PostIngestionWizardModalProps {
     correctionOnly?: boolean;
     lawyersChanged?: boolean;
     mattersChanged?: boolean;
+    researchPeriod?: { from: string; to: string };
   }) => void | Promise<void>;
   initialData: {
+    researchPeriod?: { from?: string; to?: string } | null;
+    deadline?: string | Date | null;
     filingDetails?: any;
     filingEvidence?: any;
     filingFieldStatus?: any;
@@ -128,6 +132,10 @@ export default function PostIngestionWizardModal({
   const [practiceArea, setPracticeArea] = useState(initialPractice);
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
   const [b10Text, setB10Text] = useState(initialData.b10Text || '');
+  // v1.0.117: proposed here, confirmed before generating; never asked afterwards.
+  const [period] = useState(() => initialResearchPeriod(initialData.researchPeriod, initialData.deadline));
+  const [periodFrom, setPeriodFrom] = useState(period.from);
+  const [periodTo, setPeriodTo] = useState(period.to);
   const [lawyers, setLawyers] = useState<any[]>(initialData.lawyers || []);
 
   // Wizard Navigation:
@@ -204,7 +212,7 @@ export default function PostIngestionWizardModal({
   const saveReview = async () => {
     if(isSaving)return;
     setIsSaving(true);setSaveError('');
-    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed,sourceFactReview:sourceRecord}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
+    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed,sourceFactReview:sourceRecord,...(validResearchPeriod(periodFrom,periodTo)?{researchPeriod:{from:periodFrom,to:periodTo}}:{})}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
     catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
     finally {setIsSaving(false);}
   };
@@ -386,6 +394,15 @@ export default function PostIngestionWizardModal({
                   <p style={{margin:0}}><strong>Siguiente paso:</strong> {readiness.nextStep}</p>
                 </div>;
               })()}
+              {!correctionOnly && <div className="review-decision">
+                <strong>Periodo de investigación</strong>
+                <p style={{margin:'.35rem 0'}}>{period.confirmed ? 'Este es el periodo que confirmaste.' : 'Te proponemos los doce meses anteriores a la fecha de entrega.'} Confírmalo o ajústalo: se usa para situar los asuntos en el tiempo y evita que quede como observación pendiente después de generar.</p>
+                <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',alignItems:'center'}}>
+                  <label>Desde <input type="date" value={periodFrom} max={periodTo || undefined} onChange={e=>setPeriodFrom(e.target.value)} /></label>
+                  <label>Hasta <input type="date" value={periodTo} min={periodFrom || undefined} onChange={e=>setPeriodTo(e.target.value)} /></label>
+                </div>
+                {!validResearchPeriod(periodFrom,periodTo) && <p role="alert" style={{margin:'.35rem 0 0',color:'#B91C1C'}}>Indica dos fechas válidas, con el inicio anterior al final. Si lo dejas así, el periodo no se guardará.</p>}
+              </div>}
               {!!initialData.sourceReports?.length && <div className="review-decision">
                 <strong>Fuentes leídas: {initialData.sourceReports.length}</strong>
                 {initialData.sourceReports.map((source, index) => <div key={index} style={{marginTop: '.5rem', fontSize: '.8rem'}}>

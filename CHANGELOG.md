@@ -1,3 +1,19 @@
+## 1.0.117: One record of confirmed facts for every writer and reviewer
+
+After a real run on 1.0.116 failed the final review, the judge's findings of sixteen stored runs were compared. They change family with every version, and almost all are facts the application already holds in structured form (publication status, who leads and who co-leads, declared and verified rankings, the decided category). Each writer received the raw register and derived them again. No new model call.
+
+- **Fact sheet.** Assembled from the fields the extraction already saved and the user already reviewed; it interprets no prose. Per client: publishable or confidential, and whether its value is restricted. Per lawyer: title, department headship, declared and verified ranking, the mandates led alone, the mandates co-led and with whom, the mandates joined as a team member, and the current nomination decision. Per case: department size, target and research period.
+  - Every writer, the repair, the Audit writer, the field reviewers of biographies and B10/C2, and the final judge receive it with one rule: where the text states one of these facts it must agree with the sheet. A biography receives its own lawyer only.
+- **The lead rewrite knows the source.**
+  - **Cause:** "is (listed as) lead partner on X" was rewritten to "leads X". Once B10/C2 named clients (1.0.116), that was false for a mandate with three lead partners and became the judge's only critical finding.
+  - **Change:** with exact client and lawyer names only: every named mandate co-led gives "co-leads"; some led alone and some co-led gives "is a lead partner on"; otherwise unchanged.
+- **C2 names only the decided category.**
+  - **Cause (introduced in 1.0.116):** the writer was told to take the category "the firm requests"; it asked for a recognition the shared decision had left pending.
+  - **Change:** an individual category in C2 comes only from the shared decision of a nominated lawyer.
+- **The research period is proposed in the first wizard.** It was asked only after generating, and 15 of 16 stored runs ended with the same observation. The wizard proposes the twelve months that end on the deadline (today without one) for the user to confirm or adjust; nothing is stored until saving.
+
+Not changed: the repair allowance per field. It is enforced in two places (worker and engine) and its tests record it as a deliberate rule against paid loops; changing one side alone could buy a review cycle that repairs nothing. Also unchanged: prompt caching and a C2 plan of its own.
+
 ## 1.0.116: C2 and B9 causes found by reading the code against a real run
 
 No new model call. Each change removes a cause seen in the real tax case run on 1.0.115 and, for the first two, in every stored run since 1.0.87.
