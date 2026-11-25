@@ -18,6 +18,14 @@ GENERIC = re.compile(r'^(grupo|group|private|confidential|client|cliente|empresa
 QUALIFIER = re.compile(r'^(?:de\b|m[eé]xico\b|industrial\b|manufacturing\b|international\b|services\b|s\.?a\b|s\.?p\.?a\b)', re.I)
 DESCRIPTION = re.compile(r'(?:\.|\s+[-–—]\s+|,\s*)\s*(?:is an?|it is an?|a (?:global|world|leading)|company (?:dedicated|engaged|specializing)|located in|based in|headquartered in|empresa dedicada|dedicada a|con sede en)\b', re.I)
 LEGAL = {'sa', 'de', 'cv', 'sab', 'sapi', 's', 'rl', 'inc', 'llc', 'ltd', 'corp', 'gmbh', 'ag', 'plc', 'co', 'sc', 'spa', 'srl', 'bv', 'nv'}
+# v1.0.115: a bare company form is never a client identity (see client-aliases.ts).
+LEGAL_FORMS = {'sa','ca','cv','sacv','cacv','sab','sabcv','sapi','sapicv','sas','sac','srl','srlcv','rl','rlcv','sl','slu','spa','sc','scs','eirl','ltda','cia','llc','llp','lp','inc','ltd','corp','co','gmbh','ag','plc','nv','bv','pty','pte'}
+
+
+def is_legal_form(value):
+    return re.sub(r'[^a-z]', '', re.sub(r'\bde\b', '', str(value or '').lower())) in LEGAL_FORMS
+
+
 CONFIDENTIAL = ('confidential', 'confirmation_required', 'non_publishable')
 CAREER = re.compile(r'\b(?:served|worked|working|employed|joined|director|general counsel|in-house|head of|manager|officer|president|vice[- ]president|years at|decades at|career at|trabaj[óo]|director[a]?|gerente)\b', re.I)
 
@@ -53,10 +61,12 @@ def client_aliases(names):
         add(name)
         for match in re.finditer(r'\(([^\W_][\w. -]{1,60})\)', name):
             alias = match.group(1).strip()
-            if not re.match(r'^(?:wealthy family|private owner|located|company|empresa|familia)\b', alias, re.I):
+            if not re.match(r'^(?:wealthy family|private owner|located|company|empresa|familia)\b', alias, re.I) and not is_legal_form(alias):
                 add(alias)
         for entity in re.split(r'\s+and\s+|\s+&\s+|,\s+(?!S\.?A\.?\b|S\.?\b)', name, flags=re.I):
             entity = entity.strip()
+            if is_legal_form(entity):
+                continue
             if len(entity) >= 2 and not GENERIC.match(entity):
                 add(entity)
             first = re.match(r'^[^\W_]+', entity)

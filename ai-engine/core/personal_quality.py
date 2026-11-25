@@ -43,6 +43,41 @@ def required_personal_matters(package, strategy, candidate):
     return list(dict.fromkeys(required))
 
 
+def own_register_quote(name, quote, package):
+    """v1.0.115: a literal register passage that itself names this lawyer is own
+    evidence even when that matter is not one of the selected supports. Forms
+    shorten names ("Ana Ruiz" for Ana Ruiz Soto): at least the first two name
+    words must appear together in the quote, and no other roster lawyer may
+    share them."""
+    from core.role_evidence import identity
+    from core.editorial_development import bind_quote
+    words = identity(name).split()
+    text = identity(quote)
+    prefix = next((' '.join(words[:n]) for n in range(len(words), 1, -1)
+                   if re.search(r'(?<!\w)' + re.escape(' '.join(words[:n])) + r'(?!\w)', text)), None)
+    if not prefix:
+        return False
+    for other in package.get('lawyers', []):
+        other_id = identity(other.get('name') or other.get('fullName'))
+        if other_id and other_id != identity(name) and (other_id + ' ').startswith(prefix + ' '):
+            return False
+    return any(bind_quote(quote, matter) for matter in package.get('matters', []))
+
+
+def own_directory_commentary(name, literal, package):
+    """v1.0.115: official commentary retrieved for THIS lawyer's own verified
+    directory profile is evidence about this lawyer, never about another."""
+    from core.role_evidence import identity
+    research = ((package.get('ranking_verification') or {}).get('profile_research') or {})
+    for profile in research.get('profiles') or []:
+        subject = profile.get('subject') or {}
+        if profile.get('status') != 'retrieved' or subject.get('kind') != 'individual' or identity(subject.get('name')) != identity(name):
+            continue
+        if any(literal in ' '.join(str(item.get('text') or '').split()) for item in profile.get('commentary') or []):
+            return True
+    return False
+
+
 def personal_quality_errors(package, strategy, proposal):
     if proposal.get('personal_quality_contract') != PERSONAL_QUALITY_CONTRACT:
         return []
@@ -75,7 +110,9 @@ def personal_quality_errors(package, strategy, proposal):
             for quote_index, quote in enumerate(assessment[field]):
                 literal = ' '.join(quote.split())
                 if not literal or not (any(literal in ' '.join(str(person.get(k) or '').split()) for k in source_fields)
-                                       or any(bind_quote(quote, matter) for matter in own_sources)):
+                                       or any(bind_quote(quote, matter) for matter in own_sources)
+                                       or own_register_quote(candidate.get('name'), quote, package)
+                                       or own_directory_commentary(candidate.get('name'), literal, package)):
                     errors.append(prefix + 'La categoría requiere evidencia propia literal, no otra persona ni una búsqueda sin coincidencia. '
                                   + f'Campo category_assessment/{field}/{quote_index}; cita rechazada: {quote!r}. '
                                   + 'Copia un fragmento exacto de la fuente propia, sin completar ni parafrasear su puntuación.')

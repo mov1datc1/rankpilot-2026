@@ -164,7 +164,12 @@ as the outcome of that mandate ("She co-led the representation of X in an audit,
 which concluded with ..."): participation becomes a positioning argument without
 claiming that the lawyer personally performed each act. Never describe how a
 record lists, names, records or attributes a role or a result ("is listed as",
-"is recorded as", "attributed in the records"). A client whose matter is
+"is recorded as", "attributed in the records"). The shared decision's
+counterevidence and attribution limits are internal Audit reasoning: never
+restate them in the B9 (no sentence on what the source, the record or the
+department "attributes", "assigns" or "supports", no "listed lead partner", no
+"documented role"). Say what the lawyer did or led and what the team achieved.
+A client whose matter is
 publishable keeps its name and is never called confidential. B9 argues for this
 person: their credentials, role and contribution. It does not restate the
 description of the practice (B10) or the ranking argument (C2). State a

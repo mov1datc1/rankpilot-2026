@@ -26,10 +26,16 @@ LEAD_PATTERNS = [
     (re.compile(r'\b(?P<be>was|is)\s+' + _ADV + _ROLE + r'(?=\s*[,;.])'), 'the matter'),
 ]
 EXTRA_LEAD = [
+    # v1.0.115 (real run): "a listed lead partner", "her listed leadership",
+    # "his listed lead role" -> the role itself, without the register adjective.
+    (re.compile(r'\b(?:listed|recorded|documented)\s+(?=(?:co-?)?lead(?:-|\s)partners?\b|(?:co-?)?lead(?:ership)?\s+roles?\b|leadership\b)', re.I), ''),
+    # "is listed in leadership roles on" -> "holds leadership roles on"
+    (re.compile(r'\b(?P<be>is|are|was|were)\s+(?:listed|named|recorded)\s+in\s+(?P<what>(?:a\s+)?lead(?:ership)?\s+roles?)\b', re.I),
+     lambda m: f"{ {'is': 'holds', 'are': 'hold'}.get(m.group('be').lower(), 'held')} {m.group('what')}"),
     # v1.0.110: "is (also) listed as a team member on" -> "is (also) a team member on".
     # Form vocabulary for participation; the voice rules reject it and a bound
     # quotation made it impossible to repair (the case stopped).
-    (re.compile(r'\b(?P<be>is|are|was|were)(?P<adv>\s+(?:also|likewise|further))?\s+(?:listed|named|recorded|identified)\s+as\s+(?P<art>(?:an?|one\s+of\s+the)\s+)?(?P<what>team\s+members?|members?\s+of\s+the\s+team)\b', re.I),
+    (re.compile(r'\b(?P<be>is|are|was|were)(?P<adv>\s+(?:also|likewise|further))?\s+(?:listed|named|recorded|identified)\s+as\s+(?P<art>(?:an?|one\s+of\s+the)\s+)?(?P<what>team\s+members?|members?\s+of\s+the\s+(?:matter\s+)?team)\b', re.I),
      lambda m: f"{m.group('be')}{m.group('adv') or ''} {m.group('art') or ''}{m.group('what')}"),
     # "is named lead partner or co-lead partner on mandates" -> "leads or co-leads mandates"
     (re.compile(r'\b(?P<be>was|is)\s+(?P<adv>(?:also|likewise|further)\s+)?(?:named|recorded|listed)\s+(?:as\s+)?lead(?:-|\s)partner\s+or\s+co-?lead(?:-|\s)partner\s+(?:in|on|for)\s+'),
@@ -70,7 +76,7 @@ EXTRA_LEAD = [
     # listed among the team members"). The role is a fact about the lawyer, not
     # about how a form lists it: the registry verb goes, every fact stays.
     (re.compile(r'\b(?P<be>is|are|was|were)(?P<adv>\s+(?:also|likewise|further))?\s+(?:listed|named|recorded|identified|designated|shown)\s+(?P<link>as|among)\s+'
-                r'(?=(?:an?\s+|the\s+|one\s+of\s+(?:the\s+)?(?:\w+\s+)?)?(?:(?:co-?)?lead(?:-|\s)partners?|team\s+members?|members?\s+of\s+the\s+team)\b)', re.I),
+                r'(?=(?:an?\s+|the\s+|one\s+of\s+(?:the\s+)?(?:\w+\s+)?)?(?:(?:co-?)?lead(?:-|\s)partners?|team\s+members?|members?\s+of\s+the\s+(?:matter\s+)?team)\b)', re.I),
      lambda m: f"{m.group('be')}{m.group('adv') or ''} {'among ' if m.group('link').lower() == 'among' else ''}"),
 ]
 TAIL_LEAD = re.compile(r'\b(?P<who>[A-ZÁÉÍÓÚÑ][\w’\'-]+)\s+is\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\.')

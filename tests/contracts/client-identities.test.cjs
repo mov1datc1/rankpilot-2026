@@ -16,3 +16,12 @@ test('the reviewed B10 is printed without a fixed firm-specific opening',()=>{
   assert.ok(!source.includes('Strategic Primacy (Angela'));
   assert.ok(!source.includes('is distinguished by high-stakes collective negotiations'));
 });
+
+// v1.0.115 (real run): "C.A." became a confidential alias and every publishable
+// "… C.A." client was printed as "a confidential entity".
+test('a company form is never anonymised as a confidential identity',()=>{
+  const {anonymizeConfidentialClients}=require('../../src/lib/docx/lawyer-curator.ts');
+  const text='She leads the representation of Piscinas Ejemplo, C.A. and advises Centro Ejemplo C.A. on tax.';
+  assert.equal(anonymizeConfidentialClients(text,['Editores Ejemplo, C.A.']),text);
+  assert.ok(!anonymizeConfidentialClients('Advice to Editores Ejemplo, C.A. on tax.',['Editores Ejemplo, C.A.']).includes('Editores Ejemplo'));
+});

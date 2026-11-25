@@ -56,7 +56,10 @@ qualitative criteria and no invented scores. Preserve the supplied target or
 explain a proposed change. Where actual retrieved peer commentary exists in
 ranking_verification, contrast concrete capabilities with this portfolio; a
 table-only or absent retrieval permits a precise scoped limitation, never an
-invented market comparison or forecast.
+invented market comparison or forecast. Give one concrete contrast for EACH
+retrieved peer profile that has commentary (a capability its commentary names
+and what this portfolio shows or lacks on it); never say a retrieved commentary
+does not permit a comparison.
 portfolio: one required slot per selected matter in the supplied order. Write
 two or three compact sentences within the slot's stated maximum: the legal
 problem, the firm's intervention and the achieved result or actual current stage,
