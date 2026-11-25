@@ -26,7 +26,8 @@ class MatterNarrativesKeepTheStrategicReasons(unittest.TestCase):
 class InstitutionalVoiceAndCategories(unittest.TestCase):
     def test_c2_is_assertive_and_still_requests_coverage_once(self):
         self.assertIn('assertive institutional voice',INSTITUTION_TASK)
-        self.assertIn('make the coverage request plainly once',INSTITUTION_TASK)
+        # v1.0.113: the aspiration is stated once, as the conclusion of the argument.
+        self.assertIn('stated once at the end as the consequence of the argument',INSTITUTION_TASK)
         self.assertIn('respectfully submits',INSTITUTION_TASK)  # named only as a formula to avoid
 
     def test_categories_are_calibrated_per_person(self):

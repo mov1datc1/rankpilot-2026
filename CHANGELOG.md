@@ -1,3 +1,30 @@
+## 1.0.113: Editorial precision from three real test cases
+
+Surgical changes to the engine. Every rule is general (no firm, lawyer or client names) and was replayed offline on four saved runs before commit.
+
+- **Institutional voice in B9 and matters.**
+  - **Cause:** the voice rules covered single wordings, so "is listed as a lead partner", "is listed among the lead partners" and "is listed as one of three lead partners" still reached the Word file.
+  - **Code:** one rule removes any registry verb about a lead or team role and keeps every fact.
+  - **Detection:** sentences about the record itself ("attributed in the records", "is recorded separately", "is recorded with a date") now count as auditor voice.
+  - **B9 writer:** states the role as a fact about the lawyer and the result as the outcome of the mandate; a publishable client is never called confidential; B9 does not restate B10 or C2.
+- **Leadership is not personal execution (Audit).**
+  - **Cause:** the Audit writer and its reviewer asked for the person's "own role and result"; the final judge required leadership and firm action to be separate.
+  - **Change:** writer, output slot and reviewer now share one rule: sourced role, then what the firm did and the result.
+- **Individual rankings.**
+  - A lawyer the firm declares as ranked is no longer printed as "sin ranking declarado".
+  - A category the firm itself requests for a lawyer is that lawyer's objective: proposed, or named and explained, never silently replaced by the lowest band.
+  - A proposed band is bounded by the bands observed in the consulted official table when individual categories are not cached.
+- **Other matter leaders.** Titles in parentheses no longer split one person into fragments, and a shorter form of a roster name is the same person.
+- **C2.** The case is argued first and the ranking aspiration is stated once, as its conclusion. It never opens with the request and never says the firm is unranked or seeking first-time recognition. The matching review obligation changed with it.
+- **B10.** Confirmed practice heads are named early; the rest of the structure is unchanged.
+- **Matters.** The plan reads each matter as one unit of evidence across all its fields and selects anchors in proportion to the record. The anchors are the minimum of the narrative, not its limit. The matter value is not restated and a malformed figure is never copied into the narrative.
+- **Audit explains every portfolio decision.**
+  - Each selected matter says why it holds its place (complexity, impact, result, currency, contribution to the practice; asset value alone is not relevance).
+  - Each reserve comparison ends with why the selected matter was preferred.
+  - Every excluded matter is named with its reason.
+  - The internal Audit ceiling moves from 1,800 to 2,600 words in every place that states it, so the reasoning fits.
+- **Validation:** Python: 1047 tests passed (18 new). Node contract tests and tsc not run locally (no dependency install); they run in CI.
+
 ## 1.0.112: Writers receive what the final judge enforces
 
 Point 2 of the independent architecture review: give writers the rules that reviewers enforce.

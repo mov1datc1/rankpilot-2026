@@ -174,7 +174,7 @@ class ReviewCostTests(unittest.TestCase):
     def test_excessive_audit_is_condensed_once_with_decisions_and_usage_preserved(self):
         from core.review_graph import writer
         state={'package':{'matters':[]},'strategy':{'hero_matter_id':'m'},'development':{'target':'First inclusion'}}
-        original={'portfolio':'word '*1801}
+        original={'portfolio':'word '*2601}
         compact={'portfolio':'A source-backed portfolio.'}
         with patch('core.review_graph.invoke_role',side_effect=[(original,[{'role':'writer','usage':1}]),(compact,[{'role':'writer','usage':1},{'role':'writer','usage':2}])]) as invoke:
             result=writer(state)
@@ -189,19 +189,19 @@ class ReviewCostTests(unittest.TestCase):
 
     def test_audit_cannot_pass_by_ignoring_the_executive_length_contract(self):
         from core.review_graph import writer
-        with patch('core.review_graph.invoke_role',return_value=({'portfolio':'word '*1801},[])) as invoke:
+        with patch('core.review_graph.invoke_role',return_value=({'portfolio':'word '*2601},[])) as invoke:
             result=writer({'package':{'matters':[]},'strategy':{}})
         self.assertEqual(invoke.call_count,2)
         self.assertFalse(result['writer_validated'])
         self.assertTrue(result['errors'])
-        self.assertEqual(len(result['letter']['portfolio'].split()),1801)
+        self.assertEqual(len(result['letter']['portfolio'].split()),2601)
 
     def test_repaired_audit_is_condensed_before_validation_without_replaying_repair(self):
         from core.editorial_repair import repair_letter
         letter={k:'Supported text.' for k in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps')}
         letter['next_actions']=[]
         fixed={**letter, 'executive_assessment':'Qualified recommendation with named peer comparison.'}
-        response={'corrections':[{'path':'executive_assessment','value':'word '*1801,'reason':'Add the supported comparison.'}],'unresolved':[]}
+        response={'corrections':[{'path':'executive_assessment','value':'word '*2601,'reason':'Add the supported comparison.'}],'unresolved':[]}
         state={'package':{'matters':[]},'strategy':{'matters':[]},'letter':letter,
                'repair_feedback':[{'scope':'letter','severity':'critical','message':'Missing comparison.'}]}
         with patch('core.review_graph.invoke_role',side_effect=[(response,[{'role':'writer','usage':1}]),(fixed,[{'role':'writer','usage':1},{'role':'writer','usage':2}])]) as invoke:
@@ -218,7 +218,7 @@ class ReviewCostTests(unittest.TestCase):
         from core.editorial_repair import repair_letter
         letter={k:'Supported text.' for k in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps')}
         letter['next_actions']=[]
-        excessive={**letter,'executive_assessment':'word '*1801}
+        excessive={**letter,'executive_assessment':'word '*2601}
         delta={'corrections':[{'path':'executive_assessment','value':excessive['executive_assessment'],'reason':'Add comparison.'}],'unresolved':[]}
         with patch('core.review_graph.invoke_role',side_effect=[(delta,[]),(excessive,[])]) as invoke:
             result=repair_letter({'package':{'matters':[]},'strategy':{'matters':[]},'letter':letter,'repair_feedback':[]})

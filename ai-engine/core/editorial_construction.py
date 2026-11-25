@@ -30,7 +30,12 @@ in internal decision fields; do not ask for facts already supplied.'''
 PLAN_TASK = COMMON + ''' Prepare shared editorial decisions BEFORE prose. Do not write
 B9, B10, C2 or matter narratives. Account for every selected matter and every lawyer
 once. For each matter select literal source anchors for legal issue, concrete work,
-documented results/current stage, material scale and actual roles. These anchors
+documented results/current stage, material scale and actual roles. Read each matter
+as ONE unit of evidence across all its fields (description, status, value,
+cross-border, other information, team): a result, a relationship length or a point
+of complexity stated in a complementary field is anchored too. Select as many
+anchors as the record has distinct material facts: a rich record needs more
+anchors than a thin one. These anchors
 govern the subsequent narrative; selecting them is not proof of execution.
 Form the institutional case_plan, comparative hero rationale and concrete reserve
 tradeoffs from original evidence. A reserve remains eligible personal evidence.
@@ -47,7 +52,11 @@ decision: if your rationale concludes that the criterion is not established, the
 category is Category pending. Up and Coming growth_evidence must show developing
 reputation or contribution to practice growth (for example a new practice line,
 team or client base built, or recognition received); a description of expertise
-or seniority is career-stage evidence, not growth evidence. Preserve supplied objectives or explain a proposed change. Evaluate
+or seniority is career-stage evidence, not growth evidence. Preserve supplied objectives or explain a proposed change. A category
+the firm itself requests for a named lawyer anywhere in the supplied sources is that
+lawyer's supplied objective: propose it when the evidence does not contradict it,
+otherwise name it in category_rationale and explain the change. Never replace it
+silently, and never default a ranked or senior partner to the lowest band. Evaluate
 additional source leaders internally without inventing roster titles.'''
 PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
 
@@ -74,7 +83,12 @@ material anchors meaningfully, not as a list of quotations. Never insert advice
 about publication or what the source does not say. completion_status describes
 the documented stage only in neutral factual terms (never audit voice such as
 "not stated", "source does not explain", "pending confirmation" or "unresolved").
-Do not return new anchors or change the selected facts.
+Do not return new anchors or change the selected facts. The anchors are the minimum
+the narrative must execute, not its limit: use every material fact of the matter's
+complete record, in any of its fields, including a result stated in the status
+field and context given in complementary fields. The matter value is printed in
+its own field: do not restate it in the narrative, and never copy a figure whose
+number format is malformed or ambiguous in the source.
 DEPTH PROPORTIONAL TO THE EVIDENCE: a matter with rich
 source evidence is explained as the significant mandate it is, never compressed
 into a summary; a thin source is not padded. Develop, wherever the source
@@ -144,7 +158,16 @@ ARCHITECTURE OF A NOMINATED B9 (the method the editorial owner applies):
 4. Close with one factual sentence on what this body of work shows for the
    target practice: no superlatives, no ranking claims.
 Use natural verbs for the lead role (led, advised, represented); form
-vocabulary such as "named lead partner" is replaced by the application. State a
+vocabulary such as "named lead partner" is replaced by the application. State the
+role as a fact about the lawyer (led, co-led, was part of the team) and the result
+as the outcome of that mandate ("She co-led the representation of X in an audit,
+which concluded with ..."): participation becomes a positioning argument without
+claiming that the lawyer personally performed each act. Never describe how a
+record lists, names, records or attributes a role or a result ("is listed as",
+"is recorded as", "attributed in the records"). A client whose matter is
+publishable keeps its name and is never called confidential. B9 argues for this
+person: their credentials, role and contribution. It does not restate the
+description of the practice (B10) or the ranking argument (C2). State a
 confirmed headship once, in the opening. Write in the active voice (never "is
 led by X" or a trailing "; X leads the matter") and never as a list of matters
 ("X also leads…", "Finally, X leads…"): at most eight paragraphs. The application
@@ -162,14 +185,22 @@ a sequential case list): (1) open with the strongest strategic differentiator fr
 this portfolio; (2) cover industry sector expertise, geographic/national footprint
 and areas of recent growth where evidenced in the sources; (3) develop all shared
 institutional_arguments and other documented capability pillars with concrete legal
-mechanisms and outcomes; and (4) integrate department leadership and bench depth
+mechanisms and outcomes; and (4) integrate department leadership and bench depth, naming the confirmed practice
+heads early (right after the opening differentiator, before the detailed pillars)
 (confirmed heads, team architecture and distinct practitioner roles/credentials
 grounded in lawyers and shared_decisions, without inventing partner status or
-rankings). C2 argues once for the requested coverage with distinct supported
-reasons developed with concrete evidence, in an assertive institutional voice: state
-the practice's capabilities as firm facts and make the coverage request plainly once,
-never with deferential formulas such as "respectfully submits" or "merits
-consideration" (same 1,000-word maximum, expanding a
+rankings). C2 builds a persuasive case in an assertive institutional voice; it is not a
+request followed by a list of reasons. Order the argument: (a) the evolution,
+sophistication and relevance of the recent work; (b) the specific evidence that
+distinguishes the practice and, where the sources ask for individual recognition,
+each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
+aspiration, stated once at the end as the consequence of the argument. Take the
+aspiration from the supplied target and from any category the firm itself requests
+for a lawyer; name a band only when one is supplied. Never open with the request,
+never say that the firm is unranked, new to the ranking or seeking first-time
+recognition, and close on capability, results and track record. Adapt this order
+to the candidacy and its evidence; it is not a template. State capabilities as firm
+facts, never with deferential formulas such as "respectfully submits" (same 1,000-word maximum, expanding a
 short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
 service catalogue. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
@@ -403,11 +434,17 @@ def schemas(package, strategy):
         'candidates':(list[decision],...), 'matters':(list[anchor],...)})
     return full, candidate, matter, plan
 
-def reconcile_categories(plan, package=None):
+def reconcile_categories(plan, package=None, verification=None):
     """A professional maturity descriptor must not become a verified category."""
     import re as _re
     from core.candidate_evidence import table_categories, valid_band_label
     table=table_categories(package) if package else None
+    # v1.0.113: when the individual categories of this table are not cached, the
+    # bands observed for firms in the consulted official table bound the number:
+    # a table that ends at Band 4 has no Band 5 to propose.
+    if not table:
+        observed=[str(c.get('band') or '') for c in (((verification or {}).get('market_context') or {}).get('competitors') or []) if isinstance(c,dict)]
+        table=sorted({b for b in observed if _re.fullmatch(r'Band \d',b)}) or None
     for c in plan.get('candidates', []):
         # v1.0.109: a band number this ranking table does not use for individuals
         # has a known answer: the table's lowest individual band.
@@ -703,7 +740,7 @@ def advance(state, invoke):
             if kind=='plan':
                 if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
                     value = reserve_comparisons.expand_plan(value, strategy)
-                value=reconcile_categories(value,package)
+                value=reconcile_categories(value,package,state.get('ranking_verification'))
                 value=recover_plan(package,strategy,value,pending,correcting,source_owned)
                 validate_plan(package,strategy,value)
                 work.update(value)

@@ -70,11 +70,17 @@ def additional_leaders(package, strategy):
         if matter['id'] not in core: continue
         raw=str(matter.get('leadPartner') or matter.get('lead_partner') or '')
         raw=re.sub(r'(?i)^\s*(?:lead partners?|lead lawyers?|socios? responsables?)\s*[:(s)]*\s*','',raw)
+        # v1.0.113: a title in parentheses ("(Senior Partner, member of the
+        # Executive Committee)") is not a name; its commas split one person into
+        # fragments that the Audit then reported as truncated identities.
+        raw=re.sub(r'\([^()]*\)',' ',raw)
         # Delimited source identities only. Never split a surname or infer aliases.
         for name in re.split(r'\s+(?:and|y|&)\s+|[;\n]|,\s*',raw):
-            name=name.strip(' .\t')
+            name=re.sub(r'(?i)^(?:and|y|&)\s+','',name.strip(' .\t')).strip(' .\t')
             key=identity(name)
             if not 2<=len(key.split())<=7 or key in roster or key in ('not applicable','sin informacion','n a','not stated'): continue
+            # The same roster person written without a second surname or forename.
+            if any(set(key.split())<=set(person.split()) for person in roster): continue
             if not matter_names_person(name,matter): continue
             item=result.setdefault(key,{'name':name,'matter_ids':[]})
             if matter['id'] not in item['matter_ids']: item['matter_ids'].append(matter['id'])
@@ -278,7 +284,7 @@ def obligations(package, strategy, proposal):
         all_sources=[register[d['matter_id']] for d in strategy.get('matters',[])
                      if d.get('disposition')=='core' and d['matter_id'] in register]
         add('editorial:c2_distinct_argument','c2',all_sources,
-            'Make one direct coverage request and develop distinct evidenced reasons. Two equivalent introductory requests or a repeated service catalogue do not execute this requirement. Check semantic repetition, not just identical strings. Do not demand invented market standing or longer prose.')
+            'Build the case from distinct evidenced reasons and state the ranking aspiration at most once, as the conclusion of the argument: never as the opening sentence and never by saying the firm is unranked, new to the ranking or seeking first-time recognition. Two equivalent requests or a repeated service catalogue do not execute this requirement. Check semantic repetition, not just identical strings. Do not demand invented market standing or longer prose.')
         add('editorial:market_comparison','executive_assessment',
             all_sources+[{'source_excerpt':str(package.get('ranking_verification',{}))}],
             'Where retrieved scoped peer commentary exists, compare its actual capabilities with the selected portfolio using concrete distinctions. A table-only or absent retrieval supports a precise limitation, not invented competitors or a comparative market claim. Check this obligation independently of hero rationale and letter length.')
