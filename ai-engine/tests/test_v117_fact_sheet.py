@@ -50,7 +50,7 @@ class SheetReadsSavedFieldsOnly(unittest.TestCase):
         vega = lawyer(sheet, 'Sofia Vega Ruiz')
         self.assertEqual(vega['leads_alone'], ['Beta Consultores'])
         self.assertEqual(vega['co_leads'], [{'client': 'Alfa Bebidas & Filiales', 'with': ['Ana Soto Lara', 'Pedro Lugo']}])
-        self.assertTrue(vega['department_head'])
+        self.assertEqual(vega['department_head'], 'sole department head')
         self.assertIn('Band 2 (verified', vega['verified_ranking'])
         self.assertIn('declared by the firm, not verified', vega['declared_ranking'])
         self.assertEqual(vega['current_decision'], {'recommendation': 'present', 'category': 'Band 1'})
@@ -66,7 +66,7 @@ class SheetReadsSavedFieldsOnly(unittest.TestCase):
         clients = {c['client']: c for c in sheet['clients']}
         self.assertEqual(set(clients), {'Alfa Bebidas & Filiales', 'Beta Consultores', 'Gamma Holdings, C.A.'})
         self.assertEqual(clients['Alfa Bebidas & Filiales']['publication'], 'publishable')
-        self.assertIn('never stated', clients['Alfa Bebidas & Filiales']['value'])
+        self.assertIn('never state that amount', clients['Alfa Bebidas & Filiales']['value'])
         self.assertNotIn('value', clients['Beta Consultores'])
         self.assertEqual(clients['Gamma Holdings, C.A.']['publication'], 'confidential')
         self.assertEqual(clients['Gamma Holdings, C.A.']['selection'], 'reserve')
@@ -171,3 +171,54 @@ class C2NamesOnlyDecidedCategories(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class V118CategoryReviewSeesTheFirmRequest(unittest.TestCase):
+    def test_the_firm_text_is_a_source_of_the_category_review(self):
+        import copy
+        from core.candidate_evidence import firm_request_sources
+        from core.editorial_case import obligations, prepare_case
+        from test_biography_depth import depth_case
+        self.assertEqual(firm_request_sources({}), [])
+        found = firm_request_sources({'b10_source': 'We request at least Band 2 for Sofia Vega.', 'objectives': {'primary': 'Move up one band'}})
+        self.assertIn('Department overview supplied by the firm: We request at least Band 2 for Sofia Vega.', found[0]['source_excerpt'])
+        self.assertIn('Primary objective supplied by the firm: Move up one band', found[0]['source_excerpt'])
+        package, strategy, proposal = depth_case()
+        state = {'package': package, 'strategy': strategy, 'selection_validated': True, 'selection_review_validated': True}
+        state.update(prepare_case(state))
+        plain = copy.deepcopy(state['package']); plain.pop('b10_source', None); plain.pop('c2_source', None); plain.pop('objectives', None)
+        base = next(o for o in obligations(plain, state['strategy'], proposal) if o['id'] == 'category:0:fit')
+        asked = {**plain, 'c2_source': 'The firm requests Band 1 for its head of practice.'}
+        seen = next(o for o in obligations(asked, state['strategy'], proposal) if o['id'] == 'category:0:fit')
+        self.assertEqual(len(seen['sources']), len(base['sources']) + 1)
+        self.assertIn('requests Band 1', seen['sources'][-1]['source_excerpt'])
+        self.assertIn('it remains a request, never a verified ranking', seen['instruction'])
+        self.assertNotIn('it remains a request, never a verified ranking', base['instruction'])
+
+
+class V118SheetUsesThePlanWhileWriting(unittest.TestCase):
+    def test_decisions_come_from_the_shared_plan_during_construction(self):
+        state = {'package': PACKAGE, 'strategy': STRATEGY, 'rag_unit': 'institutional'}
+        sheet = fact_sheet.for_call(state, 'development', {'shared_decisions': DEVELOPMENT})
+        self.assertEqual(lawyer(sheet, 'Sofia Vega Ruiz')['current_decision'], {'recommendation': 'present', 'category': 'Band 1'})
+        self.assertEqual(lawyer(sheet, 'Luis Mora Paz')['current_decision'], {'recommendation': 'develop', 'category': 'Category pending'})
+        bio = fact_sheet.for_call({**state, 'rag_unit': 'bio'}, 'development', {'shared_decision': DEVELOPMENT['candidates'][1]})
+        self.assertEqual(bio['lawyers'][0]['current_decision']['category'], 'Category pending')
+
+
+class V118SharedHeadship(unittest.TestCase):
+    def test_a_shared_headship_is_stated_as_shared(self):
+        package = {**PACKAGE, 'filing_details': {'heads': [{'name': 'Sofía Vega Ruiz'}, {'name': 'Ana Soto Lara'}]}}
+        sheet = fact_sheet.build(package, STRATEGY)
+        self.assertEqual(lawyer(sheet, 'Sofia Vega Ruiz')['department_head'], 'one of 2 department heads, with Ana Soto Lara')
+        self.assertNotIn('department_head', lawyer(sheet, 'Luis Mora Paz'))
+
+    def test_the_value_restriction_does_not_hide_results(self):
+        sheet = fact_sheet.build(PACKAGE, STRATEGY)
+        value = next(c for c in sheet['clients'] if c['client'] == 'Alfa Bebidas & Filiales')['value']
+        self.assertIn('Results, percentages and the other documented facts of the mandate are not restricted', value)
+
+    def test_c2_argues_with_named_mandates_and_results(self):
+        flat = ' '.join(INSTITUTION_TASK.split())
+        self.assertIn('What must differ from B10 is the function, not the evidence', flat)
+        self.assertIn('each named by its publishable client and stated with its documented result or exact stage', flat)
