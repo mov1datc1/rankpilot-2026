@@ -37,9 +37,26 @@ test('ambiguous figures and inconsistent conversions are asked once, conversions
 test('v1.0.107: the verdict blocks exactly when Studio would not prepare, with the same reasons',()=>{
  const {editorialPreparationIssues}=require('../../src/lib/audit/preparation-input.ts');
  const input={firmName:'Firm',practiceArea:'Environment',lawyers:[{name:'A',isPartner:true}],b10Text:'',matters:[{id:'m',client:'C',summary:'Work.'}]};
+ // v1.0.114: no department description is a limitation; no matters still blocks.
  const v=readinessVerdict(input);
- assert.equal(v.status,'blocked');
- assert.deepEqual(v.limitations,editorialPreparationIssues({firm_name:'Firm',practice_area:'Environment',original_b10:''},input.matters));
- assert.match(caseReadiness(input).nextStep,/^Completa primero/);
+ assert.equal(v.status,'limited');assert.match(v.limitations.join(' '),/B10 y el C2 se construirán de forma preliminar/);
+ const empty=readinessVerdict({...input,matters:[]});
+ assert.equal(empty.status,'blocked');
+ assert.deepEqual(empty.limitations,editorialPreparationIssues({firm_name:'Firm',practice_area:'Environment',original_b10:''},[]));
+ assert.match(caseReadiness({...input,matters:[]}).nextStep,/^Completa primero/);
  assert.equal(readinessVerdict({...input,b10Text:'Practice.'}).status,'limited');  // 1 matter: short portfolio, still generable
+});
+test('v1.0.114: the same matter read from two versions of a form is reported once, different mandates are not',()=>{
+ const {duplicateMatters}=require('../../src/lib/audit/case-readiness.ts');
+ const text='The firm defended the concession holder against the municipal revocation of its public lighting concession through a nullity action before the administrative court and obtained a definitive suspension that preserved the operation of the service during the proceedings.';
+ const other='The firm advised the same client on the tax treatment of a cross-border financing, reviewed the withholding obligations, prepared the ruling request filed with the authority and negotiated the security package with the lenders involved.';
+ const matters=[{id:'1',client:'Example Group',source_excerpt:text,source_document:'form v1.docx'},{id:'2',client:'EXAMPLE GROUP',source_excerpt:text+' Lead partner: A.',source_document:'form v2.docx'},{id:'3',client:'Example Group',source_excerpt:other,source_document:'form v2.docx'}];
+ const groups=duplicateMatters(matters);
+ assert.equal(groups.length,1);assert.equal(groups[0].count,2);assert.deepEqual(groups[0].sources,['form v1.docx','form v2.docx']);
+ const r=caseReadiness({firmName:'F',practiceArea:'Energy',lawyers:[],matters,b10Text:''});
+ assert.match(r.items.map(i=>i.text).join('\n'),/«Example Group» aparece 2 veces/);
+});
+test('v1.0.114: the currency question uses the amounts the narrative already states',()=>{
+ const checks=integrityChecks({},[{id:'a',client:'Example Packaging',value:'$3,400,000.00',summary:'The authority imposed fines of MXN 3,474,240 on the plant.'}]);
+ assert.equal(checks.length,1);assert.match(checks[0],/no indica la moneda, y su narrativa menciona MXN 3,474,240\. Confirma si el valor está en MXN/);
 });

@@ -1,6 +1,6 @@
 import { filingDetailsGaps } from './filing-details';
 import { integrityChecks } from './integrity-checks';
-import { editorialPreparationIssues } from './preparation-input';
+import { editorialPreparationIssues, matterSourceText } from './preparation-input';
 
 /**
  * v1.0.106 (Jonathan, 19 Nov): after reading dispersed sources (Builder option
@@ -34,6 +34,7 @@ export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
     return { status: 'blocked', limitations: blocking,
       summary: 'Todavía no conviene generar: sin esta información el Audit y el Submission no serían aceptables. Complétala y vuelve a intentarlo.' };
   const limitations: string[] = [];
+  if (!String(input.b10Text || '').trim()) limitations.push('No hay descripción de origen del departamento: el B10 y el C2 se construirán de forma preliminar solo con los asuntos acreditados, sin estructura, cargos ni capacidades que las fuentes no documenten. Revísalos con especial cuidado o añade la descripción.');
   if (!lawyers.length) limitations.push('El Submission saldrá sin B9 y el Audit sin estrategia individual por abogado; la cartera, el B10 y el C2 sí se desarrollan completos.');
   if (matters.length < 5) limitations.push(`Con ${matters.length} asunto(s) la cartera es corta: el Audit tendrá poco margen para elegir, comparar y justificar el asunto principal.`);
   if ((input.scopeConfirmations || []).length) limitations.push('Una fuente corresponde a otra práctica: su contenido solo se usará si es pertinente a la práctica elegida.');
@@ -44,13 +45,36 @@ export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
     summary: 'Listo para generar: tienes asuntos suficientes, perfiles de abogados y descripción del departamento para un Audit y un Submission completos.' };
 }
 
+const foldText = (value: unknown) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * v1.0.114: the same mandate read from two versions of a form is one matter.
+ * Same client and at least 80 % of shared words in the source text. Different
+ * mandates of one client share the name but not the text, so they are not
+ * grouped. Detection only: nothing is merged or removed.
+ */
+export function duplicateMatters(matters: any[]): { client: string; count: number; sources: string[] }[] {
+  const groups: { client: string; words: Set<string>; members: any[] }[] = [];
+  for (const m of matters || []) {
+    const client = foldText(m?.client), words = new Set(foldText(matterSourceText(m)).split(' ').filter(w => w.length > 3));
+    if (!client || words.size < 20) continue;
+    const match = groups.find(g => g.client === client && (() => {
+      let shared = 0; for (const w of words) if (g.words.has(w)) shared++;
+      return shared / Math.min(words.size, g.words.size) >= 0.8;
+    })());
+    if (match) match.members.push(m); else groups.push({ client, words, members: [m] });
+  }
+  return groups.filter(g => g.members.length > 1).map(g => ({ client: String(g.members[0].client).trim(), count: g.members.length,
+    sources: [...new Set(g.members.map(m => String(m.source_document || '').trim()).filter(Boolean))] }));
+}
+
 export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; nextStep: string; verdict: ReadinessVerdict } {
   const items: ReadinessItem[] = [];
   const lawyers = input.lawyers || [], matters = input.matters || [];
   if (!lawyers.length)
     items.push({ kind: 'missing', text: 'No encontramos perfiles de abogados en tus fuentes. Sin ellos la sección B9 quedará vacía y no habrá candidaturas individuales: sube sus biografías o pega el texto de sus perfiles.' });
   if (!String(input.b10Text || '').trim())
-    items.push({ kind: 'missing', text: 'Falta una descripción del departamento (base del B10): pega un texto sobre la práctica, sus sectores y su equipo.' });
+    items.push({ kind: 'missing', text: 'Falta una descripción del departamento (base del B10). No impide generar: el B10 se construirá de forma preliminar a partir de los asuntos. Para un resultado más completo, pega un texto sobre la práctica, sus sectores y su equipo.' });
   const gaps = filingDetailsGaps(input.filingDetails || {});
   if (gaps.length)
     items.push({ kind: 'missing', text: `Datos administrativos del formulario sin completar: ${gaps.join('; ')}. Puedes completarlos en este asistente; no impiden preparar el análisis.` });
@@ -58,8 +82,10 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
     items.push({ kind: 'doubt', text: `Encontramos ${matters.length} asuntos. Chambers admite hasta 20: si tienes más mandatos relevantes de los últimos 12 meses, añádelos para elegir mejor la cartera.` });
   for (const report of input.sourceReports || []) {
     if ((report.matter_count ?? 0) === 0)
-      items.push({ kind: 'doubt', text: `«${report.source}» no aportó asuntos. Revisa que sea la fuente correcta o si contiene otra información (perfiles, descripción del departamento).` });
+      items.push({ kind: 'doubt', text: `«${report.source}» no aportó asuntos propios. Si es un documento de respaldo (permiso, sentencia, resolución, contrato), todavía no se vincula solo a un asunto: copia en el asunto correspondiente los hechos, fechas o resultados que acredita. Si contiene perfiles o la descripción del departamento, pégalos en su apartado.` });
   }
+  for (const group of duplicateMatters(matters))
+    items.push({ kind: 'doubt', text: `«${group.client}» aparece ${group.count} veces con contenido casi idéntico (${group.sources.length ? group.sources.map(s => `«${s}»`).join(', ') : 'misma fuente'}): parece el mismo asunto en varias versiones. Conserva una sola antes de preparar para no contarlo dos veces.` });
   for (const c of input.scopeConfirmations || [])
     items.push({ kind: 'doubt', text: `«${c.source}» indica ${c.field === 'practice_area' ? 'la práctica' : c.field === 'jurisdiction' ? 'la jurisdicción' : 'la guía'} «${c.detected}»; elegiste continuar con «${c.selected}». Revisa que su contenido corresponda a esa práctica.` });
   for (const text of integrityChecks({ numPartners: input.filingDetails?.numPartners, lawyers }, matters))

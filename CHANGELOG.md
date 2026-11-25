@@ -1,3 +1,17 @@
+## 1.0.114: Loose documents (option B) can be generated without a department description
+
+First step of the strategic-diagnosis work asked for after a real option B test (six loose documents, no profiles, no department text). Deterministic changes only; no new model call.
+
+- **A missing department description no longer blocks preparation.**
+  - **Cause:** one rule blocked the wizard, Studio, the job API and the release check, so a case with documented matters could produce neither document.
+  - **Change:** it is now a stated limitation. B10 and C2 are built preliminarily from the documented matters and supplied lawyers; the writer is told never to invent structure, headcount, titles, history or capabilities.
+  - A case with no matters, or matters with no source text, still blocks.
+- **Duplicate matters are reported.** The same mandate read from two versions of a form (same client, at least 80 % shared source words) is shown once as a doubt. Nothing is merged or removed; different mandates of one client are not grouped.
+- **The currency question uses context.** When a value has no currency and the same matter's narrative states coded amounts, the question quotes them and asks whether the value is that amount or another concept.
+- **A source with no matters of its own** is described as supporting documentation, with what to do with it.
+- **Not in this release:** relevance of each matter to the chosen practice before generation, an Audit independent of the Submission, alternative-category advice, and linking supporting documents to a matter.
+- **Validation:** Python 1049 passed; Node 636 passed, 1 skipped; tsc passed. Not yet exercised on a real run.
+
 ## 1.0.113: Editorial precision from three real test cases
 
 Surgical changes to the engine. Every rule is general (no firm, lawyer or client names) and was replayed offline on four saved runs before commit.

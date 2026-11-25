@@ -181,7 +181,11 @@ is a MAXIMUM, not a target and not a 500-word limit: develop as far as the
 evidence supports, never padding. When the original department narrative
 (b10_source) is short, EXPAND it with the portfolio's evidenced mechanisms and
 results; never compress or drop its substance (allocate depth to the evidence, not
-a sequential case list): (1) open with the strongest strategic differentiator from
+a sequential case list). When b10_source is empty, build B10 and C2 only from the
+documented portfolio and the supplied lawyers: recurring legal capabilities, sectors
+served, type and complexity of mandates, authorities and counterparties, lawyers who
+recur and accredited results; never invent a structure, headcount, title, history or
+capability that those records do not state: (1) open with the strongest strategic differentiator from
 this portfolio; (2) cover industry sector expertise, geographic/national footprint
 and areas of recent growth where evidenced in the sources; (3) develop all shared
 institutional_arguments and other documented capability pillars with concrete legal

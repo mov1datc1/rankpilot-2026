@@ -27,12 +27,17 @@ export function preparationInputIssues(data:any,matters:any[]=data?.matters || [
   return issues;
 }
 
-/** Paid preparation must not discover this requirement only after drafting. */
+/**
+ * v1.0.114: a missing department description no longer blocks preparation.
+ * With documented matters the engine builds a preliminary B10/C2 from that
+ * evidence alone; the gap is shown as a limitation (departmentSourceMissing).
+ */
 export function editorialPreparationIssues(data:any,matters:any[]=data?.matters || []):string[] {
-  const issues=preparationInputIssues(data,matters);
-  if(!String(data?.confirmed_source_b10 ?? data?.original_b10 ?? '').trim())
-    issues.push('Añade la descripción de origen del departamento en «Revisar expediente» antes de preparar los documentos. Incluye solo capacidades y responsables acreditados.');
-  return issues;
+  return preparationInputIssues(data,matters);
+}
+
+export function departmentSourceMissing(data:any):boolean {
+  return !String(data?.confirmed_source_b10 ?? data?.original_b10 ?? '').trim();
 }
 
 export function officialFilingGaps(data:any):string[] {

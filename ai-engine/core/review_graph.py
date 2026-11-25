@@ -1162,7 +1162,8 @@ def release_gate(state, require_judge=True):
         resolution = lawyer.get('roleResolution')
         if resolution and (resolution.get('confirmed') is not True or not str(resolution.get('reason') or '').strip() or resolution.get('role') != lawyer.get('role') or lawyer.get('isPartner') != (lawyer.get('role') == 'Partner')):
             errors.append(f"Confirma el cargo y su fuente para {lawyer.get('name') or lawyer.get('fullName') or 'el abogado'} antes de aprobar la entrega.")
-    if not state['package'].get('b10_source'):errors.append('Department source narrative is missing.')
+    # v1.0.114: a missing department description is a stated limitation, not a
+    # release error: B10/C2 are built from the documented portfolio alone.
     if not supports_editorial_directory(state['package'].get('directory')):errors.append('This review policy has only been configured for Chambers and Legal 500; directory-specific review required.')
     if state.get('development'):
         errors.extend(development_errors(state['package'],state['strategy'],state['development']))
