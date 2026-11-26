@@ -339,6 +339,22 @@ def length_faults(package, value):
     return faults
 
 
+PROMOTION = re.compile(r'(?i)\b(?:move|moving)\s+up\b|\bpromot|\badvance|\bascen|\bsubir\b|\bhigher\s+band\b|\bup\s+one\s+band\b')
+MAINTAIN = re.compile(r'(?i)\b(?:maintain(?:ing)?|retain(?:ing)?|remain(?:ing)?|preserv(?:e|ing)\s+(?:its|the|our)\s+(?:current\s+)?(?:band|position|ranking))\b')
+
+
+def objective_faults(package, value):
+    """v1.0.123 (Ángela, 26-11): C2 argued for promotion and closed on keeping the
+    current band, which undoes the argument. When the primary objective is to move
+    up, C2 closes on that objective; maintaining is a fallback for the Audit."""
+    primary = str(((package or {}).get('objectives') or {}).get('primary') or '')
+    paragraphs = [p for p in str((value or {}).get('c2') or '').split('\n') if p.strip()]
+    if not PROMOTION.search(primary) or not paragraphs or not MAINTAIN.search(paragraphs[-1]):
+        return []
+    return [f'C2 closes on maintaining the current position while the primary objective is "{primary}". '
+            'Close C2 on the primary objective, as the evidence above argues it; maintaining the current band is a fallback stated only in the Audit.']
+
+
 NUMBER_WORDS = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,'eleven':11,'twelve':12}
 
 
@@ -828,7 +844,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+headcount_faults(package,value)
+                faults=length_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
                 if faults and not correcting:
                     # Ángela's rule: develop up to 1,000 words, never shrink the
                     # original. One self-correction states the exact expectation.

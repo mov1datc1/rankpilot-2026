@@ -14,7 +14,10 @@
  * uses the same examples. Nothing here changes a source, blocks generation or
  * decides which reading is right.
  */
-export type InputDoubt = { kind: 'doubt' | 'check'; text: string };
+/** v1.0.123 (Ángela, 26-11): three kinds of notice. 'auto': RankPilot resolves it
+ * itself; 'info': a limitation or recommendation with no action required;
+ * 'doubt'/'check': a decision or validation only the user can make. */
+export type InputDoubt = { kind: 'doubt' | 'check' | 'info' | 'auto'; text: string };
 
 const fold = (value: unknown) => (String(value ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().match(/[\p{L}\p{N}_]+/gu) || []).join(' ');
 const HEADING = /^\s*(?:(?:other\s+)?team\s+members?|lead partners?|lead lawyers?|socios? responsables?)\s*[:(s)]*\s*/i;
@@ -70,7 +73,7 @@ export function inputDoubts(input: { lawyers?: any[]; matters?: any[]; departmen
 
   const shared = roles.filter(r => r.lead.length > 1);
   if (shared.length)
-    doubts.push({ kind: 'check', text: `${shared.length} asunto(s) nombran a más de un socio responsable (${listed(shared.map(r => `${short(label(r.matter), 40)}: ${r.lead.join(' y ')}`))}). Se redactarán como codirigidos por esas personas, nunca como liderados por una sola. Si alguno lo dirige una sola persona, deja solo su nombre en «socio responsable».` });
+    doubts.push({ kind: 'auto', text: `${shared.length} asunto(s) nombran a varios socios responsables (${listed(shared.map(r => `${short(label(r.matter), 40)}: ${r.lead.join(' y ')}`))}). Se conservan todos como corresponsables, tal como los da la fuente.` });
 
   if (anyRole) {
     const unassigned = roles.filter(r => !r.lead.length && !clientLooksLikeText(r.matter?.client));
@@ -81,7 +84,7 @@ export function inputDoubts(input: { lawyers?: any[]; matters?: any[]; departmen
   if (roster.length && anyRole) {
     const outside = [...new Set(roles.flatMap(r => r.lead).filter(name => !rosterMatch(name, roster)))];
     if (outside.length)
-      doubts.push({ kind: 'doubt', text: `Los asuntos nombran como socio responsable a ${outside.length} persona(s) sin perfil en B9 (${listed(outside)}). No tendrán biografía ni candidatura individual. Añade su perfil o confirma que no se presentan.` });
+      doubts.push({ kind: 'info', text: `${outside.length} socio(s) responsable(s) de algún asunto no tienen perfil en B9 (${listed(outside)}). Es habitual en mandatos con abogados de otras prácticas: se citan como responsables del asunto y no se proponen como candidatos individuales de esta práctica.` });
     const present = new Set(roles.flatMap(r => [...r.lead, ...r.team]).map(name => rosterMatch(name, roster)).filter(Boolean));
     const idle = profiles.filter(name => !present.has(fold(name)));
     if (idle.length)

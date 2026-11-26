@@ -95,7 +95,8 @@ def register_input(package):
                     for p in package.get('lawyers', []) if identity(p.get('name') or p.get('fullName'))],
         'matters': [{'matter_id': m.get('id'), 'client_cell': str(m.get('client') or m.get('clientName') or ''),
                      'lead_partner_cell': form_cell(m, 'leadPartner'), 'team_cell': form_cell(m, 'teamMembers'),
-                     'completion_cell': str(m.get('completionDate') or ''), 'other_information': other_information(m),
+                     'completion_cell': str(m.get('completionDate') or ''), 'cross_border_cell': str(m.get('crossBorder') or ''),
+                     'other_information': other_information(m),
                      'narrative': str(m.get('rawNotes') or m.get('summary') or '')[:6000]}
                     for m in package.get('matters', [])],
     }
@@ -122,6 +123,7 @@ class MatterFacts(BaseModel):
     completion_quote: str = Field(description='Literal excerpt that states the status or date; empty when there is none.')
     public_use_restricted: bool = Field(description='True only when this record itself says the whole matter must not be disclosed or described publicly (for example "This matter is strictly confidential"). A confidential value, a confidential client or a "Confidential Matter" heading alone is NOT such a restriction.')
     restriction_quote: str = Field(description='The literal restriction sentence; empty when public_use_restricted is false.')
+    cross_border_doubt: str = Field(description='Only when cross_border_cell answers No: the literal passage of the record that describes work involving another jurisdiction (international transfers of workers, foreign parent company instructions, foreign courts or authorities). Empty otherwise.')
 
 
 class Lawyer(BaseModel):
@@ -129,6 +131,7 @@ class Lawyer(BaseModel):
     title: str = Field(description='The most specific professional title the texts write for this person, copied exactly: team cells such as "Name (Senior Associate)" or the department description such as "Name, a senior associate with 16 years" are more specific than form_role, which is only the form\'s class (Partner/Associate, sometimes in Spanish). Empty when no text writes a title.')
     title_quote: str = Field(description='The literal excerpt that gives that title; empty when title is empty.')
     other_names: List[str] = Field(description='Other ways the sources write this same person (with an initial, a second surname). Exact copies only.')
+    statements: List[str] = Field(description='Every sentence, in ANY text (department description, any matter, selected or not), that states something about THIS person: role or responsibility in the practice, years of experience, specialisation, leadership, autonomy, client relationships. Copy each sentence exactly. Skip sentences that only list a team.')
 
 
 class Register(BaseModel):
@@ -250,6 +253,31 @@ def merge_people(first, second):
     return kept
 
 
+def about_person(sentence, text, names):
+    """The sentence is literally in TEXT and names one of NAMES, or one of the four
+    sentences before it (in its paragraph, or ending the paragraph before) does."""
+    needle = ' '.join(str(sentence or '').split()).casefold()
+    keys = [identity(n) for n in names if len(identity(n).split()) >= 2]
+    keys += [' '.join(k.split()[-2:]) for k in keys if len(k.split()) >= 3]
+    if not needle or not keys:
+        return False
+    previous = ''
+    for paragraph in re.split(r'\n\s*', str(text or '')):
+        flat = ' '.join(paragraph.split())
+        at = flat.casefold().find(needle)
+        if at >= 0:
+            if any(k in identity(sentence) for k in keys):
+                return True
+            # Up to four sentences before it, in its paragraph or, when it opens the
+            # paragraph, at the end of the paragraph before.
+            recent = ' '.join(re.split(r'(?<=[.!?])\s+', flat[:at] if flat[:at].strip() else previous)[-4:])
+            if any(k in identity(recent) for k in keys):
+                return True
+        if flat:
+            previous = flat
+    return False
+
+
 def rules_matter(matter, people, period):
     lead_cell = form_cell(matter, 'leadPartner')
     lead_cell = '\n'.join(part for part in lead_cell.split('\n') if len(part) < 300)
@@ -282,7 +310,7 @@ def rules_register(package):
     lawyers = {}
     for key, name in people.items():
         profile = next((p for p in package.get('lawyers', []) if identity(p.get('name') or p.get('fullName')) == key), {})
-        lawyers[name] = {'title': str(profile.get('role') or profile.get('title') or ''), 'other_names': []}
+        lawyers[name] = {'title': str(profile.get('role') or profile.get('title') or ''), 'other_names': [], 'statements': []}
     return {'version': VERSION, 'method': 'rules', 'clients': clients, 'matters': matters, 'lawyers': lawyers, 'rejected': []}
 
 
@@ -314,6 +342,26 @@ def validate(reading, package):
             if _literal(other, every_source) and surname & set(identity(other).split()) and identity(other) != key:
                 entry['other_names'].append(' '.join(str(other).split()))
                 variants[identity(other)] = key
+    # v1.0.123 (Ángela, 26-11): what any section says about a lawyer is that
+    # lawyer's evidence (a B9 with only a link, the department description,
+    # a matter not selected). Kept only when literal and about this person:
+    # the sentence names them, or follows a sentence of the same paragraph that does.
+    texts = [str(package.get('b10_source') or '')] + [matter_sources(m) for m in by_id.values()]
+    for item in reading.get('lawyers') or []:
+        key = identity(item.get('name'))
+        if key not in people:
+            continue
+        entry = register['lawyers'][people[key]]
+        names = [people[key]] + entry['other_names']
+        for sentence in item.get('statements') or []:
+            sentence = ' '.join(str(sentence or '').split())
+            if len(sentence) < 25 or sentence in entry['statements']:
+                continue
+            if any(about_person(sentence, text, names) for text in texts):
+                entry['statements'].append(sentence)
+            else:
+                rejected.append('statement not about ' + people[key] + ' in the sources')
+        entry['statements'] = entry['statements'][:12]
     for item in reading.get('clients') or []:
         matter = by_id.get(item.get('matter_id'))
         if not matter:
@@ -360,6 +408,9 @@ def validate(reading, package):
             # The model reads a date written in the narrative; code decides the period.
             entry.update(status=status, completion={'year': year if status == 'completed' else 0, 'month': month if status == 'completed' else 0, 'quote': quote},
                          in_research_period=in_period(status, year, month, period))
+        doubt = ' '.join(str(item.get('cross_border_doubt') or '').split())
+        if doubt and re.match(r'(?i)\s*no\b', str(matter.get('crossBorder') or '')) and _literal(doubt, sources) and len(doubt) >= 20:
+            entry['cross_border_doubt'] = doubt
         restricted, sentence = bool(item.get('public_use_restricted')), str(item.get('restriction_quote') or '')
         if restricted and _literal(sentence, sources) and RESTRICTION.search(sentence):
             entry.update(public_use_restricted=True, restriction_quote=sentence)
@@ -407,4 +458,6 @@ def apply(package):
                 matter[field] = matter[snake] = '; '.join(p['name'] for p in people)
         matter['in_research_period'] = facts.get('in_research_period')
         matter['public_use_restricted'] = bool(facts.get('public_use_restricted'))
+        if facts.get('cross_border_doubt'):
+            matter['cross_border_doubt'] = facts['cross_border_doubt']
     return package

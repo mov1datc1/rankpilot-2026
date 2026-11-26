@@ -388,9 +388,15 @@ export default function PostIngestionWizardModal({
                   <strong>Qué le falta a tu expediente</strong>
                   <p style={{margin:'.5rem 0'}}><strong>{readiness.verdict.status==='blocked'?'Todavía no conviene generar':readiness.verdict.status==='limited'?'Puedes generar, con limitaciones':'Listo para generar'}.</strong> {readiness.verdict.summary}</p>
                   {readiness.verdict.limitations.length ? <ul style={{margin:'0 0 .5rem',paddingLeft:'1.2rem'}}>{readiness.verdict.limitations.map((text, i) => <li key={i}>{text}</li>)}</ul> : null}
-                  {readiness.items.length ? <ul style={{margin:'.5rem 0',paddingLeft:'1.2rem'}}>
-                    {readiness.items.map((item, i) => <li key={i} style={{marginBottom:'.35rem'}}>{item.kind==='missing'?'Falta: ':item.kind==='doubt'?'Revisa: ':'Confirma: '}{item.text}</li>)}
-                  </ul> : null}
+                  {/* v1.0.123: what needs a decision, what is only information, and what RankPilot resolves itself. */}
+                  {([['Necesita tu decisión',readiness.items.filter(item=>!['info','auto'].includes(item.kind))],
+                     ['Para tu información',readiness.items.filter(item=>item.kind==='info')],
+                     ['RankPilot lo resuelve',readiness.items.filter(item=>item.kind==='auto')]] as const).map(([title,group])=>group.length ? <div key={title} style={{margin:'.5rem 0'}}>
+                    <strong style={{fontSize:13}}>{title}</strong>
+                    <ul style={{margin:'.25rem 0',paddingLeft:'1.2rem'}}>
+                      {group.map((item, i) => <li key={i} style={{marginBottom:'.35rem'}}>{item.kind==='missing'?'Falta: ':item.kind==='doubt'?'Revisa: ':item.kind==='check'?'Confirma: ':''}{item.text}</li>)}
+                    </ul>
+                  </div> : null)}
                   <p style={{margin:0}}><strong>Siguiente paso:</strong> {readiness.nextStep}</p>
                 </div>;
               })()}

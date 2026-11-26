@@ -12,7 +12,7 @@ import { editorialPreparationIssues, matterSourceText } from './preparation-inpu
  * (5 documents) had no lawyer profile, no department data and one form for
  * another practice; the Wizard showed this only as scattered small print.
  */
-export type ReadinessItem = { kind: 'missing' | 'doubt' | 'check'; text: string };
+export type ReadinessItem = { kind: 'missing' | 'doubt' | 'check' | 'info' | 'auto'; text: string };
 export type ReadinessVerdict = { status: 'blocked' | 'limited' | 'ready'; summary: string; limitations: string[] };
 export type ReadinessInput = {
   firmName?: string; practiceArea?: string;
@@ -41,7 +41,7 @@ export function lawyersWithLinkOnly(lawyers: any[]): string[] {
     .map(l => String(l?.name || l?.fullName || '').trim()).filter(Boolean);
 }
 const linkOnlyText = (names: string[], total: number) =>
-  `${names.length} de ${total} abogado(s) traen en B9 solo un enlace, sin texto de biografía (${names.join(', ')}). RankPilot no lee el enlace: su B9 se redactará únicamente con los asuntos, sin trayectoria, formación ni cargos. Pega el texto de su perfil en el apartado de abogados para un B9 completo.`;
+  `${names.length} de ${total} abogado(s) traen en B9 solo un enlace, sin texto de biografía (${names.join(', ')}). Es una práctica habitual del formulario. Su B9 se construye con sus asuntos y con lo que el resto del documento dice de ellos (por ejemplo, la descripción del departamento). RankPilot todavía no abre los enlaces: si quieres incluir trayectoria o formación, puedes pegar el texto del perfil.`;
 
 export function readinessVerdict(input: ReadinessInput): ReadinessVerdict {
   const matters = input.matters || [], lawyers = input.lawyers || [];
@@ -92,7 +92,7 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
   if (!lawyers.length)
     items.push({ kind: 'missing', text: 'No encontramos perfiles de abogados en tus fuentes. Sin ellos la sección B9 quedará vacía y no habrá candidaturas individuales: sube sus biografías o pega el texto de sus perfiles.' });
   const linkOnly = lawyersWithLinkOnly(lawyers);
-  if (linkOnly.length) items.push({ kind: 'missing', text: linkOnlyText(linkOnly, lawyers.length) });
+  // Shown once, as a limitation of the verdict (it appeared twice before v1.0.123).
   if (!String(input.b10Text || '').trim())
     items.push({ kind: 'missing', text: 'Falta una descripción del departamento (base del B10). No impide generar: el B10 se construirá de forma preliminar a partir de los asuntos. Para un resultado más completo, pega un texto sobre la práctica, sus sectores y su equipo.' });
   const gaps = filingDetailsGaps(input.filingDetails || {});
@@ -114,13 +114,16 @@ export function caseReadiness(input: ReadinessInput): { items: ReadinessItem[]; 
   for (const doubt of inputDoubts({ lawyers, matters, departmentHeads: input.filingDetails?.departmentHeads }))
     items.push(doubt);
   const verdict = readinessVerdict(input);
+  // One notice, one place: an item already stated as a limitation is not repeated.
+  const stated = new Set(verdict.limitations);
+  items.splice(0, items.length, ...items.filter(item => !stated.has(item.text)));
   // The next step follows the verdict, so it never invites generating a case
   // that Studio would not prepare.
   const nextStep = verdict.status === 'blocked'
     ? 'Completa primero la información indicada; después confirma los asuntos y pulsa preparar.'
     : verdict.status === 'limited'
       ? 'Si tienes lo que falta, añádelo para un resultado más completo; si no, confirma los asuntos y pulsa preparar: RankPilot generará con lo disponible y lo señalará en el Audit.'
-      : items.length
+      : items.some(item => !['info','auto'].includes(item.kind))
         ? 'Revisa las dudas señaladas y después confirma los asuntos y pulsa preparar.'
         : 'Confirma los asuntos y pulsa preparar.';
   return { items, nextStep, verdict };
