@@ -126,7 +126,7 @@ class MatterFacts(BaseModel):
 
 class Lawyer(BaseModel):
     name: str = Field(description='The lawyer exactly as named in lawyers.')
-    title: str = Field(description='The professional title exactly as the sources write it for this person (for example "Senior Associate", "Senior Partner"); empty when none is written.')
+    title: str = Field(description='The most specific professional title the texts write for this person, copied exactly: team cells such as "Name (Senior Associate)" or the department description such as "Name, a senior associate with 16 years" are more specific than form_role, which is only the form\'s class (Partner/Associate, sometimes in Spanish). Empty when no text writes a title.')
     title_quote: str = Field(description='The literal excerpt that gives that title; empty when title is empty.')
     other_names: List[str] = Field(description='Other ways the sources write this same person (with an initial, a second surname). Exact copies only.')
 
@@ -196,11 +196,17 @@ def in_period(status, year, month, period):
     return True
 
 
+# A single institutional noun names no particular client ("Cámara" for a chamber of commerce).
+INSTITUTIONAL = re.compile(r'(?i)^(?:c[aá]mara|chamber|unidad|educativa|universidad|university|colegio|school|programa|program(?:me)?'
+                           r'|asociaci[oó]n|association|federaci[oó]n|federation|corporaci[oó]n|holding|holdings|soluciones|solutions'
+                           r'|distribuidora|comercializadora|editores|inversiones|constructora|consultores|ministerio|ministry)$')
+
+
 def _good_name(value, cell, firm, people):
     value = ' '.join(str(value or '').split()).strip(' ,;')
     if len(value) < 2 or not re.match(r'^[^\W_]', value) or value[:1].islower():
         return False
-    if is_legal_form(value) or GENERIC.match(value) or identity(value) in (identity(firm), *people):
+    if is_legal_form(value) or GENERIC.match(value) or INSTITUTIONAL.match(value) or identity(value) in (identity(firm), *people):
         return False
     return value in ' '.join(str(cell or '').split())
 
@@ -226,6 +232,22 @@ def _names(cell):
     # lists two people even without a comma or "and" between them.
     cell = re.sub(r'\([^()]*\)', ';', cell)
     return [' '.join(n.split()) for n in listed_names(cell) if person_like(n)]
+
+
+def same_person(a, b):
+    """The same roster lawyer, or one written name containing the other (two words at least)."""
+    if a.get('roster') and a.get('roster') == b.get('roster'):
+        return True
+    x, y = set(identity(a.get('name')).split()), set(identity(b.get('name')).split())
+    return len(min(x, y, key=len)) >= 2 and (x <= y or y <= x)
+
+
+def merge_people(first, second):
+    kept = list(first)
+    for person in second:
+        if not any(same_person(person, other) for other in kept):
+            kept.append(person)
+    return kept
 
 
 def rules_matter(matter, people, period):
@@ -325,13 +347,13 @@ def validate(reading, package):
                 if all(identity(p['name']) != identity(name) and (not key or p['roster'] != key) for p in kept):
                     kept.append({'name': name, 'roster': key})
             return kept
-        leads = persons(item.get('leads'))
-        if leads:
-            entry['leads'] = leads
+        # v1.0.122 (live reading of 26 Nov): the form cell's leads are always kept
+        # and the reading only adds people; a quote the code cannot verify never
+        # removes a lead the form names (one was lost that way).
+        entry['leads'] = merge_people(entry['leads'], persons(item.get('leads')))
         keys = {identity(p['name']) for p in entry['leads']} | {p['roster'] for p in entry['leads'] if p['roster']}
-        team = [p for p in persons(item.get('team')) if identity(p['name']) not in keys and p['roster'] not in keys]
-        if team or not entry['team']:
-            entry['team'] = team or entry['team']
+        entry['team'] = [p for p in merge_people(entry['team'], persons(item.get('team')))
+                         if identity(p['name']) not in keys and p['roster'] not in keys and not any(same_person(p, q) for q in entry['leads'])]
         status, year, month = item.get('status'), int(item.get('completion_year') or 0), int(item.get('completion_month') or 0)
         quote = str(item.get('completion_quote') or '')
         if status in ('ongoing', 'completed') and (not quote or _literal(quote, sources)) and (status == 'ongoing' or 1950 <= year <= 2100) and 0 <= month <= 12:
