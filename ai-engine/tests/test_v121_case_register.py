@@ -99,7 +99,8 @@ class ModelReadingTests(unittest.TestCase):
         self.assertEqual(reg['clients']['m1']['other_names'], ['IEG'])  # "business" and a person are rejected
         self.assertEqual(reg['clients']['m2']['name'], 'Comercial Norte, C.A.')  # a name with its description falls back
         self.assertEqual(reg['clients']['m2']['other_names'], ['Norte Retail'])  # not in the sources: rejected
-        self.assertEqual([p['name'] for p in reg['matters']['m1']['leads']], ['Ana Ruiz'])
+        # v1.0.122: the form cell's leads stay; an invented person never enters.
+        self.assertEqual([p['name'] for p in reg['matters']['m1']['leads']], ['Ana Ruiz', 'Bruno Soto Vela'])
         self.assertEqual(reg['lawyers']['Lucia Prado']['title'], 'senior associate')
         self.assertEqual(reg['lawyers']['Bruno Soto Vela']['title'], 'Partner')  # unsupported title: form role stays
         self.assertTrue(reg['matters']['m1']['public_use_restricted'])
@@ -130,6 +131,20 @@ class ModelReadingTests(unittest.TestCase):
     def test_the_reader_has_its_own_short_instructions(self):
         self.assertEqual(role_base('case_register', 'LONG REVIEW RULES'), cr.REGISTER_BASE)
         self.assertEqual(role_base('editor', 'LONG REVIEW RULES'), 'LONG REVIEW RULES')
+
+    def test_v122_a_lead_the_form_names_is_never_lost_and_a_lone_institutional_noun_is_no_alias(self):
+        reading = self.reading()
+        # The live reading of 26 Nov returned a lead whose quote code could not verify.
+        reading['matters'][0]['leads'] = [{'name': 'Bruno Soto Vela', 'quote': 'not in the record'}, {'name': 'Ana Ruiz', 'quote': 'The matter is led by Ana Ruiz.'}]
+        reading['clients'][0]['other_names'] = ['IEG', 'Instituto']
+        pkg = package()
+        pkg['matters'][1]['rawNotes'] += ' The Cámara supported it.'
+        reading['clients'][1]['other_names'] = ['Cámara', 'Norte Retail']
+        reg = cr.validate(reading, pkg)
+        self.assertEqual([p['name'] for p in reg['matters']['m1']['leads']], ['Ana Ruiz', 'Bruno Soto Vela'])
+        self.assertEqual(reg['clients']['m2']['other_names'], ['Norte Retail'])
+        self.assertTrue(cr.same_person({'name': 'Manuel Reyes', 'roster': None}, {'name': 'Manuel Reyes Paz', 'roster': None}))
+        self.assertFalse(cr.same_person({'name': 'Ana Ruiz', 'roster': None}, {'name': 'Ana Soto', 'roster': None}))
 
 
 class ConsumerTests(unittest.TestCase):

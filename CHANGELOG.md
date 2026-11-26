@@ -1,3 +1,11 @@
+## 1.0.122: The case register never loses a lead the form names
+
+No new model call. Live reading of the two real cases of 26 Nov on 1.0.121 (0.18 USD): the model found the client names the rules missed (a trading name only in the narrative, short names), reconciled a lead named in the narrative with the form's lead as co-leads, and recognised name variants of the same lawyer. Three defects:
+
+- **A lead the form names was lost.** The reading replaced the rules' leads; when code rejected one person whose quote was not literal, a lead the form cell names disappeared (two matters). The form cell's leads are now always kept and the reading only adds people, deduplicated by roster and by contained names.
+- **A lone institutional noun is no alias.** "Cámara" was returned as a name of a chamber of commerce. Single institutional nouns (chamber, programme, association, distributor, ...) are rejected.
+- **Titles.** The reading copied the form's class ("Associate") instead of the title the team cells and the department description write ("Senior Associate"). The instruction now names those texts as more specific. Not yet verified live.
+
 ## 1.0.121: One case register, read once before writing; observations grouped by section
 
 One new model call per new generation (about 0.07 to 0.11 USD on the two real cases below), made before the job starts and counted in its ledger.
