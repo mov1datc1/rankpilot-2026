@@ -17,9 +17,10 @@ import unicodedata
 GENERIC = re.compile(r'^(grupo|group|private|confidential|client|cliente|empresa|company|corporation|new|nueva|the|manufacturing|manufactura|services|servicios|industries|industria|logistics|logística|instituto|institute|sociedad|asociación|asociacion|fundación|fundacion|banco|bank|fondo|asociados|associates|transportes|semillas|familia|villas|jalisco|guadalajara|zapopan|tlajomulco|durango|m[eé]xico)$', re.I)
 QUALIFIER = re.compile(r'^(?:de\b|m[eé]xico\b|industrial\b|manufacturing\b|international\b|services\b|s\.?a\b|s\.?p\.?a\b)', re.I)
 DESCRIPTION = re.compile(r'(?:\.|\s+[-–—]\s+|,\s*)\s*(?:is an?|it is an?|a (?:global|world|leading)|company (?:dedicated|engaged|specializing)|located in|based in|headquartered in|empresa dedicada|dedicada a|con sede en)\b', re.I)
+NAME_END = re.compile(r'\s[-–—]\s*|[-–—]\s')
 LEGAL = {'sa', 'de', 'cv', 'sab', 'sapi', 's', 'rl', 'inc', 'llc', 'ltd', 'corp', 'gmbh', 'ag', 'plc', 'co', 'sc', 'spa', 'srl', 'bv', 'nv'}
 # v1.0.115: a bare company form is never a client identity (see client-aliases.ts).
-LEGAL_FORMS = {'sa','ca','cv','sacv','cacv','sab','sabcv','sapi','sapicv','sas','sac','srl','srlcv','rl','rlcv','sl','slu','spa','sc','scs','eirl','ltda','cia','llc','llp','lp','inc','ltd','corp','co','gmbh','ag','plc','nv','bv','pty','pte'}
+LEGAL_FORMS = {'na','sa','ca','cv','sacv','cacv','sab','sabcv','sapi','sapicv','sas','sac','srl','srlcv','rl','rlcv','sl','slu','spa','sc','scs','eirl','ltda','cia','llc','llp','lp','inc','ltd','corp','co','gmbh','ag','plc','nv','bv','pty','pte'}
 
 
 def is_legal_form(value):
@@ -45,6 +46,13 @@ def clean_name(raw):
     match = DESCRIPTION.search(s)
     if match and match.start() > 2:
         s = s[:match.start()]
+    # v1.0.121: a dash with a space on at least one side separates the name
+    # from the description the form pasted after it ("(IEG)- a school of
+    # management, business, …", "Retail Co - one of the …"). A dash inside a
+    # word ("Pagos Spidi-Sur") is part of the name.
+    dash = NAME_END.search(s)
+    if dash and dash.start() > 1:
+        s = s[:dash.start()]
     return s.strip().rstrip(',').strip()
 
 
@@ -66,6 +74,10 @@ def client_aliases(names):
         for entity in re.split(r'\s+and\s+|\s+&\s+|,\s+(?!S\.?A\.?\b|S\.?\b)', name, flags=re.I):
             entity = entity.strip()
             if is_legal_form(entity):
+                continue
+            # A client identity is a proper name: a word written in lower case
+            # ("business", "power") is never one (real run 13a858bf).
+            if not re.match(r'^[^\W_]', entity) or entity[:1].islower():
                 continue
             if len(entity) >= 2 and not GENERIC.match(entity):
                 add(entity)

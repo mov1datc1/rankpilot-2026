@@ -1,3 +1,4 @@
+import { isPlaceholder } from '@/lib/editorial/placeholder';
 import { resolvePublication } from './publication-policy';
 
 /** Shared by the guided review and persistence. Unknown permission is never public. */
@@ -50,11 +51,19 @@ export function extractionFieldLabel(field:string):string {
   return ({client:'Cliente',rawNotes:'Descripción completa del asunto',leadPartner:'Socio responsable',teamMembers:'Equipo',crossBorder:'Jurisdicciones',otherFirms:'Otras firmas',completionDate:'Fecha o estado',otherInfo:'Información adicional',firm_name:'Firma',practice_area:'Área de práctica',location:'Jurisdicción',original_b10:'Descripción del departamento',original_c2:'Comentarios de ranking',name:'Nombre',bio:'Biografía',url:'Enlace',current_ranking:'Ranking actual',key_focus:'Especialidad',standout_work:'Trabajo destacado',role:'Cargo'} as Record<string,string>)[field] || field;
 }
 
+/** v1.0.121: who leads and who is on the team is read by the case register from
+ * the form cell and the narrative together; two names in two places are co-leads,
+ * not a question for the user. Real run e8fce72f: five such questions were
+ * answered "na" and the documents printed "na" as the lead partner. */
+export const REGISTER_FIELDS=new Set(['leadPartner','lead_partner','teamMembers','team_members']);
+
 export function pendingExtractionIssues(record:any):any[] {
   return (record?.extraction_issues || []).filter((issue:any)=>{
+    if(REGISTER_FIELDS.has(issue.field))return false;
     if(issue.field==='value')return !validValueResolution(record);
     const value=String(record[issue.field] || '');const resolution=record.extractionResolutions?.[issue.field];
-    return !value.trim() || resolution?.confirmed!==true || resolution.value!==value;
+    // A placeholder ("na", "n/a", "-") is not an answer to a source question.
+    return !value.trim() || isPlaceholder(value) || resolution?.confirmed!==true || resolution.value!==value;
   });
 }
 

@@ -86,11 +86,13 @@ test('role correction can be saved pending but cannot approve delivery without m
 
 test('source discrepancies require a value-bound confirmation and remain after an edit',()=>{
  const {pendingExtractionIssues}=require('../../src/lib/audit/input-review.ts');
- const original={id:'new',isConfidential:true,leadPartner:'',extraction_issues:[{field:'leadPartner',kind:'conflicting',alternatives:['Ana','Bea']}]};
+ const original={id:'new',isConfidential:true,completionDate:'',extraction_issues:[{field:'completionDate',kind:'conflicting',alternatives:['March 2026','Ongoing']}]};
  assert.equal(needsInputReview(original),true);
- const resolved={...original,leadPartner:'Ana',extractionResolutions:{leadPartner:{value:'Ana',confirmed:true}}};
+ const resolved={...original,completionDate:'March 2026',extractionResolutions:{completionDate:{value:'March 2026',confirmed:true}}};
  assert.equal(pendingExtractionIssues(resolved).length,0);assert.equal(needsInputReview(resolved),false);
- assert.equal(needsInputReview({...resolved,leadPartner:'Bea'}),true);
+ assert.equal(needsInputReview({...resolved,completionDate:'Ongoing'}),true);
+ // v1.0.121 (real run e8fce72f): a placeholder is not an answer.
+ assert.equal(pendingExtractionIssues({...original,completionDate:'na',extractionResolutions:{completionDate:{value:'na',confirmed:true}}}).length,1);
  const forged=persistInputReview({...original,extraction_issues:[]},original);
  assert.equal(needsInputReview(forged),true);
 });
@@ -101,4 +103,11 @@ test('changed lawyer roles must be confirmed before paid work, not during final 
  lawyer.roleResolution.confirmed=true;assert.equal(sourceReviewPending({lawyers:[lawyer]}),false);
  lawyer.role='Associate';assert.equal(sourceReviewPending({lawyers:[lawyer]}),true);
  assert.equal(sourceReviewPending({lawyers:[{name:'New Lawyer',role:'Partner',isPartner:true}]}),false);
+});
+
+test('v1.0.121: lead partner and team are read by the case register, never asked of the user',()=>{
+ const {pendingExtractionIssues}=require('../../src/lib/audit/input-review.ts');
+ const matter={id:'m',isConfidential:true,leadPartner:'Ana Ruiz (Senior Partner) and Bea Soto (Partner).',
+  extraction_issues:[{field:'leadPartner',kind:'conflicting',alternatives:['The matter was led by Ana Ruiz.','Ana Ruiz (Senior Partner) and Bea Soto (Partner).']},{field:'teamMembers',kind:'conflicting',alternatives:['Carla Diaz','Dana Lima']}]};
+ assert.equal(pendingExtractionIssues(matter).length,0);assert.equal(needsInputReview(matter),false);
 });

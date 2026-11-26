@@ -32,6 +32,11 @@ an entry carries not_confirmed_as the form gives an incomplete name and does not
 confirm that the head is that fully named lawyer: state what that lawyer leads in
 the mandates and do not write who heads or leads the department or practice,
 neither with the incomplete name nor with the longer one.
+A client entry with public_use is a mandate the source forbids describing publicly:
+it never appears in B9, B10 or C2, not even anonymously, and it remains in section E
+and in the Audit. A client entry with research_period closed before the period is not
+part of this cycle's portfolio. A client's other_names designate that same client and
+follow its publication status.
 fact_sheet adds no fact about the legal work and never replaces the sources for the
 substance of a mandate.''')
 REVIEW_RULE = RULE + (''' When reviewing, a statement about one of these facts that
@@ -76,7 +81,20 @@ def publication(matter):
 
 
 def matter_roles(package):
-    """{matter_id: {'lead': [names as written], 'lead_roster': [...], 'team_roster': [...]}}."""
+    """{matter_id: {'lead': [names as written], 'lead_roster': [...], 'team_roster': [...]}}.
+
+    v1.0.121: read from the case register when the package carries one, so a
+    lead answered "na" or a lead named only in the narrative is not lost."""
+    register = (package or {}).get('case_register')
+    if isinstance(register, dict) and isinstance(register.get('matters'), dict):
+        result = {}
+        for matter in package.get('matters', []):
+            facts = register['matters'].get(matter.get('id')) or {'leads': [], 'team': []}
+            lead_roster = [k for k in dict.fromkeys(p.get('roster') for p in facts['leads']) if k]
+            result[matter.get('id')] = {
+                'lead': [p['name'] for p in facts['leads']], 'lead_roster': lead_roster,
+                'team_roster': [k for k in dict.fromkeys(p.get('roster') for p in facts['team']) if k and k not in lead_roster]}
+        return result
     roster = {identity(p.get('name') or p.get('fullName')): (p.get('name') or p.get('fullName'))
               for p in package.get('lawyers', []) if identity(p.get('name') or p.get('fullName'))}
     result = {}
@@ -134,9 +152,12 @@ def build(package, strategy=None, development=None, person=None):
     target = identity(person) if person else None
     if target:
         matters = [m for m in matters if target in roles[m.get('id')]['lead_roster'] + roles[m.get('id')]['team_roster']]
-    label = {m.get('id'): ' '.join(str(m.get('client') or m.get('name') or m.get('id')).split()).strip(' |') for m in matters}
+    label = {m.get('id'): ' '.join(str(m.get('client_name') or m.get('client') or m.get('name') or m.get('id')).split()).strip(' |') for m in matters}
     clients = [{'matter_id': m.get('id'), 'client': label[m.get('id')], 'publication': publication(m),
-                **({'value': 'the amount of the matter value is confidential: never state that amount, not even as a range. Results, percentages and the other documented facts of the mandate are not restricted by this'} if re.match(r'\s*confiden', str(m.get('value') or ''), re.I) else {}),
+                **({'other_names': m['client_other_names']} if m.get('client_other_names') else {}),
+                **({'value': 'the amount of the matter value is confidential: never state that amount, not even as a range, and never describe its size in words (for example "substantial", "significant", "multi-million") in B9, B10 or C2. Results, percentages and the other documented facts of the mandate are not restricted by this'} if re.match(r'\s*confiden', str(m.get('value') or ''), re.I) else {}),
+                **({'public_use': 'restricted by the source ("' + str(((package.get('case_register') or {}).get('matters') or {}).get(m.get('id'), {}).get('restriction_quote') or 'strictly confidential') + '"): this mandate is never described in B9, B10 or C2, not even anonymously; it stays in section E and in the Audit'} if m.get('public_use_restricted') else {}),
+                **({'research_period': 'closed before the confirmed research period: it is not part of the portfolio of this cycle'} if m.get('in_research_period') is False else {}),
                 **({'selection': dispositions[m.get('id')]} if dispositions.get(m.get('id')) else {})} for m in matters]
     head_names = [str(h.get('name')).strip() for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
                   if isinstance(h, dict) and identity(h.get('name'))]
@@ -153,8 +174,12 @@ def build(package, strategy=None, development=None, person=None):
         if not key or (target and key != target):
             continue
         entry = {'name': name}
-        if profile.get('role') or profile.get('title'):
-            entry['title'] = profile.get('role') or profile.get('title')
+        registered = (((package.get('case_register') or {}).get('lawyers') or {}).get(' '.join(str(name).split())) or {})
+        if registered.get('title') or profile.get('role') or profile.get('title'):
+            # The title as the sources write it ("Senior Associate"), not the form's class.
+            entry['title'] = registered.get('title') or profile.get('role') or profile.get('title')
+        if registered.get('other_names'):
+            entry['also_written_as'] = registered['other_names']
         if key in heads:
             # A shared headship is stated as shared: "one of the heads", never "the head".
             others = [n for n in head_names if identity(n) != key]

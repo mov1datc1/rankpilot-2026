@@ -37,6 +37,9 @@ SOURCE_POLICY += '\n' + DISPUTED_FIGURES
 
 
 def role_base(role, review_base):
+    if role=='case_register':
+        from core.case_register import REGISTER_BASE
+        return REGISTER_BASE
     if role=='development':
         return SOURCE_POLICY + '\nYou construct the explicitly owned editorial unit. Other decisions and fields are read-only.'
     if role=='writer':

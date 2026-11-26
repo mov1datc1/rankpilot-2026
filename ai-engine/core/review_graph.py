@@ -403,7 +403,7 @@ def invoke_role(state, role, schema, instruction, payload):
     # Narrow checks and repairs execute source-bound obligations supplied in
     # their payload. Reopening generic strategy/reference examples here adds
     # competing objectives without supplying evidence for the authorized fix.
-    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer','field_reviewer','repair') or state.get('rag_disabled') else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction, role=role, unit=state.get('rag_unit',''))
+    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer','field_reviewer','repair','case_register') or state.get('rag_disabled') else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction, role=role, unit=state.get('rag_unit',''))
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
@@ -566,6 +566,12 @@ def strategist(state):
 
 def selection_gate(state):
     source={m['id']:m for m in state['package']['matters']}; decisions=state['strategy']['matters'];ids=[m['matter_id'] for m in decisions];errors=[];field_failures={}
+    # v1.0.121 (real run e8fce72f): a mandate that closed before the confirmed
+    # research period is not part of this cycle. The case register dates it and
+    # code applies the period; Submission and Audit then share one decision.
+    for d in decisions:
+        if source.get(d.get('matter_id'),{}).get('in_research_period') is False and d.get('disposition') in ('core','reserve'):
+            d['disposition']='excluded'
     if len(ids)!=len(set(ids)) or set(ids)!=set(source):
         missing = [str(m.get('client') or m.get('name') or matter_id) for matter_id, m in source.items() if matter_id not in ids]
         detail = f" Faltan decisiones para: {', '.join(missing)}." if missing else ''

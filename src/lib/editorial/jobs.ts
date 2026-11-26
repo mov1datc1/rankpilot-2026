@@ -79,7 +79,7 @@ export async function latestJob(submissionId:string) {
   const rows:any[]=await prisma.$queryRaw`SELECT * FROM "EditorialJob" WHERE "submissionId"=${submissionId} ORDER BY "createdAt" DESC LIMIT 1`;
   return rows[0] || null;
 }
-export async function enqueue(submission:any,retry=false,requestRepair=false) {
+export async function enqueue(submission:any,retry=false,requestRepair=false,registerTrace:any=null) {
   return prisma.$transaction(async tx=>{
     // Serialize start/double-click with other starters for this submission.
     await tx.$queryRaw`SELECT "id" FROM "Submission" WHERE "id"=${submission.id} FOR UPDATE`;
@@ -191,7 +191,8 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     // Elapsed time is not evidence of provider completion or zero usage.
     if(last?.status==='indeterminate' && last.sourceHash===sourceHash) throw new Error('PROVIDER_OUTCOME_UNKNOWN');
     const tasks=repair?.tasks || ['selection'];
-    const ledger=repair ? [{stage:'artifact',status:'repair_requested'}] : [];
+    // v1.0.121: the case register reading that preceded this generation is part of its cost.
+    const ledger=repair ? [{stage:'artifact',status:'repair_requested'}] : registerTrace ? [{stage:'register',status:'completed',trace:registerTrace,worker_commit:build}] : [];
     if(repair) {
       const data:any=current.chambersData;
       const checkpoint=structuredClone(data.review_checkpoint);

@@ -1,12 +1,12 @@
 'use client';
 
 import {observationPresentation} from '@/lib/audit/observation-presentation';
-import {groupFindings} from '@/lib/audit/finding-groups';
+import {groupFindings,groupBySection,correctableByRankPilot} from '@/lib/audit/finding-groups';
 import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { reviewIssues, reviewIsStale, isStoppedSelection, type ReviewDestination } from '@/lib/audit/review-actions';
 import { Sparkles } from 'lucide-react';
 
-export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job,onRefresh,connectionError=false}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onRefresh?:()=>void;connectionError?:boolean;onResolve:(destination:ReviewDestination,message:string)=>void}) {
+export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job,onRefresh,connectionError=false,onRepair}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onRefresh?:()=>void;connectionError?:boolean;onRepair?:()=>void;onResolve:(destination:ReviewDestination,message:string)=>void}) {
   const delivery=getDeliveryState(data,data?.matters || [],true);
   const available=delivery.available;
   const stopped=!available && job?.sourceMatches!==false && (job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
@@ -48,18 +48,33 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
       {refreshNotice}
       <h2 style={{fontSize:22,margin:'0 0 10px'}}>{delivery.label}</h2>
       <p>Descarga el Submission y el Audit desde «Descargar». {delivery.hasObservations?'Consulta estos hallazgos antes de presentarlos; no necesitas iniciar otro intento para obtener los archivos.':'La revisión no dejó observaciones pendientes.'}</p>
-      {all.map((d:any,i:number)=>{const observation=observationPresentation(d);return <article key={i} style={{borderTop:'1px solid #E2E8F0',padding:'16px 0'}}>
-        <h3 style={{fontSize:16,margin:'0 0 8px'}}>{fieldLabel(d)} · {observation.title}</h3>
-        <p style={{margin:'8px 0',lineHeight:1.6}}>{observation.explanation}</p>
-        <p style={{margin:'8px 0',lineHeight:1.6}}><strong>Qué puedes hacer: </strong>{observation.action}</p>
-        {observation.destination && <button type="button" disabled={busy} onClick={()=>onResolve(observation.destination!,d.message)} style={{cursor:'pointer',padding:'8px 12px',marginBottom:10}}>{observation.button} →</button>}
-        <details>
-          <summary style={{cursor:'pointer'}}>Ver detalle y citas de la revisión</summary>
-          <p><strong>Mensaje original de la revisión:</strong> {d.message}</p>
-          {d.related?.length>0 && <p><strong>La revisión lo señaló también así:</strong> {d.related.join(' · ')}</p>}
-          {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
-          {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
-        </details>
+      {onRepair && !isRunning && all.some(correctableByRankPilot) && <div style={{padding:12,background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:8,margin:'8px 0 4px'}}>
+        <button type="button" disabled={busy} onClick={onRepair} style={{cursor:'pointer',padding:'8px 14px',fontWeight:600}}>Corregir con RankPilot</button>
+        <p style={{fontSize:13,margin:'6px 0 0'}}>Corrige en el texto las observaciones marcadas «RankPilot puede corregirlo». Inicia una corrección del caso; las que piden tu confirmación se quedan listadas.</p>
+      </div>}
+      {groupBySection(all,fieldLabel).map((section,i)=>{
+        // One card per section; inside it one line per kind of observation, its
+        // explanation once, and every original message with its quotes folded.
+        const kinds=groupBySection(section.items,(d:any)=>observationPresentation(d).title);
+        return <article key={i} style={{borderTop:'1px solid #E2E8F0',padding:'16px 0'}}>
+        <h3 style={{fontSize:16,margin:'0 0 8px'}}>{section.label} <span style={{fontWeight:400,color:'#64748B'}}>· {section.items.length===1?'1 observación':`${section.items.length} observaciones`}</span></h3>
+        <ul style={{margin:'4px 0 0',paddingLeft:18,lineHeight:1.6}}>
+          {kinds.map((kind,j:number)=>{const observation=observationPresentation(kind.items[0]);const fixable=kind.items.filter(correctableByRankPilot).length;return <li key={j} style={{marginBottom:12}}>
+            <strong>{observation.title}{kind.items.length>1?` (${kind.items.length})`:''}.</strong> {observation.explanation}
+            <span style={{display:'inline-block',marginLeft:8,fontSize:12,padding:'1px 8px',borderRadius:10,background:fixable===kind.items.length?'#DCFCE7':'#FEF3C7'}}>{fixable===kind.items.length?'RankPilot puede corregirlo':fixable?`RankPilot puede corregir ${fixable} de ${kind.items.length}`:'Requiere tu confirmación'}</span>
+            <p style={{margin:'6px 0'}}><strong>Qué puedes hacer: </strong>{observation.action}</p>
+            {observation.destination && <button type="button" disabled={busy} onClick={()=>onResolve(observation.destination!,kind.items[0].message)} style={{cursor:'pointer',padding:'6px 12px',marginBottom:6}}>{observation.button} →</button>}
+            <details>
+              <summary style={{cursor:'pointer'}}>Ver detalle y citas de la revisión</summary>
+              {kind.items.map((d:any,k:number)=><div key={k} style={{borderLeft:'3px solid #E2E8F0',paddingLeft:10,margin:'8px 0'}}>
+                <p><strong>Mensaje original de la revisión:</strong> {d.message}</p>
+                {d.related?.length>0 && <p><strong>La revisión lo señaló también así:</strong> {d.related.join(' · ')}</p>}
+                {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
+                {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
+              </div>)}
+            </details>
+          </li>;})}
+        </ul>
       </article>;})}
     </section>;
   }
