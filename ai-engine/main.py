@@ -44,12 +44,47 @@ async def service_boundary(request: Request, call_next):
         return JSONResponse(status_code=400,content={'error':'Invalid editorial allowance'})
     # Uncapped requests still track usage and stop on an uncertain provider outcome.
     budget_token=request_budget.set(RequestBudget(int(allowance) if allowance is not None else None))
+    # v1.0.120: a finished answer stays readable by the caller that asked for it,
+    # so a connection lost while it travels does not leave a paid call unknown.
+    from utils import request_results
+    request_id=request.headers.get('x-rankpilot-request-id')
+    tracked=getattr(request,'method','')=='POST' and request_results.valid(request_id)
+    if tracked:
+        request_results.begin(request_id)
     try:
         response=await call_next(request)
+    except BaseException:
+        if tracked:
+            request_results.abandon(request_id)
+        raise
     finally:
         request_budget.reset(budget_token)
     response.headers["X-RankPilot-Policy"]=REVIEW_POLICY_VERSION
+    if tracked:
+        try:
+            body=await request_results.body_of(response)
+        except BaseException:
+            request_results.abandon(request_id)
+            raise
+        request_results.finish(request_id,response.status_code,body,response.headers.get('content-type'))
+        from starlette.responses import Response
+        kept=Response(content=body,status_code=response.status_code)
+        kept.raw_headers=[(name,value) for name,value in response.raw_headers if name.lower()!=b'content-length']+[(b'content-length',str(len(body)).encode('latin-1'))]
+        return kept
     return response
+
+
+@api.get('/request-result/{request_id}')
+async def request_result_endpoint(request_id: str):
+    """The answer of a request this process already finished; never runs anything."""
+    from utils import request_results
+    from starlette.responses import Response
+    saved=request_results.lookup(request_id) if request_results.valid(request_id) else None
+    if not saved:
+        return JSONResponse(status_code=404,content={'state':'unknown'})
+    if saved[0]=='running':
+        return JSONResponse(status_code=202,content={'state':'running'})
+    return Response(content=saved[2],status_code=200,media_type=saved[3],headers={'X-RankPilot-Original-Status':str(saved[1])})
 
 @api.get("/")
 def read_root():

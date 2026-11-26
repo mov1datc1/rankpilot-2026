@@ -14,6 +14,7 @@ const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async fn=>{const o
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return{createClient:()=>{throw new Error('Worker must not need browser cookies');}};return load.call(this,name,...args);};
 const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts');
 const {runJobStage}=require('../../src/lib/editorial/runner.ts');
+require('../../src/lib/editorial/engine.ts').engineResultPolicy.stepMs=1;
 function reset(){
  calls=[];repairMode=false;
  const matters=Array.from({length:3},(_,i)=>({id:`m${i}`,client:`Synthetic client ${i}`,rawNotes:`Client ${i} retained the team for a pending appeal. No decision has been issued.`,optimizedText:'',confidentialityConfirmed:true,publish_status:'non_publishable',isConfidential:true}));
@@ -40,10 +41,13 @@ global.fetch=async(url,options)=>{
 };
 async function stage(){job.status='running';job.leaseToken=`lease-${job.cursor}`;await runJobStage(structuredClone(job));}
 test('a lost engine response preserves known tokens and quarantines unknown usage without a retry',async()=>{
- reset();await stage();const normal=global.fetch;let requests=0;
+ reset();await stage();const normal=global.fetch;let requests=0,lookups=0;
  try {
-  global.fetch=async()=>{requests++;throw new TypeError('Network response lost');};
+  // v1.0.120: the application asks the engine for the answer it lost (a read,
+  // never a paid role). Here the engine does not hold it, so the outcome stays unknown.
+  global.fetch=async(url,options)=>{if(options?.method==='POST')requests++;else lookups++;throw new TypeError('Network response lost');};
   await stage();
+  assert.equal(lookups,3);
   assert.equal(job.status,'indeterminate');assert.equal(job.cursor,1);
   assert.equal(job.ledger[0].trace.usage.total_tokens,100);
   assert.equal(job.ledger.at(-1).trace.usage.unknown_calls,1);
@@ -52,6 +56,31 @@ test('a lost engine response preserves known tokens and quarantines unknown usag
   assert.equal(requests,1);assert.equal(job.status,'indeterminate');
   assert.equal(job.issue.code,'PROVIDER_OUTCOME_UNKNOWN');
   assert.ok(!submission.chambersData.approved_artifact);
+ } finally {global.fetch=normal;}
+});
+test('a lost engine answer that the engine still holds is read again: the case continues and nothing is bought twice',async()=>{
+ // Evidence (26 Nov, real job): the engine logged 200 for the step and the job
+ // stopped 33 seconds later with an unknown outcome and no way to continue.
+ reset();await stage();const normal=global.fetch;let paid=0,lookups=0,held=null,requestId=null;
+ try {
+  global.fetch=async(url,options)=>{
+   if(options?.method==='POST') {
+    paid++;requestId=new Headers(options.headers).get('X-RankPilot-Request-Id');
+    held=await (await normal(url,options)).text();  // the engine finished the role...
+    throw new TypeError('terminated');              // ...and the answer never arrived
+   }
+   lookups++;
+   assert.ok(String(url).endsWith('/request-result/'+requestId));
+   if(lookups===1)return Response.json({state:'running'},{status:202});
+   return new Response(held,{status:200,headers:{'Content-Type':'application/json','X-RankPilot-Original-Status':'200'}});
+  };
+  await stage();
+  assert.match(requestId,/^[0-9a-f-]{36}$/);
+  assert.equal(paid,1);assert.equal(lookups,2);
+  assert.equal(job.status,'queued');assert.equal(job.issue,null);
+  assert.equal(job.ledger.at(-1).trace.usage.total_tokens,100);
+  assert.equal(job.ledger.at(-1).trace.usage_status,undefined);
+  assert.ok(submission.chambersData.review_checkpoint.state.development);
  } finally {global.fetch=normal;}
 });
 test('an unavailable semantic response is not mislabeled as an unstarted deferred review',async()=>{

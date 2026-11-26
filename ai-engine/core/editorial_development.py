@@ -103,7 +103,8 @@ TASK += " SHARED EDITORIAL CASE: First form case_plan version editorial-case-v1 
 # Never remove these words globally or rewrite a factual claim with a regex.
 AUDIT_VOICE = re.compile(
     r"\b(?:"
-    r"the (?:submitted )?(?:source|narrative|dossier|record)(?:\s+narrative)?\s+(?:describes|states|records|reports|identifies|characterises|characterizes|distinguishes|separately records|refers|frames|does not|doesn't|gives no|contains no|does not report|does not provide|does not define|does not state|establishes|does not explain)|"
+    r"the (?:submitted )?(?:source|narrative|dossier|record)(?:\s+narrative)?\s+(?:(?:separately|also|elsewhere|further)\s+)?(?:describes|states|records|reports|identifies|characterises|characterizes|distinguishes|separately records|refers|frames|does not|doesn't|gives no|contains no|does not report|does not provide|does not define|does not state|establishes|does not explain)|"
+    r"(?:a separate|another|a different) passage|do(?:es)? not state a definitive|"
     r"the formal status field|the narrative describes|the narrative therefore records|verified evidentiary record|evidence completeness|"
     r"our analysis indicates|the audit demonstrates|the submitted evidence (?:shows|supports|demonstrates)|"
     r"no verified ranking|without asserting a ranking|"

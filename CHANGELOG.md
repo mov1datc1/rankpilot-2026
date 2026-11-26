@@ -1,3 +1,14 @@
+## 1.0.120: An answer lost on the way back is read again; a disputed figure is not narrated
+
+No new model call.
+
+- **A finished answer is no longer lost with the connection.** Real job 2141add7 (1.0.119, a second firm): the engine logged 200 for a drafting step after 37 seconds; the application failed while receiving that answer and, 33 seconds later, recorded an unknown provider outcome. By design an unknown outcome is never bought again, so the case stopped with nothing to continue from, although the answer existed and was paid for. It is the first transport failure in the stored ledgers. Every paid request now carries its own id; the engine keeps each finished answer under that id (in memory, behind the service token, 30 minutes, 24 answers at most) and the application reads it again when the connection fails or the request times out. A read never starts or repeats a role. When the engine does not hold the answer (a restart, an older engine) the previous behaviour stays: unknown usage, no retry.
+- **The reason is recorded.** The transport error was discarded; the worker log now states the path, the error class and its cause, with no source or generated text.
+
+- **A figure the source itself contradicts is neither written nor narrated.** The same case's source says both that three and that four proceedings remain. On 1.0.118 the writer chose three and the final judge asked the client, suggesting "a wording that records the discrepancy"; on 1.0.119 the writer wrote the discrepancy into B10, C2 and the matter ("the source separately refers to four remaining proceedings, so we do not state a definitive number") and the judge approved a public Submission that narrates its own source. The writer contract forbade that narration and the judge asked for it. One sentence now reaches every writer and every reviewer: Submission prose states the fact without the disputed figure and never mentions the sources or the discrepancy, the Audit records both passages and asks the client, every uncontested figure stays, and no reviewer requires the disputed figure in a Submission field. The deterministic voice check also recognises "the source separately refers", "a separate passage" and "do not state a definitive". Replayed on that case's B10/C2 unit (one call): "Proceedings challenging the award remain at the evidentiary stage", no figure and no mention of the source.
+
+Limits: this recovers what the engine finished. An engine restarted in the middle of a call still leaves the outcome unknown. The disputed-figure rule was replayed on the B10/C2 unit only, not on the matter narratives or the final judge.
+
 ## 1.0.119: The judge's correction is applied, and the input is questioned before the case runs
 
 No new model call.
