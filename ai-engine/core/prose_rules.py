@@ -169,6 +169,25 @@ def strip_hedges(text):
     return out
 
 
+FIRST_TIME = re.compile(r"\b(?P<art>an?\s+)?first[-\s]time\s+(?P<noun>recognition|rankings?|inclusion|entry|listing|coverage)\b", re.I)
+FOR_FIRST_TIME = re.compile(r"\b(?P<noun>recognition|recognised|recognized|ranked|ranking|inclusion|included|listed)\s+for\s+the\s+first\s+time\b", re.I)
+
+
+def plain_aspiration(text):
+    """C2 states the aspiration without saying it is the firm's first time.
+
+    v1.0.119. The C2 contract forbids "first-time recognition" and also tells the
+    writer to take the aspiration from the supplied target, which for an unranked
+    practice is literally "First-time recognition". Real run 75b8ade5 and its unit
+    replay both wrote the forbidden words, and the first one paid a repair for it.
+    """
+    def swap(match):
+        noun = match.group('noun')
+        out = (('an ' if noun[0].lower() in 'aeiou' else 'a ') if match.group('art') else '') + noun
+        return out[0].upper() + out[1:] if match.group(0)[0].isupper() else out
+    return FOR_FIRST_TIME.sub(lambda m: m.group('noun'), FIRST_TIME.sub(swap, str(text or '')))
+
+
 def drop_value_lines(text):
     """D3 carries the value; a narrative sentence restating it is removed."""
     out = VALUE_LINE.sub('', str(text or ''))
@@ -326,8 +345,11 @@ def polish_proposal(package, proposal):
         if text and text != matter.get('text'):
             matter['text'] = text
             report['fields'].append({'path': f'matters/{i}/text', 'changed': True})
+    def institutional(text, key):
+        text = strip_hedges(source_lead(text, package))
+        return plain_aspiration(text) if key == 'c2' else text
     for key in ('b10', 'c2'):
-        text = strip_hedges(source_lead(result.get(key, ''), package))
+        text = institutional(result.get(key, ''), key)
         if text and text != result.get(key):
             result[key] = text
             report['fields'].append({'path': key, 'changed': True})
@@ -336,7 +358,7 @@ def polish_proposal(package, proposal):
         for field, quote_key in (('b10', 'b10_quote'), ('c2', 'c2_quote')):
             quote = link.get(quote_key)
             if isinstance(quote, str) and quote and _norm(quote) not in _norm(result.get(field)):
-                fixed = strip_hedges(source_lead(quote, package))
+                fixed = institutional(quote, field)
                 if _norm(fixed) in _norm(result.get(field)):
                     link[quote_key] = fixed
                 else:

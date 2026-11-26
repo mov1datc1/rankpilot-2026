@@ -22,7 +22,7 @@ import {
 import { ExtractionIssues } from '@/components/ExtractionIssues';
 import { FilingFields } from '@/components/FilingFields';
 import { filingDetailsGaps } from '@/lib/audit/filing-details';
-import { caseReadiness } from '@/lib/audit/case-readiness';
+import { caseReadiness, lawyersWithLinkOnly } from '@/lib/audit/case-readiness';
 import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
 import { lawyerInputPending, pendingExtractionIssues, publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
@@ -789,7 +789,8 @@ export default function PostIngestionWizardModal({
                             {l.role && !['Partner','Associate','Of Counsel','Other'].includes(l.role) && <option value={l.role}>{l.role}</option>}
                           </select>
                         </label>
-                        <details style={{marginTop:8,fontSize:13}}><summary style={{cursor:'pointer'}}>Revisar el texto del perfil público</summary>
+                        <details open={lawyersWithLinkOnly([l]).length>0} style={{marginTop:8,fontSize:13}}><summary style={{cursor:'pointer'}}>Revisar el texto del perfil público</summary>
+                          {lawyersWithLinkOnly([l]).length>0 && <p role="note" style={{margin:'6px 0',padding:8,background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:6,color:'#78350F'}}>El formulario trae solo un enlace para este perfil y RankPilot no lee enlaces. Pega aquí el texto de la biografía (trayectoria, formación, cargos) para un B9 completo. Si lo dejas vacío, el B9 se redactará únicamente con los asuntos.</p>}
                           <label>Conserva solo datos sustentados y coherentes con el cargo confirmado.
                             <textarea aria-label={`Perfil de ${name}`} value={l.comments || l.bio || ''} onChange={e=>{const value=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,comments:value,bio:value}:item));}} rows={5} style={{display:'block',width:'100%',boxSizing:'border-box',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #CBD5E1',borderRadius:6}} />
                           </label>
