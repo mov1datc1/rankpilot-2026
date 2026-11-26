@@ -16,3 +16,23 @@ export function groupFindings(findings:Finding[]):(Finding & {related:string[]})
   }
   return [...groups.values()];
 }
+
+/** v1.0.121: one card per section (B9 of one lawyer, B10, C2, a matter, the Audit)
+ * with all its observations listed inside, in first-seen order. A section title
+ * is never repeated once per observation. */
+export function groupBySection<T>(findings:T[],label:(finding:T)=>string):{label:string;items:T[]}[] {
+  const sections=new Map<string,T[]>();
+  for(const finding of findings) {
+    const key=label(finding);
+    if(!sections.has(key))sections.set(key,[]);
+    sections.get(key)!.push(finding);
+  }
+  return [...sections.entries()].map(([key,items])=>({label:key,items}));
+}
+
+/** Whether RankPilot can correct this observation itself (generated text), or it
+ * needs the user's confirmation of a source fact. Same split as targetedRepair(). */
+export function correctableByRankPilot(finding:any):boolean {
+  return finding?.owner==='rankpilot' && Boolean(finding.artifact_quote) && finding.code!=='SOURCE_CONFLICT'
+    && !String(finding.message || '').startsWith('La aceptación editorial no está completa:');
+}

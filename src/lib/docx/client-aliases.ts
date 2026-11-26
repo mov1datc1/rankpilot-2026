@@ -4,10 +4,21 @@ import { sanitizeClientName } from '../audit/extraction-auditor';
  * client identity. A confidential "Editores Ejemplo, C.A." registered "C.A." as
  * an alias, and the renderer then replaced the "C.A." of every publishable
  * client with "a confidential entity". */
-const LEGAL_FORMS = new Set(['sa','ca','cv','sacv','cacv','sab','sabcv','sapi','sapicv','sas','sac','srl','srlcv','rl','rlcv','sl','slu','spa','sc','scs','eirl','ltda','cia','llc','llp','lp','inc','ltd','corp','co','gmbh','ag','plc','nv','bv','pty','pte']);
+const LEGAL_FORMS = new Set(['na','sa','ca','cv','sacv','cacv','sab','sabcv','sapi','sapicv','sas','sac','srl','srlcv','rl','rlcv','sl','slu','spa','sc','scs','eirl','ltda','cia','llc','llp','lp','inc','ltd','corp','co','gmbh','ag','plc','nv','bv','pty','pte']);
 export function isLegalForm(value: string): boolean {
   const key = String(value || '').toLowerCase().replace(/\bde\b/g, '').replace(/[^a-z]/g, '');
   return key.length > 0 && LEGAL_FORMS.has(key);
+}
+
+/** v1.0.121 (real run 13a858bf): the client cell often carries a description
+ * after the name ("… (IEG)- a school of management, business, and
+ * graduate studies."). A dash with a space on at least one side ends the name;
+ * a dash inside a word ("Pagos Spidi-Sur") does not. Same rule as clean_name() in
+ * ai-engine/core/client_identity.py. */
+export function nameOnly(value: string): string {
+  const s = String(value || '').trim();
+  const dash = s.search(/\s[-–—]\s*|[-–—]\s/);
+  return (dash > 1 ? s.slice(0, dash) : s).trim().replace(/,$/, '').trim();
 }
 
 /** Conservative name variants derived from supplied identities, never an external client dictionary. */
@@ -19,7 +30,7 @@ export function clientAliases(names: string[]): string[] {
     // Client fields can contain an entire company profile. Descriptive prose
     // and locations are not additional identities or aliases of that client.
     if (/^(?:it is (?:a|an)|a (?:global|leading|major) (?:company|leader))\b/i.test(raw)) continue;
-    const name = sanitizeClientName(raw).cleanClient.replace(/\s*\(https?:\/\/[^)]*\)\s*/gi, ' ').trim();
+    const name = nameOnly(sanitizeClientName(raw).cleanClient.replace(/\s*\(https?:\/\/[^)]*\)\s*/gi, ' ').trim());
     if (name.length < 2) continue;
     aliases.add(name);
     for (const match of name.matchAll(/\(([\p{L}\p{N}][\p{L}\p{N}. -]{1,60})\)/gu)) {
@@ -29,6 +40,8 @@ export function clientAliases(names: string[]): string[] {
     for (const entity of name.split(/\s+and\s+|\s+&\s+|,\s+(?!S\.?A\.?\b|S\.?\b)/i)) {
       const trimmedEntity = entity.trim();
       if (isLegalForm(trimmedEntity)) continue;
+      // A client identity is a proper name: a lower-case word ("business") never is.
+      if (!/^[\p{L}\p{N}]/u.test(trimmedEntity) || /^\p{Ll}/u.test(trimmedEntity)) continue;
       if (trimmedEntity.length >= 2 && !generic.test(trimmedEntity)) aliases.add(trimmedEntity);
       const first = trimmedEntity.match(/^[\p{L}\p{N}]+/u)?.[0];
       const tail = first ? trimmedEntity.slice(first.length).replace(/^[\s,.;:-]+/, '').trim() : '';

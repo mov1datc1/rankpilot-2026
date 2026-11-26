@@ -4,6 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { enqueue, latestJob, publicJob } from '@/lib/editorial/jobs';
+import { ensureCaseRegister } from '@/lib/editorial/case-register-build';
+
+// The case register reading (v1.0.121) can take up to three minutes.
+export const maxDuration = 300;
 import { EDITORIAL_VERSION } from '@/lib/editorial/contracts';
 import { REVIEW_CONTRACT } from '@/lib/audit/review-versions';
 
@@ -34,7 +38,9 @@ export async function POST(request:NextRequest) {
   try {
     const workers:any[]=await prisma.$queryRaw`SELECT "id" FROM "EditorialWorker" WHERE "version"=${EDITORIAL_VERSION} AND "heartbeat">now()-interval '90 seconds' LIMIT 1`;
     if(!workers.length) return NextResponse.json({code:'WORKER_UNAVAILABLE',error:'El motor editorial no está disponible. No iniciamos llamadas ni gastamos tokens; el expediente se conserva.'},{status:503});
-    return NextResponse.json({job:publicJob(await enqueue(submission,body.retry===true,body.repair===true))},{status:202});
+    // v1.0.121: a new generation first reads the case register (one call, saved).
+    const registered=body.repair===true ? {submission,trace:null} : await ensureCaseRegister(submission,await latestJob(submission.id));
+    return NextResponse.json({job:publicJob(await enqueue(registered.submission,body.retry===true,body.repair===true,registered.trace))},{status:202});
   } catch(error:any) {
     if(error.message==='AUTO_REPAIR_UNAVAILABLE') return NextResponse.json({code:'AUTO_REPAIR_UNAVAILABLE',error:'RankPilot no encontró una reparación automática respaldada por las fuentes para este hallazgo. El expediente se conserva; no necesitas alterar tus datos para resolver un error de generación.'},{status:422});
     return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'No podemos confirmar el resultado de la llamada anterior. Conservamos el expediente. Pulsa «Actualizar estado» para consultar el avance guardado. Esta consulta no repite la llamada ni inicia otra generación.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});

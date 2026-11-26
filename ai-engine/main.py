@@ -539,6 +539,23 @@ async def extract_document_endpoint(request: Request):
     return JSONResponse(status_code=200, content=merged)
 
 
+@api.post('/case-register')
+async def case_register_endpoint(request: Request):
+    """v1.0.121: read the case register once, before a new generation starts."""
+    try:
+        body = await request.json()
+        payload = body.get('package')
+        if not isinstance(payload, dict) or not isinstance(payload.get('matters'), list):
+            return JSONResponse(status_code=400, content={'success': False, 'error': 'Invalid case register request'})
+        from core.case_register import build
+        from core.review_graph import invoke_role
+        register, trace = await asyncio.to_thread(build, payload, invoke_role)
+        return JSONResponse(content={'success': True, 'register': register, 'trace': trace})
+    except Exception:
+        logger.exception('Case register failed')
+        return JSONResponse(status_code=500, content={'success': False, 'error': 'Case register unavailable'})
+
+
 @api.post('/review-step')
 async def review_step_endpoint(request: Request):
     """One role per call; the authenticated application persists each checkpoint."""
@@ -551,6 +568,10 @@ async def review_step_endpoint(request: Request):
             return JSONResponse(status_code=400, content={'success': False, 'error': 'Invalid review step'})
         from core.review_graph import run_editorial_stage, release_gate
         from utils.ranking_verifier import verify_ranking_claim
+        # v1.0.121: every role reads the same case register (saved reading, or
+        # the rules reading of the saved fields for a case that has none).
+        from core.case_register import apply as apply_case_register
+        apply_case_register(payload)
         state = {**(body.get('state') or {}), 'package': payload,
                  'field_review_enabled': stage=='development'}
         state.pop('budget_stop',None)

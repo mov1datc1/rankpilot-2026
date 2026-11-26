@@ -1,18 +1,110 @@
 {
   "note": "Shared by ai-engine/core/client_identity.py and src/lib/docx/client-aliases.ts (v1.0.101). Fictional and anonymised register shapes.",
   "aliases": [
-    {"client": "GeNI de México, S.A de C.V.", "includes": ["GeNI de México, S.A de C.V.", "GeNI"]},
-    {"client": "SKF Industrial", "includes": ["SKF Industrial", "SKF"]},
-    {"client": "Volkswagen de México and VW Financial Services", "includes": ["Volkswagen de México", "VW Financial Services", "Volkswagen"]},
-    {"client": "Grupo Alfa", "includes": ["Grupo Alfa", "Alfa"]},
-    {"client": "Example Foods (EFX)", "includes": ["Example Foods (EFX)", "EFX"]},
-    {"client": "Editores Ejemplo, C.A.", "includes": ["Editores Ejemplo, C.A.", "Editores Ejemplo"]}
+    {
+      "client": "GeNI de México, S.A de C.V.",
+      "includes": [
+        "GeNI de México, S.A de C.V.",
+        "GeNI"
+      ]
+    },
+    {
+      "client": "SKF Industrial",
+      "includes": [
+        "SKF Industrial",
+        "SKF"
+      ]
+    },
+    {
+      "client": "Volkswagen de México and VW Financial Services",
+      "includes": [
+        "Volkswagen de México",
+        "VW Financial Services",
+        "Volkswagen"
+      ]
+    },
+    {
+      "client": "Grupo Alfa",
+      "includes": [
+        "Grupo Alfa",
+        "Alfa"
+      ]
+    },
+    {
+      "client": "Example Foods (EFX)",
+      "includes": [
+        "Example Foods (EFX)",
+        "EFX"
+      ]
+    },
+    {
+      "client": "Editores Ejemplo, C.A.",
+      "includes": [
+        "Editores Ejemplo, C.A.",
+        "Editores Ejemplo"
+      ]
+    },
+    {
+      "client": "Instituto Ejemplo de Gestión (IEG)- a school of management, business, and graduate studies.",
+      "includes": [
+        "Instituto Ejemplo de Gestión (IEG)",
+        "IEG"
+      ]
+    }
   ],
   "excludes": [
-    {"client": "Grupo Alfa", "not": ["Grupo"]},
-    {"client": "Banco Example", "not": ["Banco"]},
-    {"client": "Editores Ejemplo, C.A.", "not": ["C.A."]},
-    {"client": "Servicios Ejemplo, S. de R.L. de C.V.", "not": ["S. de R.L. de C.V.", "C.V."]},
-    {"client": "Example Holdings, LLC", "not": ["LLC"]}
+    {
+      "client": "Grupo Alfa",
+      "not": [
+        "Grupo"
+      ]
+    },
+    {
+      "client": "Banco Example",
+      "not": [
+        "Banco"
+      ]
+    },
+    {
+      "client": "Editores Ejemplo, C.A.",
+      "not": [
+        "C.A."
+      ]
+    },
+    {
+      "client": "Servicios Ejemplo, S. de R.L. de C.V.",
+      "not": [
+        "S. de R.L. de C.V.",
+        "C.V."
+      ]
+    },
+    {
+      "client": "Example Holdings, LLC",
+      "not": [
+        "LLC"
+      ]
+    },
+    {
+      "client": "Instituto Ejemplo de Gestión (IEG)- a school of management, business, and graduate studies.",
+      "not": [
+        "business",
+        "and graduate studies.",
+        "business, and graduate studies."
+      ]
+    },
+    {
+      "client": "Servicios Nube, S.C.A. - supporting clients whose operations depend on continuity, data integrity and systems resilience",
+      "not": [
+        "data integrity",
+        "systems resilience",
+        "continuity"
+      ]
+    },
+    {
+      "client": "Banco Ejemplo, N.A. - a bank",
+      "not": [
+        "N.A."
+      ]
+    }
   ]
 }

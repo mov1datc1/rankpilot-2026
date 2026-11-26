@@ -1,8 +1,9 @@
 'use client';
-import { pendingExtractionIssues, extractionFieldLabel } from '@/lib/audit/input-review';
+import { pendingExtractionIssues, extractionFieldLabel, REGISTER_FIELDS } from '@/lib/audit/input-review';
 /** Only evidence discrepancies are questions. Complete fields remain in the overview. */
 export function ExtractionIssues({value,onChange}:{value:any;onChange:(value:any)=>void}) {
-  const issues=(value.extraction_issues || []).filter((issue:any)=>issue.field!=='value');
+  // Lead and team are reconciled by the case register (v1.0.121), never asked.
+  const issues=(value.extraction_issues || []).filter((issue:any)=>issue.field!=='value' && !REGISTER_FIELDS.has(issue.field));
   if(!issues.length)return null;
   const pending=pendingExtractionIssues(value);
   return <section className="review-decision" aria-label="Dudas de la extracción">

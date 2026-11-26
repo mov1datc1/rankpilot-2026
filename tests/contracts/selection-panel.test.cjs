@@ -114,7 +114,8 @@ test('internal B9 checks have a human heading while preserving the complete find
   available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
   editorial_development:{candidates:[{name:'Sofia Vega'}]},final_artifact_review:{judge:{passed:false,defects:[]}},release_verdict:{passed:false,status:'needs_review'}};
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[message],warnings:[],approved:false,onResolve:()=>{}}));
- assert.match(html,/B9 · Sofia Vega · Revisa el respaldo de la candidatura individual/);
+ // v1.0.121: one card per section; the kind of observation is listed inside it.
+ assert.match(html,/B9 · Sofia Vega <span[^>]*>· 1 observación/);assert.match(html,/Revisa el respaldo de la candidatura individual/);
  assert.ok(html.includes(message));assert.match(html,/Mensaje original de la revisión/);
 });
 
@@ -129,4 +130,25 @@ test('available observations offer navigation only and retain technical messages
  const visible=html.replace(/<details>[\s\S]*?<\/details>/g,'');
  assert.doesNotMatch(visible,/research_period|acción interna|Presentar ambas variantes/);
  assert.match(visible,/Qué puedes hacer/);assert.match(html,/research_period/);
+});
+
+test('v1.0.121: observations of one section are one card, its title is never repeated, and one button corrects what RankPilot can',()=>{
+ const {REVIEW_CONTRACT:c}=require('../../src/lib/audit/review-versions.ts');
+ const defects=[1,2,3].map(n=>({code:'EDITORIAL_OMISSION',owner:'rankpilot',severity:'critical',field_path:'candidates/0/submission_bio',message:`Omisión ${n} en la biografía.`,artifact_quote:`Texto ${n}.`,source_quote:`Fuente ${n}.`}))
+  .concat([{code:'SOURCE_CONFLICT',owner:'user',severity:'critical',field_path:'candidates/0/submission_bio',message:'Confirma quién lideró el asunto.'},
+   {code:'EDITORIAL_OMISSION',owner:'rankpilot',severity:'critical',field_path:'b10',message:'Falta un resultado en B10.',artifact_quote:'B10.',source_quote:'Resultado.'}]);
+ const data={draft_revision:1,completed_review_policy_version:c.policy,completed_renderer_version:c.renderer,completed_artifact_review_version:c.artifact,
+  available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
+  editorial_development:{candidates:[{name:'Sofia Vega'}]},final_artifact_review:{judge:{passed:false,defects}},release_verdict:{passed:false,status:'needs_review'}};
+ let repaired=0;
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[],warnings:[],approved:false,onResolve:()=>{},onRepair:()=>{repaired++;}}));
+ assert.equal((html.match(/B9 · Sofia Vega/g) || []).length,1);
+ assert.match(html,/B9 · Sofia Vega <span[^>]*>· 4 observaciones/);
+ assert.match(html,/Falta información relevante en este apartado \(3\)/);
+ assert.equal((html.match(/Falta información relevante en este apartado/g) || []).length,2); // B9 once, B10 once
+ assert.match(html,/Requiere tu confirmación/);assert.match(html,/RankPilot puede corregirlo/);
+ assert.equal((html.match(/Corregir con RankPilot/g) || []).length,1);
+ for(const n of [1,2,3])assert.ok(html.includes(`Omisión ${n} en la biografía.`));
+ const none=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{...data,final_artifact_review:{judge:{passed:false,defects:[defects[3]]}}},errors:[],warnings:[],approved:false,onResolve:()=>{},onRepair:()=>{}}));
+ assert.doesNotMatch(none,/Corregir con RankPilot/);
 });

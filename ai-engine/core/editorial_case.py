@@ -57,7 +57,9 @@ def support_ids(package, strategy):
     Excluded records require a separate practice reassessment; they cannot be
     smuggled into an individual case through this more permissive evidence set.
     """
-    register={m['id'] for m in package.get('matters', [])}
+    # v1.0.121: a mandate the source forbids describing publicly is never public
+    # evidence of a person (it stays in section E and the Audit).
+    register={m['id'] for m in package.get('matters', []) if not m.get('public_use_restricted')}
     return {d['matter_id'] for d in strategy.get('matters', [])
             if d.get('disposition') in ('core','reserve') and d['matter_id'] in register}
 

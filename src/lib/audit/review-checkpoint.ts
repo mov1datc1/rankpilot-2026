@@ -33,6 +33,8 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     b10_draft: data.enhanced_b7 || data.original_b10 || '',
     c2_source: data.original_c2 || '', c2_draft: data.enhanced_c2 || '',
     editorial_development: data.editorial_development || null,
+    // v1.0.121: the case register read before this generation (part of the source snapshot).
+    ...(data.case_register ? {case_register: data.case_register} : {}),
     lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole),
     matters: matters.map(m => {
       const permission = resolvePublication(m);

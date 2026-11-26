@@ -1,3 +1,4 @@
+import { renderingInputs, registerConfidentialNames } from '@/lib/editorial/case-register';
 import {
   Document, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, ShadingType, AlignmentType, BorderStyle,
@@ -328,6 +329,9 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
 }
 
 export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission?: any, exportMode: string = 'optimized'): Document {
+  // v1.0.121: read leads, team and contacts through the case register: a
+  // placeholder answer ("na") is never printed as a lead partner or an email.
+  ({data: chambersData, submission} = renderingInputs(chambersData, submission));
   // v10.0: DIRECTORY ROUTER — Route to correct template
   const targetDirectory = (submission?.targetDirectory || 'Chambers').toLowerCase();
   if (targetDirectory.includes('500') || targetDirectory.includes('legal5')) {
@@ -536,6 +540,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   const publishableClientNames = allMattersPool.filter((m:any)=>resolvePublication(m)==='publishable').map((m:any)=>String(m.client || m.clientName || '')).filter(Boolean);
   const bioClients = bioOnlyClientNames(chambersData.editorial_development, publishableClientNames);
   for (const name of bioClients) dynamicConfNames.add(name);
+  for (const name of registerConfidentialNames(chambersData, (m:any)=>resolvePublication(m)==='publishable')) dynamicConfNames.add(name);
   const confNamesList = Array.from(dynamicConfNames);
 
   const rawInputLawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
@@ -1162,7 +1167,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   elements.push(pageStart());
   const lawyers = chambersData.lawyers || [];
   const bioClientsL500 = bioOnlyClientNames(chambersData.editorial_development, rawMattersListL500.filter((m:any)=>resolvePublication(m)==='publishable').map((m:any)=>String(m.client || m.clientName || '')).filter(Boolean));
-  const confClientNames = [...new Set([...rawMattersListL500.filter((m:any)=>resolvePublication(m)!=='publishable').map((m:any)=>m.client || m.clientName).filter(Boolean),...bioClientsL500])] as string[];
+  const confClientNames = [...new Set([...rawMattersListL500.filter((m:any)=>resolvePublication(m)!=='publishable').map((m:any)=>m.client || m.clientName).filter(Boolean),...bioClientsL500,
+    ...registerConfidentialNames(chambersData,(m:any)=>resolvePublication(m)==='publishable')])] as string[];
 
   let b7Val = exportMode === 'original'
     ? (chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '')

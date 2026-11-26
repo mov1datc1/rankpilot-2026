@@ -949,7 +949,7 @@ def coherent_repair_targets(proposal,targets,package=None):
             spans=[x.get('public_quote','') for x in candidate.get('profile_coverage',[]) if x.get('decision') in ('retain','generalize')
                 and (package is None or source_norm(x.get('source_quote')) in source_units) and not affected_span(x.get('public_quote',''))]
             spans.extend(x.get('public_quote','') for x in candidate.get('submission_case_coverage',[])
-                if x.get('matter_id') not in privacy and (package is None or (x.get('matter_id') in register and matter_names_person(candidate.get('name'),register[x['matter_id']]) and bind_quote(x.get('source_quote'),register[x['matter_id']]))))
+                if x.get('matter_id') not in privacy and not (register.get(x.get('matter_id')) or {}).get('public_use_restricted') and (package is None or (x.get('matter_id') in register and matter_names_person(candidate.get('name'),register[x['matter_id']]) and bind_quote(x.get('source_quote'),register[x['matter_id']]))))
             # A generated output reference is not evidence that the words were
             # ever written. Protect only real, source-bound BIO spans. Missing
             # contributions remain obligations of the original validators.
