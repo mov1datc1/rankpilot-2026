@@ -68,7 +68,8 @@ additional source leaders internally without inventing roster titles.'''
 PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
 PLAN_TASK += '\n' + '\n'.join((editorial_strategy.SECTION_ROLES, editorial_strategy.ORIGINAL_STRATEGY,
     editorial_strategy.CANDIDACY, editorial_strategy.MATTER_SIGNIFICANCE)) + '''
-Record the original thesis and how B10 and C2 keep it in original_strategy, and give each
+Record in original_strategy the B10 thesis and, separately, the C2 argument (the aspect to
+reconsider, its grounds and the lawyers it names) and how each section keeps it, and give each
 lawyer a candidacy_state; the institutional_arguments are claims about what distinguishes
 the practice, proved by mandates, never one argument per mandate.'''
 
@@ -145,7 +146,7 @@ role explicitly in submission_bio. Preserve material career credentials, scale
 qualifiers (such as "high-value" disputes), prior
 employment, professional offices (such as bar association committee/officer roles)
 and all substantive personally attributed core/reserve work without softening
-sourced achieved results into aims. Vary sentence openings across matter
+sourced achieved results into aims. Vary sentence openings across
 paragraphs (never start consecutive paragraphs with repetitive phrases such as
 "named lead partner"). Distinguish their own
 role from the firm's result. Generalise private client identities and identifying
@@ -176,7 +177,8 @@ give no sector or industry label ("a confidential client"). Bind each original p
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
 (never from another unit), copy source_quote literally, and for every retained
 credential copy public_quote verbatim from the actual resulting submission_bio.
-Preserve every distinct substantive contribution in submission_case_coverage. Do
+Preserve every distinct substantive contribution in submission_case_coverage, each as
+proof in a clause of this B9 (never a re-told matter). Do
 not narrate verification rules, missing rankings or source sufficiency in public
 prose. Keep limited team participation proportionate without inventing a
 nomination or personal result.
@@ -1092,7 +1094,7 @@ def advance(state, invoke):
                 profile={**work['candidates'][unit['index']],**value}
                 profile,titled=biography_openings.place_title(profile,package)
                 profile,_=prose_rules.polish_candidate(profile,package)
-                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
+                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))
                 prior=(pending.get('shape_fallback') or {}).get(key)
                 if shape and not correcting:
                     # Ángela's B9 architecture, checked before review: one
@@ -1102,7 +1104,7 @@ def advance(state, invoke):
                     raise ValueError('; '.join(shape))
                 if correcting and prior and len(shape)>prior['faults']:
                     profile={**profile,**prior['fields']}
-                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
+                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))
                     pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
                 if shape:pending.setdefault('shape_observations',[]).extend(shape)
                 (pending.get('shape_fallback') or {}).pop(key,None)
@@ -1112,7 +1114,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)+editorial_strategy.section_faults(package,value)
+                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)+editorial_strategy.section_faults(package,value,work.get('matters'))
                 if faults and not correcting:
                     # Ángela's rules: B10 within 500 words and C2 within 1,000,
                     # never collapsing the original, and the original's leadership

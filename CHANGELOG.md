@@ -1,3 +1,18 @@
+## 1.0.129: every section proves with mandates in a clause; the original C2 argument is kept
+
+The rubric on the 1.0.127 probe left three criteria weak: B9 re-told the matters (2/5), the sections shared the same narrative (complementarity 2/5) and C2 lost the original argument about the firm's lawyers (3/5). The cause was in the code. The B9 writer already said "never re-tell", but three later pieces still asked for the opposite:
+- the B9 shape check asked for themes "opened by the mandate (client problem, legal obstacle, own action, result)" and to "keep every fact";
+- the field reviewer's obligation asked B9 to "develop the contribution, distinctive issue and result" of each mandate;
+- the Audit-consistency obligation asked that each contribution "be developed" in B9.
+
+The reviewer and repair then lengthened every B9 again. No check looked for a section narrating a work highlight a second time. The plan recorded the original strategy only from B10, so the C2 argument (consolidated leadership, named lawyers' autonomy) was folded into it.
+
+- **One B9 contract across roles.** The writer, the shape check, the field reviewer, the Audit-consistency obligation and repair all ask for the same thing: the mandate as proof of the lawyer's case, as a clause with the own contribution and the result. A compact proof clause meets the obligation; no reviewer asks B9 for the legal problem, the procedure or the team's steps.
+- **No section re-tells a work highlight** (checked in code before review, with one self-correction and then an observation). A B9, B10 or C2 with two or more long sentences that share most of their terms with a sentence of section D/E is corrected. On saved runs this flags 21 of 31 presented B9s and the B10/C2 of most cases, as the editorial owner's reviews did.
+- **The original C2 argument is kept.** The plan records the B10 thesis and, separately, the C2 argument: the aspect to reconsider, its grounds and the lawyers it names. A C2 that drops a lawyer the original C2 argues for is corrected. A lawyer not presented now stays in the C2 as growing responsibility and bench depth, never as a nomination.
+
+Validation: Python 1,205 tests OK (new `test_v129_sections.py`). The checks were replayed at no cost on 9 saved runs and on the 1.0.127 probe, where they flag exactly what the rubric found: the B9 that re-told two matters, and the C2 that dropped the lawyer the original argued for. Paid validation is pending.
+
 ## 1.0.128: graph flow for administrators
 
 A new **Administration → Graph flow** page shows what happened in every block of a case, in the style of a path exploration. Only ADMIN and SUPERADMIN users can open it: the server checks the role on both pages and on every query. It is read-only: no model call and no write.
