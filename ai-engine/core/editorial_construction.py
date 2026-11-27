@@ -383,6 +383,50 @@ def status_faults(package, matters):
     return faults
 
 
+RESULT_CUE = re.compile(r'\b(?:closed\s+with|resolution|resolved|obtained|secured|achieved|favou?rable|reduc\w+|dismiss\w+|annull?\w*|won|ruled|judgment|award\w*|approved|granted|settle\w*|recover\w*|refund\w*|exempt\w*)\b|\d+(?:[.,]\d+)?\s?%', re.I)
+TEAM_CUE = re.compile(r'\b(?:lead\s+partners?|led\s+by|co-?led\s+by|co-?leads?\b|leads\s+the\s+(?:matter|mandate)|lead\s+lawyer|supported\s+by|on\s+the\s+team|team\s+(?:comprised|included|members?))', re.I)
+TEAM_FILLER = set('the a an and with as on of by is are was were in to for its their matter mandate work team lead leads led co-led '
+                  'co-lead co-leads partner partners supported support supporting assisted associate associates senior member members '
+                  'serving served serves acting acted also who which this that from under both together alongside'.split())
+# The matter value has its own field; the narrative never restates its size.
+VALUE_TALK = re.compile(r'\b(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)[- ]figure\b|\bvalued\s+at\b', re.I)
+# A sentence ends at . ! ? but not after an initial ("Pedro I. Sosa").
+SENTENCE_END = re.compile(r'(?<=[.!?])(?<!\b[A-Z]\.)\s+')
+STATUS_ONLY = re.compile(r'^\s*(?:the\s+)?(?:matter|mandate|work|engagement|relationship|advice)\s+(?:is|remains|continues)\s+(?:ongoing|pending|in\s+progress)\.?\s*$', re.I)
+
+
+def matter_shape_faults(package, matters):
+    """v1.0.126 (Ángela, Tax review): a matter is built around why it mattered.
+
+    Two shapes are corrected once before review: a documented result that appears
+    only as the narrative's closing sentence, and a sentence that only lists who
+    led or supported the matter. Significance itself is the writer's judgement."""
+    register={m['id']:m for m in package.get('matters',[])}
+    faults=[]
+    for item in matters:
+        source=register.get(item.get('matter_id'),{})
+        label=source.get('client_name') or source.get('client') or item.get('matter_id')
+        sentences=[s for s in SENTENCE_END.split(str(item.get('text') or '').strip()) if s.strip()]
+        while sentences and STATUS_ONLY.match(sentences[-1]):
+            sentences=sentences[:-1]
+        record=' '.join(str(source.get(k) or '') for k in ('completionDate','rawNotes','summary','otherInfo'))
+        if len(sentences)>=3 and RESULT_CUE.search(record):
+            with_result=[i for i,s in enumerate(sentences) if RESULT_CUE.search(s)]
+            if with_result==[len(sentences)-1]:
+                faults.append(f'{label}: the documented result appears only as the closing sentence ("{sentences[-1][:140]}"). Make it the core of the narrative: state it early and explain what it means for the client with the record\'s facts.')
+        value=VALUE_TALK.search(str(item.get('text') or ''))
+        if value:
+            faults.append(f'{label}: the narrative restates the matter value ("{value.group(0)}"). The value is printed in its own field, with its own confidentiality: never describe its size in the narrative.')
+        for s in sentences:
+            if not TEAM_CUE.search(s):
+                continue
+            content=[w for w in re.findall(r"[a-z][a-z'\-]+", re.sub(r"\b[A-ZÁÉÍÓÚÑ][\w'’.\-]*", ' ', s)) if w not in TEAM_FILLER]
+            if len(content)<=3:
+                faults.append(f'{label}: "{s[:140]}" only lists who led or supported the matter. Weave each lawyer\'s role into the account of the work they did instead.')
+                break
+    return faults
+
+
 def length_faults(package, value):
     """B10 (500) and C2 (1,000) stay within their maximum and never collapse the original.
 
@@ -995,7 +1039,7 @@ def advance(state, invoke):
                     pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
                 from core import source_reservations
-                faults=status_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
+                faults=status_faults(package,value['matters'])+matter_shape_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
                 if faults and not correcting:raise ValueError('; '.join(faults))
                 if faults:pending.setdefault('status_observations',[]).extend(faults)
                 values={m['matter_id']:m for m in value['matters']}

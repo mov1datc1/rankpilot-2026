@@ -1,3 +1,15 @@
+## 1.0.126: matter narratives built around why the mandate mattered, checked in code
+
+On 1.0.125 a live probe of the four matters Ángela cited showed no change: the writer rule alone did not reach the narratives. No new model call.
+
+- **The shape is where the model reads it.** The matter narrative field now describes its shape in the response schema: open with the decisive element, explain its significance with the record's facts, state a documented result early, and make each lawyer's role part of the account.
+- **Checked before review (one self-correction, then an observation).** A documented result that appears only as the closing sentence (a trailing status sentence does not count), a sentence that only lists who led or supported the matter, and a narrative that describes the size of the matter value ("seven-figure", "valued at"), which has its own field. Sentences are not split at initials ("Pedro I."). On the saved real runs these shapes appear in most matters (17 of 17, 18 of 17, 7 of 20, 12 of 12 faults), including the 1% result Ángela cited, always last.
+- Significance itself stays the writer's judgement; code checks only the two shapes.
+
+- **Unit probe (27 Nov, 0.37 USD, three batches of four matters on the two real cases).** Tax, first batch: right first time; the audit result opens its matter, the acquisition is joined to its local implementation, the relationship's starting year opens another, and the team is part of the work. Labour: one self-correction (one result last, one false team-list fault from an initial, now fixed); the four matters Ángela cited open with their decisive element (favourable rulings and cassation, the litigation volume and continuity, the sector-wide bargaining, the executive transition handled as a whole). The first batch restated the size of a confidential value, now checked; the repeated Tax batch needed one self-correction. Not yet achieved: explaining what a result means for the client (the 1% result is stated first but not interpreted).
+
+Limits: unit probes only; no full run, field review or judge.
+
 ## 1.0.125: Ángela's Tax review: the team inside the work, the positioning as a conclusion, matters built around why they mattered
 
 Ángela reviewed her Tax run of 24 Nov (made on 1.0.112) and asked that these become general quality criteria, not fixes for one submission. No new model call.
