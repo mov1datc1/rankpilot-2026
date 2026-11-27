@@ -178,7 +178,7 @@ def public_disclosure(package, matter_ids):
         source='\n'.join(str(matter.get(k) or '') for k in SOURCE_KEYS)
         entry={'matter_id':matter['id'],'client_names_not_public':client_aliases(register_names(matter)[:1]),
                'figures_not_public':metric_spans(source),
-               'public_rule':'Describe this mandate as work for a confidential client; give its scale qualitatively. Legal problem, action, role and result stay.'}
+               'public_rule':'Describe this mandate as work for a confidential client; give a non-monetary scale qualitatively and a monetary amount no size at all (no "substantial", "significant" or "multi-million"). Legal problem, action, role and result stay.'}
         sector=sector_rule(matter)
         if sector:entry['client_sector']=sector
         view.append(entry)

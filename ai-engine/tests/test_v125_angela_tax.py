@@ -62,6 +62,11 @@ class PositioningIsAConclusion(unittest.TestCase):
         c2 = 'We aim for Band 1 recognition.\n\nOur work is sophisticated.\n\nThis is the work of a Band 1 practice.'
         self.assertTrue(any('before its closing paragraph' in f for f in ec.aspiration_faults({}, {'c2': c2})))
 
+    def test_a_current_ranking_cited_as_evidence_is_not_an_aspiration(self):
+        c2 = ('The practice, ranked in Band 2, handles complex audits. Ana Ruiz, a Senior Statesperson, leads them.\n\n'
+              'This is the work of a Band 1 practice.')
+        self.assertEqual(ec.aspiration_faults({}, {'c2': c2}), [])
+
     def test_requests_to_authorities_are_not_ranking_petitions(self):
         c2 = 'We file requests to tax authorities and advise on advance payments.\n\nThis is the work of a Band 1 practice.'
         self.assertEqual(ec.aspiration_faults({}, {'c2': c2}), [])

@@ -42,6 +42,11 @@ class TeamInsideTheWork(unittest.TestCase):
             faults = ec.matter_shape_faults(PACKAGE, [{'matter_id': 'm2', 'text': text}])
             self.assertTrue(any('only lists who led' in f for f in faults), (line, faults))
 
+    def test_a_team_clause_inside_the_account_is_not_corrected(self):
+        text = ('Ana Ruiz is the lead partner, with Bruno Soto on the team. We advise Beta Foods on national taxes '
+                'and defend its audits before the tax authority.')
+        self.assertEqual(ec.matter_shape_faults(PACKAGE, [{'matter_id': 'm2', 'text': text}]), [])
+
     def test_a_role_woven_into_the_work_passes(self):
         text = ('Ana Ruiz leads our advice to Beta Foods on national taxes, while Bruno Soto manages the transfer-pricing '
                 'analysis of its cross-border transactions.')
