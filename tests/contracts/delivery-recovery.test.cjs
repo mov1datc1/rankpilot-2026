@@ -27,11 +27,13 @@ test('a terminal selection displays its actual findings instead of a ready-draft
 });
 const person={name:'Sofia Vega',isPartner:true,isRanked:false,currentRank:'Unranked',suggestedRank:'Associate to Watch'};
 const project=(people,matters=[],data={})=>curateLawyers(people,matters,'Synthetic Legal','Tax','Latin America — Mexico',data);
-test('unavailable individual evidence cannot become Unranked or Ranked N in B9',()=>{
+test('unverified individual evidence never prints a rank text; the form Ranked Y/N is the firm answer and stays',()=>{
   const input=structuredClone(person);const [result]=project([input]);
-  assert.equal(result.currentRank,'');assert.equal(result.isRanked,null);assert.equal(result.suggestedRank,'');assert.deepEqual(input,person);
+  assert.equal(result.currentRank,'');assert.equal(result.suggestedRank,'');assert.deepEqual(input,person);
+  // v1.0.123 (Ángela, 26-11): the Partner Y/N and Ranked Y/N the firm filled in are preserved.
   const rankedValue = result.isRanked === true ? 'Y' : result.isRanked === false ? 'N' : '';
-  assert.equal(rankedValue, '');
+  assert.equal(rankedValue, 'N');
+  assert.equal(project([{...person,isRanked:undefined}])[0].isRanked,null);
 });
 test('confidential and public matter mentions cannot manufacture a B9 identity or partner',()=>{
   const mentions=[{leadPartner:'Private Lawyer',teamMembers:'Other Lawyer',isConfidential:true},{leadPartner:'Public Mention',isConfidential:false}];
@@ -41,7 +43,10 @@ test('only exact scoped individual observations print the observed rank',()=>{
   const observation={lawyer_name:'Sofia Vega',firm_name:'Synthetic Legal',practice_area:'Tax',jurisdiction:'Mexico',requested_edition:'current',subject_type:'individual',status:'verified_mismatch',observed_band:'Band 3',evidence:{source_url:'https://chambers.com/legal-rankings/synthetic'}};
   const read=item=>project([person],[],{ranking_verification:{individuals:[item]}})[0];
   assert.equal(read(observation).currentRank,'Band 3');assert.equal(read(observation).isRanked,true);
-  for(const change of [{practice_area:'Employment'},{lawyer_name:'Another Person'},{firm_name:'Other Firm'},{requested_edition:'2020'},{status:'not_found'},{subject_type:'firm'}]) assert.equal(read({...observation,...change}).isRanked,null);
+  // Without an exact observation no band is printed and the firm's own answer (here N) stays.
+  for(const change of [{practice_area:'Employment'},{lawyer_name:'Another Person'},{firm_name:'Other Firm'},{requested_edition:'2020'},{status:'not_found'},{subject_type:'firm'}]) {
+    assert.equal(read({...observation,...change}).isRanked,false);assert.equal(read({...observation,...change}).currentRank,'');
+  }
 });
 test('a role finding mentioning the period opens people, not the period control',()=>{
   assert.equal(describeReviewIssue('Sofia Vega: contradicción de seniority. Confirmar su cargo para este período.').destination,'lawyers');

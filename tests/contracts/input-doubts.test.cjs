@@ -23,9 +23,10 @@ test('co-led mandates, leads without a profile, idle profiles and shared headshi
  const matters=[{client:'Alpha Corp',leadPartner:'Sofia Vega and Ana Soto',teamMembers:'Pedro Lugo'},
   {client:'Beta Ltd',leadPartner:'Sofia Vega Ruiz'},{client:'Gamma Inc',leadPartner:'Marta Cruz'},{client:'Delta SA',leadPartner:''}];
  const text=inputDoubts({lawyers,matters,departmentHeads:[{name:'Sofia Vega Ruiz'},{name:'Ana Soto Mora'}]}).map(d=>d.kind+':'+d.text).join('\n');
- assert.match(text,/check:1 asunto\(s\) nombran a más de un socio responsable \(Alpha Corp: Sofia Vega y Ana Soto\).*codirigidos/);
+ // v1.0.123 (Ángela): several leads are kept as given, with no question; leads from other practices are information.
+ assert.match(text,/auto:1 asunto\(s\) nombran a varios socios responsables \(Alpha Corp: Sofia Vega y Ana Soto\).*corresponsables/);
  assert.match(text,/doubt:1 asunto\(s\) no indican socio responsable \(Delta SA\)/);
- assert.match(text,/doubt:Los asuntos nombran como socio responsable a 1 persona\(s\) sin perfil en B9 \(Marta Cruz\)/);
+ assert.match(text,/info:1 socio\(s\) responsable\(s\) de algún asunto no tienen perfil en B9 \(Marta Cruz\).*otras prácticas/);
  assert.match(text,/doubt:1 abogado\(s\) con perfil no figuran.*\(Luis Paz Gil\)/);
  assert.match(text,/check:El formulario nombra 2 jefes de departamento \(Sofia Vega Ruiz, Ana Soto Mora\).*uno de los jefes/);
 });

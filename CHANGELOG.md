@@ -1,3 +1,16 @@
+## 1.0.123: Ángela's review of 26 Nov: input notices sorted, form fields kept, evidence from any section, C2 consistent with the objective
+
+The case register reads one more thing in its single call (no new call). From Ángela's review of the labour case of 26 Nov 2026:
+
+- **Notices sorted by who acts.** The wizard groups notices into "needs your decision", "for your information" and "RankPilot resolves it". Several lead partners on one matter are kept as co-leads without a question; a lead partner without a B9 profile is information (lawyers of other practices lead multidisciplinary mandates and are not candidates); the link-only B9 notice appeared twice and now appears once, and no longer says the B9 uses the mandates only.
+- **Form fields kept.** The Partner Y/N and Ranked Y/N the firm filled in are printed as given, also when saved as text ("True"); the Ranked column was blank for every lawyer whose ranking the application had not verified. A verified ranking still wins; an unverified rank text is still never printed.
+- **D1/E1 carry the client's name.** The corporate description pasted after the name stays in the matter's source text as context for its narrative.
+- **What any section says about a lawyer is that lawyer's evidence.** The register now collects, per lawyer, the literal sentences of any section (department description, any matter, selected or not) about their role, experience, leadership, autonomy or client relationships; code keeps a sentence only when it is in the sources and names the person or follows a sentence that does. They reach the fact sheet of the B9, B10 and Audit. In the labour case the department description holds five such sentences about one associate and four about another, which the B9s did not use.
+- **C2 closes on the primary objective.** C2 argued for moving up a band and concluded on keeping the current one. When the primary objective is to move up, a closing paragraph about maintaining is a fault corrected once before review; maintaining is a fallback stated in the Audit. The fact sheet gives every role the objectives with that rule.
+- **A cross-border answer the record contradicts becomes a question.** When the form says a matter is not cross-border and the record describes work involving another jurisdiction (international transfers of workers), the register keeps that literal passage; the Audit asks the firm and the Submission keeps the form answer without narrating the discrepancy.
+
+Limits: the register's new readings (statements, cross-border doubt) were tested with recorded readings and the real labour description, not with a live call. Not addressed yet: reading the B9 links, the B10 word limit, the narrative variety of B9s, the intensity of rewriting by source quality, and confidential material in public sections in general.
+
 ## 1.0.122: The case register never loses a lead the form names
 
 No new model call. Live reading of the two real cases of 26 Nov on 1.0.121 (0.18 USD): the model found the client names the rules missed (a trading name only in the narrative, short names), reconciled a lead named in the narrative with the form's lead as co-leads, and recognised name variants of the same lawyer. Three defects:

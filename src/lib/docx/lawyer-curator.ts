@@ -238,7 +238,11 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
   // B9 is the supplied public roster. A matter mention neither authorizes a
   // public biography nor establishes partnership, even for a lead lawyer.
   const confNames = allMattersPool.filter(m => m.isConfidential || m.confidential || m.confidentialityConfirmed === false || ['non_publishable', 'confidential', 'confirmation_required'].includes(m.publish_status)).map(m => m.client).filter(Boolean);
-  const booleanOrUnknown = (...values: any[]): boolean | null => { const v = values.find(v => typeof v === 'boolean'); return typeof v === 'boolean' ? v : null; };
+  // v1.0.123 (Ángela, 26-11): the form's Partner Y/N and Ranked Y/N are printed as
+  // the firm filled them in. Saved values may be booleans or text ("True", "Y", "No").
+  const yesNo = (v: any): boolean | null => typeof v === 'boolean' ? v
+    : /^(?:true|y|yes|s[ií])$/i.test(String(v ?? '').trim()) ? true : /^(?:false|n|no)$/i.test(String(v ?? '').trim()) ? false : null;
+  const booleanOrUnknown = (...values: any[]): boolean | null => { for (const v of values) { const b = yesNo(v); if (b !== null) return b; } return null; };
   return [...roster.values()].map(person => {
     const verified = chambersData?.ranking_verification?.individuals?.find((item: any) =>
       normalizeName(item.lawyer_name || '') === normalizeName(person.name) &&
@@ -271,7 +275,9 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     // Appending snippets from a second source would duplicate that argument
     // and introduce prose outside the reviewed development proposal.
     const standoutWork = candidacy?.submission_bio ? '' : buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio, practiceArea);
-    return { name: person.name, career, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
+    // A ranking verified in the official table wins; otherwise the firm's own Y/N stays.
+    const declaredRanked = booleanOrUnknown(person.isRanked, person.is_ranked);
+    return { name: person.name, career, isPartner, isRanked: verified ? true : declaredRanked, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });
 }
 

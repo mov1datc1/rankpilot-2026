@@ -69,8 +69,9 @@ test('v1.0.116: a B9 answered with a link only is said before generating and nev
  assert.deepEqual(lawyersWithLinkOnly(lawyers),['Sofia Vega','Eva Mora']);
  const r=caseReadiness({firmName:'Example Firm',practiceArea:'Tax',lawyers,matters,b10Text:'Practice.',filingDetails:{departmentName:'X',numPartners:'1',numLawyers:'2',contacts:[{name:'A',email:'a@x'}],departmentHeads:[{name:'A'}]},sourceReports:[{source:'a.docx',matter_count:12}]});
  assert.equal(r.verdict.status,'limited');
- assert.match(r.verdict.limitations.join(' '),/2 de 4 abogado\(s\) traen en B9 solo un enlace.*Sofia Vega, Eva Mora.*RankPilot no lee el enlace/);
- assert.match(r.items.map(i=>i.kind+':'+i.text).join('\n'),/missing:2 de 4 abogado/);
+ assert.match(r.verdict.limitations.join(' '),/2 de 4 abogado\(s\) traen en B9 solo un enlace.*Sofia Vega, Eva Mora.*práctica habitual.*resto del documento.*todavía no abre los enlaces/);
+ // v1.0.123 (Ángela, 26-11): said once, as a limitation; it appeared twice before.
+ assert.doesNotMatch(r.items.map(i=>i.kind+':'+i.text).join('\n'),/2 de 4 abogado/);
  assert.match(r.nextStep,/RankPilot generará con lo disponible/);
  assert.deepEqual(lawyersWithLinkOnly([{name:'A',isPartner:true}]),[]);
 });

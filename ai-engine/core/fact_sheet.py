@@ -32,6 +32,16 @@ an entry carries not_confirmed_as the form gives an incomplete name and does not
 confirm that the head is that fully named lawyer: state what that lawyer leads in
 the mandates and do not write who heads or leads the department or practice,
 neither with the incomplete name nor with the longer one.
+A lawyer's source_statements are the sources' own sentences about that person, from
+whatever section they appear in (department description, any matter, selected or
+not): use them as that person's evidence in their B9, in B10 when it describes the
+team, and in the Audit's assessment; never drop them because they sit in another
+section, and never turn them into a mandate.
+case.objectives: C2 builds and closes on the primary objective; a secondary objective
+(for example maintaining the current band) is a fallback stated in the Audit, never the
+conclusion of a C2 that argues for the primary one. When the evidence cannot support the
+primary objective, the Audit says so and recommends the adjusted objective, and C2 follows
+that recommendation from its first sentence to its last.
 A client entry with public_use is a mandate the source forbids describing publicly:
 it never appears in B9, B10 or C2, not even anonymously, and it remains in section E
 and in the Audit. A client entry with research_period closed before the period is not
@@ -158,6 +168,7 @@ def build(package, strategy=None, development=None, person=None):
                 **({'value': 'the amount of the matter value is confidential: never state that amount, not even as a range, and never describe its size in words (for example "substantial", "significant", "multi-million") in B9, B10 or C2. Results, percentages and the other documented facts of the mandate are not restricted by this'} if re.match(r'\s*confiden', str(m.get('value') or ''), re.I) else {}),
                 **({'public_use': 'restricted by the source ("' + str(((package.get('case_register') or {}).get('matters') or {}).get(m.get('id'), {}).get('restriction_quote') or 'strictly confidential') + '"): this mandate is never described in B9, B10 or C2, not even anonymously; it stays in section E and in the Audit'} if m.get('public_use_restricted') else {}),
                 **({'research_period': 'closed before the confirmed research period: it is not part of the portfolio of this cycle'} if m.get('in_research_period') is False else {}),
+                **({'cross_border_question': 'the form answers that this matter is not cross-border, but the record says: "' + m['cross_border_doubt'] + '". The Audit asks the firm to confirm; the Submission keeps the form answer and never narrates the discrepancy'} if m.get('cross_border_doubt') else {}),
                 **({'selection': dispositions[m.get('id')]} if dispositions.get(m.get('id')) else {})} for m in matters]
     head_names = [str(h.get('name')).strip() for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
                   if isinstance(h, dict) and identity(h.get('name'))]
@@ -180,6 +191,8 @@ def build(package, strategy=None, development=None, person=None):
             entry['title'] = registered.get('title') or profile.get('role') or profile.get('title')
         if registered.get('other_names'):
             entry['also_written_as'] = registered['other_names']
+        if registered.get('statements'):
+            entry['source_statements'] = registered['statements']
         if key in heads:
             # A shared headship is stated as shared: "one of the heads", never "the head".
             others = [n for n in head_names if identity(n) != key]
@@ -205,7 +218,7 @@ def build(package, strategy=None, development=None, person=None):
     sheet = {'version': VERSION, 'clients': clients, 'lawyers': lawyers}
     if not target:
         details = package.get('filing_details') or {}
-        case = {k: package.get(k) for k in ('firm_name', 'practice_area', 'directory', 'jurisdiction', 'research_period', 'requested_target')
+        case = {k: package.get(k) for k in ('firm_name', 'practice_area', 'directory', 'jurisdiction', 'research_period', 'requested_target', 'objectives')
                 if package.get(k)}
         size = {k: details.get(v) for k, v in (('partners', 'num_partners'), ('other_lawyers', 'num_lawyers')) if str(details.get(v) or '').strip()}
         if size:

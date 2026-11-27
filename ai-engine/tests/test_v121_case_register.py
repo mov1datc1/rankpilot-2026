@@ -147,6 +147,57 @@ class ModelReadingTests(unittest.TestCase):
         self.assertFalse(cr.same_person({'name': 'Ana Ruiz', 'roster': None}, {'name': 'Ana Soto', 'roster': None}))
 
 
+class StatementTests(unittest.TestCase):
+    """v1.0.123 (Ángela, 26-11): what any section says about a lawyer is that lawyer's evidence."""
+    B10 = ('The practice is supported by a senior team. Crucially, day-to-day management is led by Lucia Prado, a senior associate with over 16 years.'
+           ' She plays a central role in overseeing mandates and acts as a primary client contact.\nShe is complemented by Bruno Soto Vela.\n'
+           'Another paragraph about the market. She leads nothing here.')
+
+    def test_a_sentence_counts_when_it_names_the_person_or_follows_one_that_does(self):
+        names = ['Lucia Prado']
+        self.assertTrue(cr.about_person('She plays a central role in overseeing mandates and acts as a primary client contact.', self.B10, names))
+        self.assertTrue(cr.about_person('Crucially, day-to-day management is led by Lucia Prado, a senior associate with over 16 years.', self.B10, names))
+        self.assertTrue(cr.about_person('She is complemented by Bruno Soto Vela.', self.B10, names))  # opens the next paragraph
+        self.assertFalse(cr.about_person('She leads nothing here.', self.B10, names))
+        self.assertFalse(cr.about_person('Lucia Prado leads every mandate of the firm.', self.B10, names))  # not in the source
+
+    def test_statements_reach_the_fact_sheet_of_that_lawyer(self):
+        pkg = package()
+        pkg['b10_source'] = self.B10
+        reading = ModelReadingTests().reading()
+        reading['lawyers'][0]['statements'] = ['She plays a central role in overseeing mandates and acts as a primary client contact.',
+                                               'Another paragraph about the market.']
+        pkg['case_register'] = cr.validate(reading, pkg)
+        cr.apply(pkg)
+        lucia = next(l for l in fact_sheet.build(pkg, person='Lucia Prado')['lawyers'] if l['name'] == 'Lucia Prado')
+        self.assertEqual(lucia['source_statements'], ['She plays a central role in overseeing mandates and acts as a primary client contact.'])
+        self.assertIn('source_statements', fact_sheet.RULE)
+
+    def test_a_cross_border_answer_the_record_contradicts_becomes_a_question(self):
+        pkg = package()
+        pkg['matters'][1]['crossBorder'] = 'No.'
+        pkg['matters'][1]['rawNotes'] += ' The team advised on international transfers of workers from the parent company in Spain.'
+        reading = ModelReadingTests().reading()
+        reading['matters'][1]['cross_border_doubt'] = 'The team advised on international transfers of workers from the parent company in Spain.'
+        reading['matters'][0]['cross_border_doubt'] = 'Invented passage about Mexico and Peru.'
+        pkg['case_register'] = cr.validate(reading, pkg)
+        cr.apply(pkg)
+        self.assertNotIn('cross_border_doubt', pkg['case_register']['matters']['m1'])
+        clients = {c['matter_id']: c for c in fact_sheet.build(pkg)['clients']}
+        self.assertIn('international transfers', clients['m2']['cross_border_question'])
+
+
+class ObjectiveTests(unittest.TestCase):
+    def test_c2_never_closes_on_maintaining_when_the_primary_objective_is_to_move_up(self):
+        from core.editorial_construction import objective_faults
+        pkg = {'objectives': {'primary': 'Move up one band/tier', 'secondary': 'Maintain current ranking'}}
+        closing = 'The work above shows depth.\nTaken together, this record supports maintaining the Band 4 position and moving up one band.'
+        self.assertEqual(len(objective_faults(pkg, {'c2': closing})), 1)
+        self.assertEqual(objective_faults(pkg, {'c2': 'Evidence.\nTaken together, this record supports moving up to Band 3.'}), [])
+        self.assertEqual(objective_faults({'objectives': {'primary': 'Maintain current ranking'}}, {'c2': closing}), [])
+        self.assertIn('objectives', fact_sheet.build(package() | {'objectives': pkg['objectives']})['case'])
+
+
 class ConsumerTests(unittest.TestCase):
     def test_the_fact_sheet_reads_leads_titles_period_and_restriction_from_the_register(self):
         pkg = package()

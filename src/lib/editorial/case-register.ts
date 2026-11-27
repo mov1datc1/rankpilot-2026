@@ -40,7 +40,8 @@ export function applyRegister(matters: any[], register: any): any[] {
   const valid = register?.version === CASE_REGISTER_VERSION;
   return matters.map((matter: any) => {
     const facts = valid ? register.matters?.[matter?.id] : null;
-    let copy = matter;
+    const client = valid ? register.clients?.[matter?.id] : null;
+    let copy = client?.name && matter ? {...matter, client_name: client.name} : matter;
     for (const [field, snake, people] of [['leadPartner','lead_partner',facts?.leads],['teamMembers','team_members',facts?.team]] as const) {
       if (!matter || !isPlaceholder(matter[field] ?? matter[snake]) || (matter[field] ?? matter[snake]) === undefined) continue;
       const fromRegister = Array.isArray(people) && people.length ? people.map((p: any) => p.name).join('; ') : '';

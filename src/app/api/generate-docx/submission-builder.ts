@@ -1,4 +1,5 @@
 import { renderingInputs, registerConfidentialNames } from '@/lib/editorial/case-register';
+import { nameOnly } from '@/lib/docx/client-aliases';
 import {
   Document, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, ShadingType, AlignmentType, BorderStyle,
@@ -161,7 +162,11 @@ function sanitizeMatterSummary(rawText: string): string {
 
 function cleanClientDescriptor(rawClient: string, matter?: any): string {
   // v1.0.109: a form label kept by extraction ("Client: X") is template text, not part of the name.
-  return cleanTablePipes(String(rawClient || '').replace(/^\s*(?:client|cliente)\s*:\s*/i, ''));
+  const stripped = cleanTablePipes(String(rawClient || '').replace(/^\s*(?:client|cliente)\s*:\s*/i, ''));
+  // v1.0.123 (Ángela, 26-11): D1/E1 carry the client's name, not the corporate
+  // description pasted after it; the description stays in the matter's source
+  // text as context for its narrative. The case register's name comes first.
+  return cleanTablePipes(String(matter?.client_name || '')) || nameOnly(sanitizeClientName(stripped).cleanClient) || stripped;
 }
 
 /** Translation belongs to the reviewed writing stage, never a name-based renderer fallback. */
