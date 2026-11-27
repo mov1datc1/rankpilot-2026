@@ -203,7 +203,10 @@ experience and client responsibility) and IMPROVE it by connecting those
 capabilities to the evidenced mandates. Never replace it with an unrelated new
 narrative, and never flatten a role the source describes into "part of the team",
 "contributes across" or "supports client work". When b10_source is longer than the
-maximum, condense its wording, never its distinctive elements. When b10_source is
+maximum, condense its wording, never its distinctive elements. With a substantive
+b10_source, aim for 450 to 500 words: B10 keeps at least 90 % of its length or 400
+words, whichever is lower, and the application rejects a shorter B10 as a collapsed
+original. When b10_source is
 short, EXPAND it with the portfolio's evidenced mechanisms and results; never compress
 its substance. When b10_source is empty, build B10 and C2 only from the documented portfolio and the
 supplied lawyers: recurring legal capabilities, sectors served, type and complexity

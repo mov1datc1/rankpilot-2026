@@ -10,7 +10,9 @@ Jonathan's decision of 27 Nov after Ángela's review of the labour case: B10 fol
 
 Unchanged by decision: confidential matters in public sections. Only matters the source expressly restricts are kept out of B9, B10 and C2; the general question is open with Ángela.
 
-Limits: validated with tests and a replay of the saved runs; the writer's new B10 was probed on one unit, not in a full run.
+- **Unit probe on the two real cases of 26 Nov** (B10/C2 only, with a live case-register reading; 27 Nov, about 1.6 USD). Labour: 475 words, opening on the original's market context, then the head's institutional leadership, the senior associate who runs the practice day to day with her years of experience and client role, the second senior associate's experience, then three capability pillars. Tax: 424 words from a 772-word original, with the three senior partners and four pillars. Every first answer was short (348 to 388 words) and one self-correction brought it within range; the writer is now asked to aim for 450 to 500 words with a substantive original (not verified live).
+
+Limits: validated with tests, a replay of the saved runs and the unit probe above; not a full run, no field review or judge.
 
 ## 1.0.123: Ángela's review of 26 Nov: input notices sorted, form fields kept, evidence from any section, C2 consistent with the objective
 

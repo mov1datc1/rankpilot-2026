@@ -45,7 +45,8 @@ class Structure(unittest.TestCase):
         task = ec.INSTITUTION_TASK
         for expected in ('B10 PRESENTS the practice', 'PRESERVE its structure', 'never flatten a role',
                          'department leadership and bench depth', 'two to four capability pillars',
-                         'never a matter-by-matter catalogue', 'C2 uses these strengths to argue'):
+                         'never a matter-by-matter catalogue', 'C2 uses these strengths to argue',
+                         'aim for 450 to 500 words', 'at least 90 % of its length or 400'):
             self.assertIn(expected, task)
         self.assertIn('two to four\ninstitutional_arguments', ec.PLAN_TASK)
 
