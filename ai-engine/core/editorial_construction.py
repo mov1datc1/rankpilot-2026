@@ -16,10 +16,12 @@ BATCH_SIZE = 4
 # v1.0.124 (Jonathan, 27-11, after Ángela's Labour review): B10 follows the
 # form's 500-word limit; B9 and C2 keep the 1,000-word project maximum.
 from core.section_limits import B10_MAX_WORDS, C2_MAX_WORDS
+# v1.0.127: one editorial method for every role (Ángela's Labour, Tax and Public Law reviews).
+from core import editorial_strategy
 BIO_FIELDS = ('submission_bio', 'profile_coverage', 'submission_case_coverage', 'biography_depth')
 PLAN_FIELDS = ('case_plan', 'filing_recommendation', 'positioning', 'target',
                'target_rationale', 'principal_strength', 'principal_vulnerability',
-               'hero_rationale', 'comparisons')
+               'original_strategy', 'hero_rationale', 'comparisons')
 
 COMMON = '''Use only the supplied original evidence and immutable selected portfolio.
 Write the requested unit only. Do not change other units, selection or shared decisions.
@@ -64,6 +66,11 @@ otherwise name it in category_rationale and explain the change. Never replace it
 silently, and never default a ranked or senior partner to the lowest band. Evaluate
 additional source leaders internally without inventing roster titles.'''
 PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
+PLAN_TASK += '\n' + '\n'.join((editorial_strategy.SECTION_ROLES, editorial_strategy.ORIGINAL_STRATEGY,
+    editorial_strategy.CANDIDACY, editorial_strategy.MATTER_SIGNIFICANCE)) + '''
+Record the original thesis and how B10 and C2 keep it in original_strategy, and give each
+lawyer a candidacy_state; the institutional_arguments are claims about what distinguishes
+the practice, proved by mandates, never one argument per mandate.'''
 
 MATTER_TASK = COMMON + ''' Write these matter narratives in English. The destination
 and original restrictions are explicit in field_contracts. E is confidential:
@@ -111,7 +118,7 @@ WHY THE MATTER MATTERED (the form asks for it): identify the element that makes 
 mandate relevant (a decisive result, a technically demanding interaction of legal
 regimes, a transaction together with its operational implementation, the length and
 depth of the client relationship, a cross-border structure) and build the narrative
-around it: state it early and explain its significance with the facts of the record
+around it: make it visible from the opening paragraph and explain its significance with the facts of the record
 only (for example, a resolution fixing an amount equal to 1% of the original
 assessment means the client's exposure was reduced to a small fraction of the amount
 assessed). A documented result is the core of the narrative, never a closing
@@ -123,7 +130,11 @@ of the work instead of a separate closing line ("The matter was led by ..."). Op
 with the decisive element never removes the firm as the actor of its work (never "the
 client receives advice" or "is the subject of an ongoing mandate"). The aim
 is legal, commercial and strategic density, not length: no generalities, no
-inference the record does not support.'''
+inference the record does not support.
+''' + editorial_strategy.MATTER_OPENING + '''
+Describe the legal sophistication the record shows: a notable client or a difficult
+jurisdiction never turns a routine filing, registration or permit into complex work.
+''' + editorial_strategy.MATERIAL_CONFLICTS
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
@@ -174,13 +185,15 @@ ARCHITECTURE OF A NOMINATED B9 (the method the editorial owner applies):
 1. Opening, one or two sentences: who this lawyer is in THIS practice: current
    role, confirmed headship, and the kind of legal problem clients bring them,
    shown by the evidence rather than adjectives.
-2. Body grouped by two to four legal themes drawn from their own mandates
-   (for example development continuity, expropriation, boundaries). Open each
-   theme with its most significant mandate: the client's problem, the legal
-   obstacle, this lawyer's own action or strategy, and the achieved result or
-   exact current stage with its decisive scale (qualitative for a non-monetary
-   figure of a mandate in public_disclosure; none for a confidential monetary amount). Related mandates in the same
-   theme follow briefly. Never one paragraph per matter in list form.
+2. Body: two or three points that make THIS lawyer's individual case (for
+   example strategic leadership of disputes over State conduct, technical
+   autonomy before regulators, being the client's primary counsel), drawn from
+   their own mandates. Each point is proved by this lawyer's own contribution on
+   one or two mandates, each in a clause with the achieved result or exact
+   current stage and its decisive scale (qualitative for a non-monetary figure of
+   a mandate in public_disclosure; none for a confidential monetary amount). The
+   matter itself is told in section D/E: never re-tell its facts here. Never one
+   paragraph per matter in list form.
 3. Career credentials (education, teaching, professional offices, prior
    employment) appear once, where they explain the expertise.
 4. Close with one factual sentence on what this body of work shows for the
@@ -203,9 +216,9 @@ person: their credentials, role and contribution. It does not restate the
 description of the practice (B10) or the ranking argument (C2). State a
 confirmed headship once, in the opening. Write in the active voice (never "is
 led by X" or a trailing "; X leads the matter") and never as a list of matters
-("X also leads…", "Finally, X leads…"): at most eight paragraphs. The application
-checks this shape before review.
-''' + DEPTH_INSTRUCTION
+("X also leads…", "Finally, X leads…"): usually three to five paragraphs and at most
+eight. The application checks this shape before review.
+''' + editorial_strategy.SECTION_ROLES + '\n' + DEPTH_INSTRUCTION
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional
 case_plan, speaking directly as the firm (never audit voice or market superlatives).
@@ -235,7 +248,8 @@ of mandates, authorities and counterparties, lawyers who recur and accredited
 results; never invent a structure, headcount, title, history or capability that
 those records do not state. Order B10 as follows, adapting proportions to the
 evidence: (1) open with the strongest strategic differentiator of this practice,
-framed by the context the original gives when it gives one; (2) right after the
+framed by the context the original gives when it gives one, and with the original's
+own thesis when original_strategy keeps it; (2) right after the
 opening, a visible paragraph on department leadership and bench depth, naming the confirmed practice
 heads early (before the detailed pillars) and every lawyer whom b10_source or the fact sheet's
 source_statements describe with a role, and state that role as the source states it
@@ -243,8 +257,9 @@ source_statements describe with a role, and state that role as the source states
 execution of the practice, primary client contact, years of experience, growing
 responsibility in contentious or regulatory work), so that the depth, continuity
 and execution capacity of the team are visible; never invent partner status, titles
-or rankings; (3) the key types of work as two to four capability pillars that
-develop the shared institutional_arguments, each proved by one or two decisive
+or rankings; (3) the key types of work as two to four pillars that
+develop the shared institutional_arguments, each a claim about what this practice does
+that others in its market do not, proved by one or two decisive
 mandates stated in a clause with their legal mechanism and result (publishable
 clients by name), never a matter-by-matter catalogue ("For X, we ... For Y, we
 ..."): the full matters belong in section D/E. The team is part of each capability,
@@ -253,20 +268,24 @@ lead or execute its decisive mandates (fact sheet: leads_alone, co_leads,
 team_member), so the legal work never reads as detached from the professionals who
 lead it; the early leadership paragraph does not replace that link and B10 need
 not open with the team; (4) industry sector expertise and
-areas of recent growth, where the sources evidence them. C2 builds a persuasive case in an assertive institutional voice; it is not a
-request followed by a list of reasons. Order the argument: (a) the evolution,
-sophistication and relevance of the recent work; (b) the specific evidence that
-distinguishes the practice and, where the sources ask for individual recognition,
-each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
-aspiration, stated once at the end as the consequence of the argument. The
+areas of recent growth, where the sources evidence them. C2 is the firm's feedback on the directory's coverage, in an
+assertive institutional voice; it is not a request followed by a list of reasons, and it does not present the
+practice again. Order the argument: (a) the current coverage as the firm reads it: the
+practice's present position or its absence and, when c2_source gives one, the firm's
+own reading of the market; (b) the precise aspect that deserves reconsideration (the
+practice's position, a named lawyer, a type of work or capability the coverage does not
+reflect); (c) the evidence that justifies it, each decisive mandate cited only for the
+point it proves; (d) the conclusion,
+stated once at the end as the consequence of the argument. The
 objective guides the argument but is not its subject: the evidence (technical
 sophistication, relevance of the mandates, results, international dimension, depth
 of the team) carries the case, and the positioning emerges from it as a conclusion
 about the standing that work demonstrates (for example "the breadth and results of
 this work are those of a Band 1 practice"), never as a petition to the researcher:
 never "seeks", "requests", "asks", "puts forward", "should be ranked", "should be
-maintained", "supports moving" or "supports the promotion of", and never mention the
-band, promotion or recognition anywhere else in C2. The same principle governs
+maintained", "supports moving" or "supports the promotion of", and never mention a
+band to be reached, a promotion or recognition anywhere else in C2 (the present
+position may be stated in (a) as a fact). The same principle governs
 individuals: each lawyer's category is the conclusion of that lawyer's evidence,
 stated once, never a list of requests. Take the
 practice aspiration from the supplied target; name a band only when one is supplied.
@@ -284,9 +303,10 @@ recognition, and close on capability, results and track record. Adapt this order
 to the candidacy and its evidence; it is not a template. State capabilities as firm
 facts, never with deferential formulas such as "respectfully submits" (C2 has a ''' + f'{C2_MAX_WORDS:,}' + '''-word maximum, expanding a
 short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
-service catalogue. What must differ from B10 is the function, not the evidence: C2 argues
-with the same decisive mandates, each named by its publishable client and stated with
-its documented result or exact stage (for example an audit that closed with a
+service catalogue. What must differ from B10 is the function: C2 may rely on the same
+decisive mandates, but cites each only for the point it proves about the coverage,
+each named by its publishable client and stated with its documented result or exact stage in a
+clause, never re-describing the work B10 presents (for example an audit that closed with a
 resolution at 1% of the assessment), because a named mandate with its result is the
 proof of the argument and a generic description ("a completed audit") is not. Do
 not restate B10's sentences; use the fact to draw the conclusion B10 does not draw. Use actual retrieved peer evidence only within its scope; never
@@ -316,7 +336,8 @@ lawyers are separate figures; never present either one as the whole team, and a
 total is only their sum. With a single partner, that partner is the person leading the
 team: never "supported by one partner" or "works with one partner". Return institutional_execution
 with literal b10_quote/c2_quote for each shared argument. These bindings are
-internal, not additional public copy.'''
+internal, not additional public copy.
+''' + editorial_strategy.SECTION_ROLES + '\n' + editorial_strategy.ORIGINAL_STRATEGY
 
 # One self-correction per construction unit: enough to act on a precise
 # validator diagnosis, never an open-ended paid loop.
@@ -773,7 +794,9 @@ def reconcile_categories(plan, package=None, verification=None):
         c['category_rationale'] += ' La experiencia establecida sustenta la candidatura, pero la categoría concreta permanece pendiente.'
         if c.get('category_assessment'):
             c['category_assessment']={**c['category_assessment'],'decision':'pending','criterion':'pending'}
-    return plan
+    # v1.0.127: the candidacy state decides the recommendation, and a lawyer the
+    # firm declares ranked is never sent to an entry band.
+    return editorial_strategy.apply_candidacy(plan, package)
 
 def drop_unbound_support(package, strategy, plan):
     """Withdraw supporting claims the original records do not sustain.
@@ -982,6 +1005,7 @@ def advance(state, invoke):
             task=INSTITUTION_TASK;payload={'package':{**package,'matters':[m for m in package['matters'] if m['id'] in selected]},
                 'privacy_register':construction_bindings.privacy_register(package),
                 'shared_decisions':decision_snapshot(work),'strategy':strategy,
+                'original_strategy':work.get('original_strategy',''),
                 'department_size':department_size(package)}
             from core.public_privacy import public_disclosure
             payload['public_disclosure']=public_disclosure(package,selected)
@@ -1054,7 +1078,8 @@ def advance(state, invoke):
                     pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
                 from core import source_reservations
-                faults=status_faults(package,value['matters'])+matter_shape_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
+                faults=(status_faults(package,value['matters'])+matter_shape_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
+                        +editorial_strategy.conflict_faults(package,value['matters'])+editorial_strategy.opening_faults(package,value['matters']))
                 if faults and not correcting:raise ValueError('; '.join(faults))
                 if faults:pending.setdefault('status_observations',[]).extend(faults)
                 values={m['matter_id']:m for m in value['matters']}
@@ -1087,7 +1112,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
+                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)+editorial_strategy.section_faults(package,value)
                 if faults and not correcting:
                     # Ángela's rules: B10 within 500 words and C2 within 1,000,
                     # never collapsing the original, and the original's leadership

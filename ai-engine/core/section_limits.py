@@ -7,6 +7,11 @@ B9 (per person) and C2 keep the 1,000-word project maximum.
 B10_MAX_WORDS = 500
 C2_MAX_WORDS = 1000
 B9_MAX_WORDS = 1000
+# v1.0.127 (Ángela, Public Law): B9 is an individual argument, not a summary of the
+# mandates that section D/E tells. It usually needs 200 to 400 words; below 200 a
+# nominated profile is checked for an undeveloped argument, never padded to a target.
+B9_ARGUMENT_WORDS = 200
+B9_USUAL_WORDS = (200, 400)
 
 # A generated B10 may condense a long original, never collapse it: the floor is
 # 90 % of the original, but never more than 80 % of the maximum, so a 470-word

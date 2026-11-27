@@ -113,6 +113,12 @@ class Person(BaseModel):
     quote: str = Field(description='The shortest literal excerpt of this matter record that names this person in this role.')
 
 
+class Conflict(BaseModel):
+    subject: str = Field(description='The fact the two passages disagree on, in two to four words: "arbitral forum", "legal basis", "outcome", "completion date", "lead lawyer".')
+    quote_a: str = Field(description='The first literal passage, copied exactly from this matter record.')
+    quote_b: str = Field(description='The incompatible literal passage, copied exactly from this same matter record.')
+
+
 class MatterFacts(BaseModel):
     matter_id: str
     leads: List[Person] = Field(description='Firm lawyers who lead or co-lead this mandate: everyone named in lead_partner_cell, and any firm lawyer the narrative states led or leads it. People named in different places are co-leads, not a conflict.')
@@ -123,6 +129,7 @@ class MatterFacts(BaseModel):
     completion_quote: str = Field(description='Literal excerpt that states the status or date; empty when there is none.')
     public_use_restricted: bool = Field(description='True only when this record itself says the whole matter must not be disclosed or described publicly (for example "This matter is strictly confidential"). A confidential value, a confidential client or a "Confidential Matter" heading alone is NOT such a restriction.')
     restriction_quote: str = Field(description='The literal restriction sentence; empty when public_use_restricted is false.')
+    material_conflicts: List[Conflict] = Field(description='Only incompatible versions of the SAME material fact inside this record (for example the same arbitration described as a treaty arbitration and as an ICC arbitration, two different outcomes, two completion dates). Complementary details, later updates and co-leads named in different places are NOT conflicts. Empty when there is none.')
     cross_border_doubt: str = Field(description='Only when cross_border_cell answers No: the literal passage of the record that describes work involving another jurisdiction (international transfers of workers, foreign parent company instructions, foreign courts or authorities). Empty otherwise.')
 
 
@@ -411,6 +418,17 @@ def validate(reading, package):
         doubt = ' '.join(str(item.get('cross_border_doubt') or '').split())
         if doubt and re.match(r'(?i)\s*no\b', str(matter.get('crossBorder') or '')) and _literal(doubt, sources) and len(doubt) >= 20:
             entry['cross_border_doubt'] = doubt
+        # v1.0.127 (Public Law): incompatible versions of one material fact are read
+        # once, with both literal passages; no section states either version.
+        conflicts = []
+        for conflict in item.get('material_conflicts') or []:
+            a, b = (' '.join(str(conflict.get(k) or '').split()) for k in ('quote_a', 'quote_b'))
+            if a and b and a != b and _literal(a, sources) and _literal(b, sources):
+                conflicts.append({'subject': ' '.join(str(conflict.get('subject') or '').split())[:60], 'quote_a': a, 'quote_b': b})
+            elif a or b:
+                rejected.append('conflict without two literal passages: ' + matter['id'][:8])
+        if conflicts:
+            entry['material_conflicts'] = conflicts
         restricted, sentence = bool(item.get('public_use_restricted')), str(item.get('restriction_quote') or '')
         if restricted and _literal(sentence, sources) and RESTRICTION.search(sentence):
             entry.update(public_use_restricted=True, restriction_quote=sentence)
@@ -460,4 +478,6 @@ def apply(package):
         matter['public_use_restricted'] = bool(facts.get('public_use_restricted'))
         if facts.get('cross_border_doubt'):
             matter['cross_border_doubt'] = facts['cross_border_doubt']
+        if facts.get('material_conflicts'):
+            matter['contested_facts'] = list(facts['material_conflicts'])
     return package

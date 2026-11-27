@@ -1,3 +1,35 @@
+## 1.0.127: one editorial method for every role (structural version after the Public Law review)
+
+The Labour, Tax and Public Law reviews each found a new gap because every review had been answered with a rule for one role. The prompts had accumulated clauses that contradicted the reviews themselves: B9 had a 500-1,000-word target (650 to draft), which filled profiles with re-told matters; an old development instruction still said "In C2 make a direct, grounded request for coverage"; C2 was defined as a positioning case that re-argued B10 with the same mandates. No new model call.
+
+- **One specification** (`core/editorial_strategy.py`), read by the plan, matter, B9 and B10/C2 writers, the field reviewer, repair, the judge, the Audit writer and selection:
+  - B9 says who deserves recognition and why: an individual argument, usually 200 to 400 words and never more than 1,000, with each mandate as proof in a clause.
+  - B10 says what distinguishes the practice in its market, with mandates as evidence, not a list.
+  - C2 is feedback on the directory's coverage: what should be reconsidered and why, without presenting the practice again.
+  - Work highlights carry the evidence.
+  - A strong original thesis is kept and strengthened.
+  - Candidacy and matter significance follow the rules below.
+- **Candidacy.**
+  - A ranking the firm declares for its lawyer is a fact of the case. A declared-ranked lawyer is never proposed for an entry band: a declared band is kept, and without one the category is pending, with the question to the firm.
+  - Four states: present, under-documented (with the information to obtain), development potential and inviable. The application derives the recommendation from the state, and the Audit prints it.
+  - The Audit states the real status of the official query (unavailable, no exact match or verified).
+- **Original strategy.** The plan records the original thesis and how B10 and C2 keep it, and the B10/C2 writer receives it.
+- **Matters.**
+  - Five separate dimensions in selection and writing: client prominence, jurisdictional complexity, legal sophistication, relevance to the practice and the firm's contribution.
+  - A narrative opens with the legal problem and the firm's contribution, never with a procedural or adverse outcome.
+  - Incompatible versions of one material fact are read once by the case register, with both literal passages. No section states either version, and the Audit asks the firm.
+- **Checked in code before review** (one self-correction, then an observation):
+  - a C2 that opens by presenting the practice, or repeats B10 sentences;
+  - a matter that opens with a procedural outcome;
+  - a narrative that states a contested fact;
+  - an entry band for a declared-ranked lawyer, applied directly.
+- **Fixes from the Public Law run.** The Audit wrote "no exact match" when the official table was unavailable. The department-head check missed "one of two department heads" and punctuation in the practice name. The judge treated the form's Partner and Ranked Y/N columns, the firm's own answers, as unverified ranking claims.
+- **Acceptance rubric** (`evals/editorial_rubric.py`): the reviews' criteria in eight scores. A saved Submission and Audit can be evaluated before a release for about 0.2 USD, instead of a new run.
+
+Validation:
+- Replayed on six saved real runs (79 matters, at no cost). The matter-opening check flags only the narrative the reviewer cited; the candidacy rule changes only the lawyer she cited. The C2 checks flag every saved C2, as her reviews did, so until the writer meets them first time each case pays one institutional self-correction (about 0.17 USD).
+- Limits: no live model call yet; the case register's reading of conflicts and the new prompts are untested with the model.
+
 ## 1.0.126: matter narratives built around why the mandate mattered; contradictions between roles removed
 
 On 1.0.125 a live probe of the four matters Ángela cited showed no change: the writer rule alone did not reach the narratives. No new model call.

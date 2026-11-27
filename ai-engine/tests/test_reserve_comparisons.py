@@ -96,8 +96,11 @@ class ReserveComparisonTests(unittest.TestCase):
         self.assertEqual(pending['pending_groups'][0]['kind'],'matters')
         self.assertEqual(pending['work']['comparisons'][:3],partial['comparisons'])
         self.assertEqual(len(pending['work']['comparisons']),11)
+        # v1.0.127: a plan saved before candidacy_state existed gains it empty; nothing else changes.
+        def without_state(value):
+            return [{k:v for k,v in c.items() if not (k=='candidacy_state' and v is None)} for c in value] if isinstance(value,list) and value and isinstance(value[0],dict) and 'recommendation' in value[0] else value
         for key in partial:
-            if key!='comparisons':self.assertEqual(pending['work'][key],partial[key])
+            if key!='comparisons':self.assertEqual(without_state(pending['work'][key]),partial[key])
         self.assertEqual(sum(t['usage']['total_tokens'] for t in result['trace']),66)
         self.assertEqual(pending['rejected_response'],partial)
         self.assertTrue(pending['plan_comparison_recovery']['completed'])

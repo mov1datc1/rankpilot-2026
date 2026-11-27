@@ -43,6 +43,14 @@ Suggested budget 130 words. Missing optional information does not block delivery
 Use names, never internal IDs. Do not declare delivery approval, modify selection,
 or introduce a strategy the Submission does not execute. Preserve documented
 source uncertainty instead of inventing a result, category, title or permission.'''
+# v1.0.127 (Public Law review): candidacy advice and contested facts in the Audit.
+from core import editorial_strategy as _strategy
+WRITING_TASK += '\n' + _strategy.CANDIDACY + '\n' + _strategy.MATERIAL_CONFLICTS + '''
+For each lawyer the Audit is consulting advice, not a verdict on sufficiency: for a
+candidacy that is under_documented, name the specific information to obtain and how it
+would build the candidacy; for development_potential, what would develop it; inviable
+only with its reason. Every contested fact is listed as pending confirmation by the firm.'''
+
 
 def active(state):
     development=state.get('development') or {}
@@ -118,8 +126,15 @@ def _category(value):
 
 
 def decision_heading(candidate,state=None):
-    return (candidate['name']+' — Decisión: '+{'present':'proponer candidatura','develop':'desarrollar candidatura',
-            'do_not_present':'no proponer candidatura'}.get(candidate.get('recommendation'),'por confirmar')+
+    from core.editorial_strategy import STATE_LABEL
+    # v1.0.127 (Public Law review): inviable, insufficiently documented and with
+    # development potential are different advice; the state names which one.
+    label=STATE_LABEL.get(candidate.get('candidacy_state')) or {'present':'proponer candidatura','develop':'desarrollar candidatura',
+            'do_not_present':'no proponer candidatura'}.get(candidate.get('recommendation'),'por confirmar')
+    needed=''
+    if candidate.get('candidacy_state') in ('under_documented','development_potential') and str(candidate.get('recommended_action') or '').strip():
+        needed=('. Información a conseguir: ' if candidate.get('candidacy_state')=='under_documented' else '. Para desarrollarla: ')+str(candidate['recommended_action']).strip().rstrip('.')
+    return (candidate['name']+' — Decisión: '+label+needed+
             '. Situación actual: '+_current_position(candidate.get('current_ranking'),verification_status(state,candidate.get('name')))+
             '. Categoría propuesta: '+_category(candidate.get('suggested_ranking'))+'.')
 
