@@ -11,7 +11,12 @@ The reviewer and repair then lengthened every B9 again. No check looked for a se
 - **No section re-tells a work highlight** (checked in code before review, with one self-correction and then an observation). A B9, B10 or C2 with two or more long sentences that share most of their terms with a sentence of section D/E is corrected. On saved runs this flags 21 of 31 presented B9s and the B10/C2 of most cases, as the editorial owner's reviews did.
 - **The original C2 argument is kept.** The plan records the B10 thesis and, separately, the C2 argument: the aspect to reconsider, its grounds and the lawyers it names. A C2 that drops a lawyer the original C2 argues for is corrected. A lawyer not presented now stays in the C2 as growing responsibility and bench depth, never as a nomination.
 
-Validation: Python 1,205 tests OK (new `test_v129_sections.py`). The checks were replayed at no cost on 9 saved runs and on the 1.0.127 probe, where they flag exactly what the rubric found: the B9 that re-told two matters, and the C2 that dropped the lawyer the original argued for. Paid validation is pending.
+- **Review loops** (measured with the graph-flow data of 10 saved runs). A case costs 5.27 USD on average: the field reviewer 1.91 (12.3 calls of about 26,000 input tokens), the judge 0.94, repair 0.55, and writing only about 1.05.
+  - B9 is the field most often re-reviewed (25 times) and the one the judge most often sends back (9 of 23 fields). The B9 contract above addresses it.
+  - "Omission" is the most frequent defect: 51 cases. About half asked the matter narrative to repeat what the form's own cells carry: the leads' titles and committee roles, the cross-border answer and its jurisdictions. The writer, the field reviewer, repair and the judge now read that those cells are not omissions, and the two matter obligations say so.
+  - The prompt cache is not the lever: the part common to all calls of one role in a case is about 20% of each call, so it would save about 0.10 USD per case. It is not changed.
+
+Validation: Python 1,206 tests OK (new `test_v129_sections.py`). The checks were replayed at no cost on 9 saved runs and on the 1.0.127 probe, where they flag exactly what the rubric found: the B9 that re-told two matters, and the C2 that dropped the lawyer the original argued for. Paid validation is pending; the effect on the review loops shows only in a full run.
 
 ## 1.0.128: graph flow for administrators
 

@@ -83,7 +83,15 @@ reconcile incompatible facts by inference, and never characterise the contested 
 a word of either version (for an arbitral forum: "an international arbitration", never a
 treaty, investment or institutional arbitration, nor its seat).'''
 
-SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS))
+FORM_FIELDS = '''FORM FIELDS: a work highlight is a form with its own cells for the lead lawyer and
+the team (with their titles and committee roles), the cross-border answer and its
+jurisdictions, the value and the dates. The narrative is the summary of the matter and
+the firm's role: it does not need to repeat what those cells carry, and the absence of
+a title, a committee membership, a cross-border answer or a listed jurisdiction from the
+narrative is never an omission. The firm's own contribution, a co-lead role and the
+legal mechanism of the matter are part of the narrative.'''
+
+SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS, FORM_FIELDS))
 
 REVIEW = ('EDITORIAL METHOD (shared by every writer; judge the output against it, and never '
           'demand what it forbids, such as re-telling a matter inside B9 or a list of mandates in B10):\n' + SPEC)

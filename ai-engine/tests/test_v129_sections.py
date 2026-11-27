@@ -68,6 +68,17 @@ class OriginalC2Argument(unittest.TestCase):
         self.assertIn('never folded into the B10 thesis', es.ORIGINAL_STRATEGY)
 
 
+class FormFieldsAreNotOmissions(unittest.TestCase):
+    def test_reviewers_and_the_matter_writer_read_it(self):
+        from core import field_review, editorial_repair, review_graph
+        for text in (field_review.TASK, editorial_repair.TASK, review_graph.BASE, ec.MATTER_TASK):
+            self.assertIn('FORM FIELDS: a work highlight is a form with its own cells', text)
+        self.assertIn('is never an omission', es.FORM_FIELDS)
+        source = inspect.getsource(editorial_case)
+        self.assertEqual(source.count('nor their titles or committee memberships'), 2)
+        self.assertEqual(source.count('printed in their own D4/E4 field'), 2)
+
+
 class OneContractForB9(unittest.TestCase):
     def test_reviewer_and_shape_ask_for_proof_not_narrative(self):
         source = inspect.getsource(editorial_case)

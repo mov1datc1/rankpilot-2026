@@ -135,7 +135,7 @@ inference the record does not support.
 ''' + editorial_strategy.MATTER_OPENING + '''
 Describe the legal sophistication the record shows: a notable client or a difficult
 jurisdiction never turns a routine filing, registration or permit into complex work.
-''' + editorial_strategy.MATERIAL_CONFLICTS
+''' + editorial_strategy.MATERIAL_CONFLICTS + '\n' + editorial_strategy.FORM_FIELDS
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
