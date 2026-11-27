@@ -16,7 +16,7 @@ A new **Administration → Graph flow** page shows what happened in every block 
 - **Findings and calls.** Gates, judge, reviewer, repair, construction and delivery, plus a call table filtered by block.
 - **Data.** Only the ledger and the review reports of the case are read; documents are never loaded (about 0.5 s and 500 KB per job). Cost is estimated at list prices, with cache reads at 0.1×.
 
-Validation: 8 contract tests with synthetic data, covering blocks, costs, loops, RAG, reports, the engine route, legacy jobs and the admin guard. The page was rendered with 10 saved real runs (v115-v126) without errors, and both queries were checked read-only against the database.
+Validation: 7 contract tests with synthetic data, covering blocks, costs, loops, RAG, reports, the engine route, legacy jobs and the admin guard. The page was rendered with 10 saved real runs (v115-v126) without errors, and both queries were checked read-only against the database.
 
 ## 1.0.127: one editorial method for every role (structural version after the Public Law review)
 
