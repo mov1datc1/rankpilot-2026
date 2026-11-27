@@ -61,25 +61,54 @@ def letter_contract(state, base):
     return create_model('SharedDecisionAudit',__base__=base,leadership=(leadership,...))
 
 
-def _current_position(text):
-    """Spanish wording of the current-ranking field; never asserts a ranking."""
+VERIFIED=('verified_match','verified_observation','verified_mismatch')
+# v1.0.127 (Ángela, Public Law): the Audit wrote "the scoped query found no exact
+# match" when the official table was unavailable. The check sentence now follows
+# the real status of that lawyer's query.
+_CHECK={'not_found':'la consulta acotada no encontró una coincidencia exacta de persona y firma, lo que no confirma ni descarta esa posición',
+        'unavailable':'la verificación oficial no estuvo disponible, lo que no confirma ni descarta esa posición'}
+_BAND=re.compile(r'\bBand\s*\d|\bSenior\s+Statesp\w*|\bUp\s+and\s+Coming|\bAssociates?\s+to\s+watch|\bStar\s+Associates?|\bEminent\s+Practitioner',re.I)
+
+
+def _check(status):
+    if status in _CHECK:return _CHECK[status]
+    return ('la posición no se pudo contrastar con la tabla oficial, lo que no la confirma ni la descarta' if status
+            else 'sin verificación oficial, lo que no confirma ni descarta esa posición')
+
+
+def verification_status(state,name):
+    """Status of the official query for this lawyer, as the research recorded it."""
+    from core.role_evidence import identity
+    research=((state or {}).get('package') or {}).get('ranking_verification') or {}
+    for row in research.get('individuals') or []:
+        if isinstance(row,dict) and identity(row.get('lawyer_name'))==identity(name):
+            return str(row.get('status') or '') or None
+    return None
+
+
+def _current_position(text,status=None):
+    """Spanish wording of the current-ranking field; never asserts a ranking.
+
+    The firm's declaration is a fact of the case (Ángela, Public Law 27-11): it is
+    stated as the firm's declaration, and the official check only confirms it."""
     value=' '.join(str(text or '').split()).rstrip('.')
-    if not value:return 'sin verificación disponible'
-    # v1.0.113: the firm's own declaration for this lawyer is stated as declared.
-    # The Audit printed "sin ranking declarado" for lawyers declared "Ranked".
-    if re.search(r'\bdeclared\b',value,re.I) and not re.search(r'\b(?:se|una|la|el|de|en|que)\b',value,re.I):
-        if re.search(r'\b(?:not ranked|unranked)\b',value,re.I):
-            return 'la firma lo declara sin ranking; la consulta acotada no encontró una coincidencia exacta, lo que no prueba ausencia en otras ediciones o prácticas'
-        if re.search(r'\branked\b',value,re.I):
-            return 'la firma lo declara rankeado, sin indicar categoría; la consulta acotada no encontró una coincidencia exacta de persona y firma, lo que no confirma ni descarta ese ranking'
-    # v1.0.109: any English "no ... ranking ... verified" wording gets the same
-    # Spanish sentence (the Audit printed "No current individual ranking is
-    # verified in the supplied research" inside a Spanish document).
-    if re.search(r'\b(?:not ranked|unranked|no current ranking|sin ranking)\b',value,re.I) or (
+    if not value:return 'sin verificación disponible' if not status else 'sin posición declarada; '+_check(status)
+    if status in VERIFIED:return value
+    if re.search(r'\b(?:not ranked|unranked|no rankead\w*)\b',value,re.I):
+        return 'la firma lo declara sin ranking; '+_check(status)
+    band=_BAND.search(value)
+    if band and status:
+        return 'la firma lo declara en '+band.group(0)+'; '+_check(status)
+    if re.match(r'\s*(?:declared\s+as\s+)?ranked\b',value,re.I) or (
+            re.search(r'\bdeclar\w*',value,re.I) and re.search(r'\branked\b',value,re.I)):
+        return 'la firma lo declara rankeado, sin indicar categoría; '+_check(status)
+    # v1.0.109: an English generated "no ... ranking ... verified" sentence is
+    # printed in Spanish inside the Spanish Audit.
+    if re.search(r'\b(?:no current ranking|sin ranking)\b',value,re.I) or (
             re.search(r'\b(?:no|not|none)\b',value,re.I) and re.search(r'\b(?:ranking|ranked|rank)\b',value,re.I)
             and re.search(r'\b(?:is|are|was|the|current|verified|supplied|found|individual)\b',value,re.I)
             and not re.search(r'\b(?:se|una|la|el|de|en|que)\b',value,re.I)):
-        return 'sin ranking declarado; la consulta acotada no encontró una coincidencia exacta, lo que no prueba ausencia en otras ediciones o prácticas'
+        return 'sin ranking declarado; '+_check(status)
     return value
 
 
@@ -88,10 +117,10 @@ def _category(value):
     return 'categoría pendiente' if not value or value.casefold()=='category pending' else value
 
 
-def decision_heading(candidate):
+def decision_heading(candidate,state=None):
     return (candidate['name']+' — Decisión: '+{'present':'proponer candidatura','develop':'desarrollar candidatura',
             'do_not_present':'no proponer candidatura'}.get(candidate.get('recommendation'),'por confirmar')+
-            '. Situación actual: '+_current_position(candidate.get('current_ranking'))+
+            '. Situación actual: '+_current_position(candidate.get('current_ranking'),verification_status(state,candidate.get('name')))+
             '. Categoría propuesta: '+_category(candidate.get('suggested_ranking'))+'.')
 
 
@@ -100,7 +129,7 @@ def project_letter(state, letter):
     paragraphs=[]
     for i,c in enumerate(state['development']['candidates']):
         argument=letter['leadership'][f'L{i+1:02d}'].strip()
-        detail=decision_heading(c)+' '+argument
+        detail=decision_heading(c,state)+' '+argument
         if c.get('suggested_ranking')=='Category pending':
             detail+=' Criterio pendiente: '+c['category_missing_criterion']+' Acción: '+c['recommended_action']
         paragraphs.append(detail)
@@ -109,7 +138,7 @@ def project_letter(state, letter):
 
 def preserve_decisions(state, original, shortened):
     if not active(state):return shortened
-    headings=[decision_heading(c) for c in state['development']['candidates']]
+    headings=[decision_heading(c,state) for c in state['development']['candidates']]
     old=str(original.get('leadership',''));new=str(shortened.get('leadership',''))
     if any(h in old and h not in new for h in headings):return {**shortened,'leadership':old}
     return shortened

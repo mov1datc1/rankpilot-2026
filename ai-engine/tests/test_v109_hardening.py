@@ -42,7 +42,8 @@ class SpanishAuditAndCleanNames(unittest.TestCase):
     def test_an_english_no_ranking_sentence_is_printed_in_spanish(self):
         spanish=_current_position('No current individual ranking is verified in the supplied research.')
         self.assertTrue(spanish.startswith('sin ranking declarado'))
-        self.assertEqual(_current_position('Not ranked'),spanish)
+        # v1.0.127: «Not ranked» is the firm's declaration, stated as such.
+        self.assertTrue(_current_position('Not ranked').startswith('la firma lo declara sin ranking'))
         kept='No se verificó una coincidencia exacta de persona y firma en la tabla consultada'
         self.assertEqual(_current_position(kept+'.'),kept)
         self.assertEqual(_current_position('Band 3'),'Band 3')

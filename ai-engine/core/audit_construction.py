@@ -435,7 +435,7 @@ def _person_block(state, plan, content, person):
     from core.audit_decisions import decision_heading
     candidate = state['development']['candidates'][person['index']]
     built = content['leadership'][person['key']]
-    lines = [decision_heading(candidate) + ' ' + built['argument'].strip()]
+    lines = [decision_heading(candidate, state) + ' ' + built['argument'].strip()]
     if candidate.get('suggested_ranking') == 'Category pending':
         lines[0] += (' Criterio pendiente: ' + str(candidate.get('category_missing_criterion') or '').strip()
                      + ' Acción: ' + str(candidate.get('recommended_action') or '').strip())
