@@ -87,12 +87,16 @@ class AngelaExpectationTests(unittest.TestCase):
 
 
 class LengthRuleTests(unittest.TestCase):
-    def test_b10_c2_develop_the_original_up_to_1000_words_never_shrink(self):
+    def test_b10_500_and_c2_1000_maximum_never_collapse_the_original(self):
+        # v1.0.124 (Jonathan, 27-11): B10 follows the form's 500-word limit; C2 keeps 1,000.
         from core.editorial_construction import length_faults
         package = {'b10_source': 'word ' * 400, 'c2_source': 'word ' * 100}
-        self.assertEqual(length_faults(package, {'b10': 'w ' * 600, 'c2': 'w ' * 60}), [])
+        self.assertEqual(length_faults(package, {'b10': 'w ' * 450, 'c2': 'w ' * 60}), [])
         shrunk = length_faults(package, {'b10': 'w ' * 300, 'c2': 'w ' * 60})
         self.assertEqual(len(shrunk), 1)
         self.assertIn('original b10_source has 400', shrunk[0])
-        self.assertIn('at most 1,000', shrunk[0])
-        self.assertIn('maximum is 1,000', length_faults(package, {'b10': 'w ' * 1200, 'c2': 'w ' * 200})[0])
+        self.assertIn('at most 500', shrunk[0])
+        self.assertIn('maximum is 500', length_faults(package, {'b10': 'w ' * 600, 'c2': 'w ' * 200})[0])
+        self.assertIn('maximum is 1,000', length_faults(package, {'b10': 'w ' * 450, 'c2': 'w ' * 1200})[0])
+        # A long original is condensed into the limit: 400 words of a 700-word original are enough.
+        self.assertEqual(length_faults({'b10_source': 'word ' * 700}, {'b10': 'w ' * 400}), [])

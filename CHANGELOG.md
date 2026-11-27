@@ -1,3 +1,32 @@
+## 1.0.125: Ángela's Tax review: the team inside the work, the positioning as a conclusion, matters built around why they mattered
+
+Ángela reviewed her Tax run of 24 Nov (made on 1.0.112) and asked that these become general quality criteria, not fixes for one submission. No new model call.
+
+- **B10: the team is part of each capability.** Each capability pillar names the lawyers who lead or execute its decisive mandates; the early leadership paragraph does not replace that link, and B10 need not open with the team. Checked in code: a department head who leads or co-leads matters but appears in only one paragraph of B10 (in her run, all three heads only in the seventh paragraph of eight) is corrected once before review.
+- **C2: the positioning is the conclusion of the evidence.** The evidence (sophistication, relevance, results, international dimension, depth of the team) carries the argument; the band and each individual category appear once, in the closing paragraph, as a conclusion about the standing the work demonstrates. Checked in code: a petition ("seeks", "is put forward", "should be maintained", "supports moving") or a mention of the aspiration before the closing paragraph. It flags every saved C2 of the last four real runs.
+- **Matters built around why they mattered.** The writer identifies what makes a mandate relevant (a decisive result, an interaction of legal regimes, a transaction and its operational implementation, the length of the relationship, a cross-border structure), states it early and explains its significance with the record's facts only; a result is the core, never a closing line; related elements the record gives separately are connected; the lawyers' roles are woven into the account. Density, not length.
+- **Lawyer identities: already resolved, verified on her data.** The title fragments her Audit listed as leaders ("member of ... Executive Committee)", "M&A Senior Partner") came from splitting titles in parentheses; fixed in 1.0.113. With current code her matters give two real leaders from another practice, and the associate the record writes in two ways (with and without accents and second surname) is consolidated across 17 matters (her run had one).
+
+The judge, the field reviewer and the repair apply the same rules.
+
+Limits: validated with tests and a replay on the saved runs; no live probe of the new writer rules yet.
+
+## 1.0.124: B10 within the form's 500 words, presenting the practice with the original's leadership structure
+
+Jonathan's decision of 27 Nov after Ángela's review of the labour case: B10 follows the Chambers form's own 500-word limit, and its quality and structure matter more than its length. B9 (per person) and C2 keep the 1,000-word maximum. No new model call.
+
+- **One limit, everywhere.** `ai-engine/core/section_limits.py` and `src/lib/editorial/section-limits.ts` hold the limits. The writer, the shared plan, the field reviewer, the final judge, the repair and the screens use them; the judge no longer says that the form's 500-word guidance does not apply.
+- **B10 presents, C2 argues.** B10 presents the practice: what it is best known for, who leads it and how the team works, its key types of work, sectors and growth. It does not argue for a band; C2 uses those strengths to argue the positioning.
+- **Structure.** (1) the practice's differentiator, framed by the context the original gives; (2) right after it, a visible paragraph on leadership and bench depth that states each person's role as the original does (institutional leadership, day-to-day management, primary client contact, years of experience); (3) two to four capability pillars, each proved by one or two decisive mandates, never a matter-by-matter walk; (4) sectors and growth. The plan gives two to four institutional arguments rather than one per matter.
+- **The firm's own account is kept and improved, not replaced.** A substantive original keeps its structure and distinctive elements; a long original is condensed in wording, never in substance; a role the source describes is never flattened into "part of the team".
+- **Checked in code before review (one self-correction, then an observation).** B10 over 500 words; B10 under 90 % of the original, never requiring more than 400 words; a head or lawyer the original department narrative names who disappears from the B10, or the years of experience the original gives that person. On the saved labour run the check finds what Ángela found: 584 words, and the 16 and eight years of the two senior associates lost.
+
+Unchanged by decision: confidential matters in public sections. Only matters the source expressly restricts are kept out of B9, B10 and C2; the general question is open with Ángela.
+
+- **Unit probe on the two real cases of 26 Nov** (B10/C2 only, with a live case-register reading; 27 Nov, about 1.6 USD). Labour: 475 words, opening on the original's market context, then the head's institutional leadership, the senior associate who runs the practice day to day with her years of experience and client role, the second senior associate's experience, then three capability pillars. Tax: 424 words from a 772-word original, with the three senior partners and four pillars. Every first answer was short (348 to 388 words) and one self-correction brought it within range; the writer is now asked to aim for 450 to 500 words with a substantive original (not verified live).
+
+Limits: validated with tests, a replay of the saved runs and the unit probe above; not a full run, no field review or judge.
+
 ## 1.0.123: Ángela's review of 26 Nov: input notices sorted, form fields kept, evidence from any section, C2 consistent with the objective
 
 The case register reads one more thing in its single call (no new call). From Ángela's review of the labour case of 26 Nov 2026:

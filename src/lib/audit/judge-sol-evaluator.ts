@@ -17,6 +17,7 @@
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { evaluateStrategicSufficiency, StrategicSufficiencyAudit } from './evidence-sufficiency-gate';
 import { curateMatters } from '@/lib/docx/matter-curator';
+import { B10_MAX_WORDS } from '@/lib/editorial/section-limits';
 
 export interface JudgeSolCheck {
   check_id: string;
@@ -753,13 +754,14 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
       }
     }
 
-    // Enforce 1000-word limit for expanded 4-pillar narrative
+    // v1.0.124: B10 follows the form's 500-word limit (legacy polish path; the
+    // editorial graph enforces the limit before review and never truncates).
     const b10Words = polishedB10.split(/\s+/).filter(Boolean);
-    if (b10Words.length > 1000) {
-      const trimmedWords = b10Words.slice(0, 985).join(' ');
+    if (b10Words.length > B10_MAX_WORDS) {
+      const trimmedWords = b10Words.slice(0, B10_MAX_WORDS - 15).join(' ');
       const lastPeriod = trimmedWords.lastIndexOf('.');
-      polishedB10 = lastPeriod > 600 ? trimmedWords.slice(0, lastPeriod + 1) : trimmedWords + '.';
-      repairsLog.push(`[B10 Narrativa] Longitud ajustada de ${b10Words.length} a ${polishedB10.split(/\s+/).length} palabras (cumpliendo el presupuesto editorial ampliado de hasta 1.000 palabras).`);
+      polishedB10 = lastPeriod > 300 ? trimmedWords.slice(0, lastPeriod + 1) : trimmedWords + '.';
+      repairsLog.push(`[B10 Narrativa] Longitud ajustada de ${b10Words.length} a ${polishedB10.split(/\s+/).length} palabras (límite del formulario: ${B10_MAX_WORDS}).`);
       repairsCount++;
     }
   }
