@@ -56,6 +56,7 @@ import { PipelineProgress } from '@/components/PipelineProgress';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
 import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
+import { B10_MAX_WORDS } from '@/lib/editorial/section-limits';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
 interface MatterItem {
@@ -2053,7 +2054,7 @@ export default function SubmissionStudio({
                       B10: Posicionamiento Institucional del Departamento
                     </h3>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
-                      ¿Por qué destaca este departamento? — What is this department best known for? (Presupuesto editorial ampliado hasta 1.000 palabras)
+                      ¿Por qué destaca este departamento? — What is this department best known for? (máximo {B10_MAX_WORDS} palabras, el límite del formulario)
                     </p>
                   </div>
                 </div>
@@ -2065,11 +2066,11 @@ export default function SubmissionStudio({
                     fontWeight: 700,
                     padding: '0.3rem 0.75rem',
                     borderRadius: '9999px',
-                    background: b10WordCount <= 1000 ? '#EEF2FF' : '#FEF2F2',
-                    color: b10WordCount <= 1000 ? '#4F46E5' : '#DC2626',
-                    border: `1px solid ${b10WordCount <= 1000 ? '#C7D2FE' : '#FECACA'}`
+                    background: b10WordCount <= B10_MAX_WORDS ? '#EEF2FF' : '#FEF2F2',
+                    color: b10WordCount <= B10_MAX_WORDS ? '#4F46E5' : '#DC2626',
+                    border: `1px solid ${b10WordCount <= B10_MAX_WORDS ? '#C7D2FE' : '#FECACA'}`
                   }}>
-                    {b10WordCount} / 1.000 palabras (estándar ampliado)
+                    {b10WordCount} / {B10_MAX_WORDS} palabras
                   </span>
                 </div>
               </div>
@@ -3621,9 +3622,9 @@ export default function SubmissionStudio({
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                       {b10WordCount === 0
                         ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Pulsa «Preparar documentos» para desarrollar la presentación del departamento con sus fuentes.`
-                        : b10WordCount > 1000
-                          ? `⚠Excede el presupuesto editorial de 1.000 palabras (${b10WordCount}/1000w). Calibra la extensión para mantener la densidad analítica en ${selectedDirectory}.`
-                          : `${b10WordCount} palabras (estándar editorial de hasta 1.000w). ${needsB10Optimization(chambersData,b10Text) ? 'Texto del documento original. Se revisará al preparar los documentos.' : 'Redacción guardada en este expediente.'}`}
+                        : b10WordCount > B10_MAX_WORDS
+                          ? `⚠Excede el límite de ${B10_MAX_WORDS} palabras del formulario (${b10WordCount}/${B10_MAX_WORDS}). Se condensará al preparar los documentos, conservando la estructura de liderazgo y los pilares de la práctica.`
+                          : `${b10WordCount} palabras (máximo ${B10_MAX_WORDS}). ${needsB10Optimization(chambersData,b10Text) ? 'Texto del documento original. Se revisará al preparar los documentos.' : 'Redacción guardada en este expediente.'}`}
                     </p>
                     {b10Text.trim() && <p aria-label="Vista previa del B10 actual" style={{fontSize:'0.72rem',color:'#475569',lineHeight:1.45}}>{b10Text.trim().slice(0,180)}{b10Text.trim().length > 180 ? '…' : ''}</p>}
                     <button

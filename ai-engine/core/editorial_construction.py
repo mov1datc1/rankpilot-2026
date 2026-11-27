@@ -13,6 +13,9 @@ from core import construction_bindings, reserve_comparisons
 
 VERSION = 'editorial-construction-v1'
 BATCH_SIZE = 4
+# v1.0.124 (Jonathan, 27-11, after Ángela's Labour review): B10 follows the
+# form's 500-word limit; B9 and C2 keep the 1,000-word project maximum.
+from core.section_limits import B10_MAX_WORDS, C2_MAX_WORDS
 BIO_FIELDS = ('submission_bio', 'profile_coverage', 'submission_case_coverage', 'biography_depth')
 PLAN_FIELDS = ('case_plan', 'filing_recommendation', 'positioning', 'target',
                'target_rationale', 'principal_strength', 'principal_vulnerability',
@@ -38,7 +41,9 @@ anchors as the record has distinct material facts: a rich record needs more
 anchors than a thin one. These anchors
 govern the subsequent narrative; selecting them is not proof of execution.
 Form the institutional case_plan, comparative hero rationale and concrete reserve
-tradeoffs from original evidence. A reserve remains eligible personal evidence.
+tradeoffs from original evidence. B10 has 500 words: give the case_plan two to four
+institutional_arguments, each a distinct capability pillar, rather than one per
+matter. A reserve remains eligible personal evidence.
 For each lawyer decide nomination, proposed category, reason, personally attributed
 support and remaining action. Do not equate maturity descriptors with directory
 categories or unverified targets with current recognition. Apply
@@ -183,24 +188,43 @@ checks this shape before review.
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional
 case_plan, speaking directly as the firm (never audit voice or market superlatives).
-B10 demonstrates the practice's evidenced identity and capabilities. 1,000 words
-is a MAXIMUM, not a target and not a 500-word limit: develop as far as the
-evidence supports, never padding. When the original department narrative
-(b10_source) is short, EXPAND it with the portfolio's evidenced mechanisms and
-results; never compress or drop its substance (allocate depth to the evidence, not
-a sequential case list). When b10_source is empty, build B10 and C2 only from the
-documented portfolio and the supplied lawyers: recurring legal capabilities, sectors
-served, type and complexity of mandates, authorities and counterparties, lawyers who
-recur and accredited results; never invent a structure, headcount, title, history or
-capability that those records do not state: (1) open with the strongest strategic differentiator from
-this portfolio; (2) cover industry sector expertise, geographic/national footprint
-and areas of recent growth where evidenced in the sources; (3) develop all shared
-institutional_arguments and other documented capability pillars with concrete legal
-mechanisms and outcomes; and (4) integrate department leadership and bench depth, naming the confirmed practice
-heads early (right after the opening differentiator, before the detailed pillars)
-(confirmed heads, team architecture and distinct practitioner roles/credentials
-grounded in lawyers and shared_decisions, without inventing partner status or
-rankings). C2 builds a persuasive case in an assertive institutional voice; it is not a
+B10 and C2 have different, complementary functions. B10 PRESENTS the practice:
+what it is best known for, who leads it and how its team works, its key types of
+work, its industry sector expertise and its areas of recent growth. It does not
+argue for a ranking or name a band: C2 uses these strengths to argue the
+positioning. B10 has a MAXIMUM of ''' + str(B10_MAX_WORDS) + ''' words (the form's own limit): a
+MAXIMUM, not a target: spend the words on quality and selection, never on padding
+or on a walk through the matters one by one.
+When the original department narrative (b10_source) is substantive, it is the
+firm's own account of its practice: PRESERVE its structure and its distinctive
+elements (the market or regulatory context it describes, the differentiators it
+claims, the leadership structure and each person's described role, years of
+experience and client responsibility) and IMPROVE it by connecting those
+capabilities to the evidenced mandates. Never replace it with an unrelated new
+narrative, and never flatten a role the source describes into "part of the team",
+"contributes across" or "supports client work". When b10_source is longer than the
+maximum, condense its wording, never its distinctive elements. When b10_source is
+short, EXPAND it with the portfolio's evidenced mechanisms and results; never compress
+its substance. When b10_source is empty, build B10 and C2 only from the documented portfolio and the
+supplied lawyers: recurring legal capabilities, sectors served, type and complexity
+of mandates, authorities and counterparties, lawyers who recur and accredited
+results; never invent a structure, headcount, title, history or capability that
+those records do not state. Order B10 as follows, adapting proportions to the
+evidence: (1) open with the strongest strategic differentiator of this practice,
+framed by the context the original gives when it gives one; (2) right after the
+opening, a visible paragraph on department leadership and bench depth, naming the confirmed practice
+heads early (before the detailed pillars) and every lawyer whom b10_source or the fact sheet's
+source_statements describe with a role, and state that role as the source states it
+(for example institutional or strategic leadership, day-to-day management and
+execution of the practice, primary client contact, years of experience, growing
+responsibility in contentious or regulatory work), so that the depth, continuity
+and execution capacity of the team are visible; never invent partner status, titles
+or rankings; (3) the key types of work as two to four capability pillars that
+develop the shared institutional_arguments, each proved by one or two decisive
+mandates stated in a clause with their legal mechanism and result (publishable
+clients by name), never a matter-by-matter catalogue ("For X, we ... For Y, we
+..."): the full matters belong in section D/E; (4) industry sector expertise and
+areas of recent growth, where the sources evidence them. C2 builds a persuasive case in an assertive institutional voice; it is not a
 request followed by a list of reasons. Order the argument: (a) the evolution,
 sophistication and relevance of the recent work; (b) the specific evidence that
 distinguishes the practice and, where the sources ask for individual recognition,
@@ -219,7 +243,7 @@ practice aspiration is stated once. Never open with the request,
 never say that the firm is unranked, new to the ranking or seeking first-time
 recognition, and close on capability, results and track record. Adapt this order
 to the candidacy and its evidence; it is not a template. State capabilities as firm
-facts, never with deferential formulas such as "respectfully submits" (same 1,000-word maximum, expanding a
+facts, never with deferential formulas such as "respectfully submits" (C2 has a ''' + f'{C2_MAX_WORDS:,}' + '''-word maximum, expanding a
 short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
 service catalogue. What must differ from B10 is the function, not the evidence: C2 argues
 with the same decisive mandates, each named by its publishable client and stated with
@@ -327,15 +351,81 @@ def status_faults(package, matters):
 
 
 def length_faults(package, value):
-    """B10/C2 must develop the original up to a 1,000-word maximum, never shrink it."""
-    words=lambda text:len(str(text or '').split())
+    """B10 (500) and C2 (1,000) stay within their maximum and never collapse the original.
+
+    v1.0.124: B10 follows the form's 500-word limit. A long original is condensed
+    in wording, not in substance; the floor never exceeds 80 % of the maximum."""
+    from core.section_limits import MAX_WORDS, B10_FLOOR_SHARE, words
     faults=[]
     for field,source_key in (('b10','b10_source'),('c2','c2_source')):
+        limit=MAX_WORDS[field]
         generated,original=words(value.get(field)),words(package.get(source_key))
-        if generated>1000:
-            faults.append(f'{field.upper()} has {generated} words; the maximum is 1,000. Keep every evidenced argument and tighten wording only.')
-        elif original>=150 and generated<0.9*original:
-            faults.append(f'{field.upper()} has {generated} words but the original {source_key} has {original}. Develop it with the supplied evidence up to at most 1,000 words; do not compress or drop its substance.')
+        floor=min(0.9*original, B10_FLOOR_SHARE*limit) if field=='b10' else 0.9*original
+        if generated>limit:
+            faults.append(f'{field.upper()} has {generated} words; the maximum is {limit:,}. Keep the original\'s distinctive elements and every evidenced argument; cut repetition and the matter-by-matter detail that belongs in the matters, and tighten wording.')
+        elif original>=150 and generated<floor:
+            faults.append(f'{field.upper()} has {generated} words but the original {source_key} has {original}. Develop it with the supplied evidence up to at most {limit:,} words; do not compress or drop its substance.')
+    return faults
+
+
+YEAR_WORDS = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+    'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,'sixteen':16,'seventeen':17,
+    'eighteen':18,'nineteen':19,'twenty':20,'twenty-five':25,'thirty':30,'forty':40}
+YEARS = re.compile(r'\b(\d{1,2}|' + '|'.join(sorted(YEAR_WORDS, key=len, reverse=True)) + r')\s*\+?\s+years?\b', re.I)
+
+
+def _surname_tokens(name):
+    """The last two name words (length 4+), the way a narrative names a person."""
+    parts=[p for p in re.split(r'\s+', str(name or '').strip()) if len(p.strip('.,'))>=4]
+    return [p.strip('.,') for p in parts[1:][-2:]] or [p.strip('.,') for p in parts[-1:]]
+
+
+def _names_person(text, tokens):
+    return next((t for t in tokens if re.search(r'(?<![\w-])'+re.escape(t)+r'(?![\w-])', text)), None)
+
+
+def leadership_faults(package, value):
+    """v1.0.124 (Ángela, 26-11): B10 keeps the original's leadership structure.
+
+    Every head or lawyer whom the original department narrative (b10_source)
+    names keeps a place in the generated B10, and a figure of years of experience
+    the original gives that person is not lost. The model writes the paragraph;
+    the application only checks that nobody the firm presented disappears."""
+    source=str(package.get('b10_source') or '')
+    generated=str(value.get('b10') or '')
+    if len(source.split())<60 or not generated.strip():
+        return []
+    people=[]
+    for row in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])+(package.get('lawyers') or []):
+        name=' '.join(str((row or {}).get('name') or (row or {}).get('fullName') or '').split())
+        if name and name not in people:people.append(name)
+    sentences=re.split(r'(?<=[.!?])\s+|\n+', source)
+    missing=[];years=[]
+    for name in people:
+        tokens=_surname_tokens(name)
+        token=_names_person(source, tokens)
+        if not token:
+            continue
+        if not _names_person(generated, tokens):
+            missing.append(name);continue
+        own=[s for s in sentences if _names_person(s, tokens)]
+        # The year figure of the sentence that names the person, or of the next
+        # sentence when that one continues about the same person ("She ...").
+        for i,s in enumerate(sentences):
+            if s not in own:continue
+            for candidate in (s,)+((sentences[i+1],) if i+1<len(sentences) and re.match(r'\s*(?:She|He|They)\b', sentences[i+1]) else ()):
+                for m in YEARS.finditer(candidate):
+                    raw=m.group(1).lower();n=int(raw) if raw.isdigit() else YEAR_WORDS[raw]
+                    forms=[str(n)]+[w for w,v in YEAR_WORDS.items() if v==n]
+                    if not any(re.search(r'\b'+re.escape(f)+r'\s*\+?\s+years?\b', generated, re.I) for f in forms):
+                        years.append((name, m.group(0), candidate.strip()[:160]))
+                break
+    faults=[]
+    if missing:
+        faults.append('B10 drops '+', '.join(missing)+', whom the original department narrative (b10_source) presents with a role. '
+            'Keep the leadership and team paragraph right after the opening and state each person\'s role as the source does.')
+    for name,figure,quote in years[:4]:
+        faults.append(f'B10 omits {name}\'s experience ("{figure}"), which b10_source states: "{quote}". Keep it in the leadership paragraph.')
     return faults
 
 
@@ -844,10 +934,11 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
+                faults=length_faults(package,value)+leadership_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
                 if faults and not correcting:
-                    # Ángela's rule: develop up to 1,000 words, never shrink the
-                    # original. One self-correction states the exact expectation.
+                    # Ángela's rules: B10 within 500 words and C2 within 1,000,
+                    # never collapsing the original, and the original's leadership
+                    # structure kept. One self-correction states the exact expectation.
                     raise ValueError('; '.join(faults))
                 if faults:pending.setdefault('length_observations',[]).extend(faults)
                 work.update(value)

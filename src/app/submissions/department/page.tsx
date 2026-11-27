@@ -7,6 +7,7 @@ import {
   UserPlus, Briefcase, MessageSquare, Save
 } from 'lucide-react';
 import { updateSubmissionDepartment } from '@/app/actions/submissions';
+import { B10_MAX_WORDS } from '@/lib/editorial/section-limits';
 
 // ── Types ──
 type Contact = { name: string; email: string; phone: string };
@@ -228,15 +229,15 @@ function DepartmentContent() {
 
       {/* ═══ B10: Department Description ═══ */}
       <div style={sectionCard}>
-        {sectionHeader(<Building2 size={18} />, 'B10 — What is this department best known for?', 'Industry expertise, key work types, recent growth (hasta 1.000 palabras)')}
+        {sectionHeader(<Building2 size={18} />, 'B10 — What is this department best known for?', `Industry expertise, key work types, recent growth (máximo ${B10_MAX_WORDS} palabras)`)}
         <textarea
           value={departmentDesc}
           onChange={e => setDepartmentDesc(e.target.value)}
           placeholder="Describe the department's strengths, industry focus, and recent growth areas..."
           style={{ ...inputStyle, minHeight: '120px', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
         />
-        <div style={{ textAlign: 'right', fontSize: '0.75rem', color: departmentDesc.split(/\s+/).filter(Boolean).length > 1000 ? '#dc2626' : '#94a3b8', marginTop: '0.25rem' }}>
-          {departmentDesc.split(/\s+/).filter(Boolean).length} / 1.000 words
+        <div style={{ textAlign: 'right', fontSize: '0.75rem', color: departmentDesc.split(/\s+/).filter(Boolean).length > B10_MAX_WORDS ? '#dc2626' : '#94a3b8', marginTop: '0.25rem' }}>
+          {departmentDesc.split(/\s+/).filter(Boolean).length} / {B10_MAX_WORDS} words
         </div>
       </div>
 

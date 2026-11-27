@@ -1,3 +1,17 @@
+## 1.0.124: B10 within the form's 500 words, presenting the practice with the original's leadership structure
+
+Jonathan's decision of 27 Nov after Ángela's review of the labour case: B10 follows the Chambers form's own 500-word limit, and its quality and structure matter more than its length. B9 (per person) and C2 keep the 1,000-word maximum. No new model call.
+
+- **One limit, everywhere.** `ai-engine/core/section_limits.py` and `src/lib/editorial/section-limits.ts` hold the limits. The writer, the shared plan, the field reviewer, the final judge, the repair and the screens use them; the judge no longer says that the form's 500-word guidance does not apply.
+- **B10 presents, C2 argues.** B10 presents the practice: what it is best known for, who leads it and how the team works, its key types of work, sectors and growth. It does not argue for a band; C2 uses those strengths to argue the positioning.
+- **Structure.** (1) the practice's differentiator, framed by the context the original gives; (2) right after it, a visible paragraph on leadership and bench depth that states each person's role as the original does (institutional leadership, day-to-day management, primary client contact, years of experience); (3) two to four capability pillars, each proved by one or two decisive mandates, never a matter-by-matter walk; (4) sectors and growth. The plan gives two to four institutional arguments rather than one per matter.
+- **The firm's own account is kept and improved, not replaced.** A substantive original keeps its structure and distinctive elements; a long original is condensed in wording, never in substance; a role the source describes is never flattened into "part of the team".
+- **Checked in code before review (one self-correction, then an observation).** B10 over 500 words; B10 under 90 % of the original, never requiring more than 400 words; a head or lawyer the original department narrative names who disappears from the B10, or the years of experience the original gives that person. On the saved labour run the check finds what Ángela found: 584 words, and the 16 and eight years of the two senior associates lost.
+
+Unchanged by decision: confidential matters in public sections. Only matters the source expressly restricts are kept out of B9, B10 and C2; the general question is open with Ángela.
+
+Limits: validated with tests and a replay of the saved runs; the writer's new B10 was probed on one unit, not in a full run.
+
 ## 1.0.123: Ángela's review of 26 Nov: input notices sorted, form fields kept, evidence from any section, C2 consistent with the objective
 
 The case register reads one more thing in its single call (no new call). From Ángela's review of the labour case of 26 Nov 2026:
