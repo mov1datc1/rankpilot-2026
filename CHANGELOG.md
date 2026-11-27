@@ -18,6 +18,7 @@ The Labour, Tax and Public Law reviews each found a new gap because every review
   - Five separate dimensions in selection and writing: client prominence, jurisdictional complexity, legal sophistication, relevance to the practice and the firm's contribution.
   - A narrative opens with the legal problem and the firm's contribution, never with a procedural or adverse outcome.
   - Incompatible versions of one material fact are read once by the case register, with both literal passages. No section states either version, and the Audit asks the firm.
+  - The register version is now `case-register-v2`, so a case read before this version is read again (about 0.08 USD) before its next new generation. Without the change a saved reading would have stayed current and never carried the conflicts. A v1 reading still serves jobs already running and saved documents.
 - **Checked in code before review** (one self-correction, then an observation):
   - a C2 that opens by presenting the practice, or repeats B10 sentences;
   - a matter that opens with a procedural outcome;
@@ -28,7 +29,17 @@ The Labour, Tax and Public Law reviews each found a new gap because every review
 
 Validation:
 - Replayed on six saved real runs (79 matters, at no cost). The matter-opening check flags only the narrative the reviewer cited; the candidacy rule changes only the lawyer she cited. The C2 checks flag every saved C2, as her reviews did, so until the writer meets them first time each case pays one institutional self-correction (about 0.17 USD).
-- Limits: no live model call yet; the case register's reading of conflicts and the new prompts are untested with the model.
+- Paid probe on the saved Public Law run (1.32 USD in all): a new register reading and the complete construction (plan, matter batches, every B9, B10/C2), first pass only, without field review or the Audit prose.
+  - Acceptance rubric: 24/40 against 15/40 for the saved run. Candidacy went from 1 to 5, C2 function from 1 to 3 and B10 distinctiveness from 3 to 4. B9 lengths fell from more than 500 words to 84-203.
+  - The probe found three defects, fixed and re-tested here:
+    - The register missed the contested arbitral forum, which sits between the narrative and the cross-border form answer. Its instruction now compares each short form answer with the narrative and reports a conflict even when an expert could reconcile it, and the cross-border cell is a literal source. On the second reading it found the conflict.
+    - A narrative that wrote "international investment arbitration" adopted one version with a single word. The check now also flags a word of one version placed right before the disputed object, and the writer is told to use neither. Re-run: "an international arbitration", with no fault.
+    - A pending category written with an explanation ("Category pending (keep the declared position…)") failed the form-label check. The label is now normalised and the explanation moved to the criterion.
+- Limits:
+  - One firm and one practice, first pass only.
+  - B9 still re-tells matters (2/5) and the sections still share the same mandates (complementarity 2/5).
+  - The original C2 thesis (3/5) and the Audit prose were not re-measured.
+  - Not an acceptance by the editorial owner.
 
 ## 1.0.126: matter narratives built around why the mandate mattered; contradictions between roles removed
 

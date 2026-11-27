@@ -28,7 +28,11 @@ from pydantic import BaseModel, Field
 from core.client_identity import GENERIC, NAME_END, clean_name, is_legal_form
 from core.role_evidence import identity
 
-VERSION = 'case-register-v1'
+VERSION = 'case-register-v2'
+# v1.0.127: v2 adds material_conflicts, so a case read as v1 is read again before
+# its next NEW generation. A v1 reading stays usable for a job already running
+# and for documents already saved; it simply carries no conflicts.
+READABLE = ('case-register-v1', VERSION)
 
 # Answers that mean "no value". Typed by users in wizard fields ("na") or
 # written by firms in form cells; they are never a name or a contact.
@@ -79,7 +83,7 @@ def other_information(matter):
 
 def matter_sources(matter):
     keys = ('client', 'clientName', 'leadPartner', 'lead_partner', 'teamMembers', 'team_members', 'completionDate',
-            'rawNotes', 'summary', 'source_excerpt')
+            'crossBorder', 'rawNotes', 'summary', 'source_excerpt')
     texts = [str(matter.get(k) or '') for k in keys]
     texts += [form_cell(matter, 'leadPartner'), form_cell(matter, 'teamMembers'), other_information(matter)]
     return '\n'.join(texts)
@@ -129,7 +133,7 @@ class MatterFacts(BaseModel):
     completion_quote: str = Field(description='Literal excerpt that states the status or date; empty when there is none.')
     public_use_restricted: bool = Field(description='True only when this record itself says the whole matter must not be disclosed or described publicly (for example "This matter is strictly confidential"). A confidential value, a confidential client or a "Confidential Matter" heading alone is NOT such a restriction.')
     restriction_quote: str = Field(description='The literal restriction sentence; empty when public_use_restricted is false.')
-    material_conflicts: List[Conflict] = Field(description='Only incompatible versions of the SAME material fact inside this record (for example the same arbitration described as a treaty arbitration and as an ICC arbitration, two different outcomes, two completion dates). Complementary details, later updates and co-leads named in different places are NOT conflicts. Empty when there is none.')
+    material_conflicts: List[Conflict] = Field(description='Compare every short form answer (cross_border_cell, completion_cell, other_information) with what the narrative says about the SAME fact. Report two versions of one material fact that the record itself never reconciles: the narrative calls a proceeding a treaty or investment arbitration and a form cell places it at an institution such as the ICC, two different forums, legal bases, outcomes or completion dates. Report it even when an expert could reconcile the two by inference: the firm confirms, the reader never infers. Complementary details, later updates and co-leads named in different places are NOT conflicts. Empty when there is none.')
     cross_border_doubt: str = Field(description='Only when cross_border_cell answers No: the literal passage of the record that describes work involving another jurisdiction (international transfers of workers, foreign parent company instructions, foreign courts or authorities). Empty otherwise.')
 
 
@@ -151,7 +155,8 @@ INSTRUCTION = '''Read this case and return its register: for every matter_id one
 one matters entry, and one lawyers entry for every lawyer listed. Copy names, titles and
 quotes exactly as the texts write them; do not translate, complete or correct them. A form
 cell answered with a placeholder ("na", "n/a", "-") gives no name. Return only what the
-texts state; when a fact is not stated, leave it empty or 0.'''
+texts state; when a fact is not stated, leave it empty or 0. For each matter, check its short
+form answers against its narrative before returning material_conflicts.'''
 
 REGISTER_BASE = '''You read the structured fields of a law-firm directory submission and
 record who and what they name. You never write prose, judge quality or decide an editorial
@@ -453,7 +458,7 @@ def build(package, invoke):
 def current(package):
     """The register this package carries, or the rules reading of its saved fields."""
     saved = package.get('case_register')
-    if isinstance(saved, dict) and saved.get('version') == VERSION and isinstance(saved.get('matters'), dict):
+    if isinstance(saved, dict) and saved.get('version') in READABLE and isinstance(saved.get('matters'), dict):
         return saved
     return rules_register(package)
 

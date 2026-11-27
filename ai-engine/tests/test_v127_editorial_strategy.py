@@ -34,6 +34,15 @@ class DeclaredRankingIsAFact(unittest.TestCase):
         c = es.apply_candidacy(plan(('Bruno Soto', 'present', 'Band 1', {})), {'lawyers': LAWYERS})['candidates'][0]
         self.assertEqual(c['suggested_ranking'], 'Band 1')
 
+    def test_a_pending_label_with_an_explanation_becomes_the_form_label(self):
+        row = ('Ana Ruiz', 'present', 'Category pending (mantener la posición declarada; confirmar la banda)',
+               {'category_missing_criterion': ''})
+        c = es.apply_candidacy(plan(row), {'lawyers': LAWYERS})['candidates'][0]
+        self.assertEqual(c['suggested_ranking'], 'Category pending')
+        self.assertEqual(c['category_missing_criterion'], 'mantener la posición declarada; confirmar la banda')
+        from core.candidate_evidence import category_error
+        self.assertIsNone(category_error(c))
+
     def test_an_unranked_lawyer_keeps_the_entry_proposal(self):
         c = es.apply_candidacy(plan(('Carla Ibarra', 'present', 'Entry-band candidate', {})), {'lawyers': LAWYERS})['candidates'][0]
         self.assertEqual(c['suggested_ranking'], 'Entry-band candidate')
@@ -121,6 +130,15 @@ class Matters(unittest.TestCase):
         clean = 'We advised Delta Works in an international arbitration on the conduct of State entities under domestic law.'
         self.assertEqual(es.conflict_faults(self.PACKAGE, [{'matter_id': 'm1', 'text': clean}]), [])
 
+    def test_one_word_of_a_version_on_the_disputed_object_is_stating_it(self):
+        package = {'matters': [{'id': 'm1', 'client': 'Delta Works', 'contested_facts': [
+            {'subject': 'arbitral forum', 'quote_a': 'leading to a treaty arbitration under applicable international investment agreements.',
+             'quote_b': 'Yes. Arbitration filled at the International Chamber of Commerce (ICC) in Paris.'}]}]}
+        text = 'We acted in an international investment arbitration on State conduct, within international investment law.'
+        self.assertIn('investment', es.conflict_faults(package, [{'matter_id': 'm1', 'text': text}])[0])
+        clean = 'We acted in an international arbitration on State conduct, framed within international investment law.'
+        self.assertEqual(es.conflict_faults(package, [{'matter_id': 'm1', 'text': clean}]), [])
+
     def test_a_procedural_outcome_is_not_the_opening(self):
         text = 'The Arbitration Tribunal determined that it had no jurisdiction. We analysed State conduct.'
         self.assertTrue(es.opening_faults(self.PACKAGE, [{'matter_id': 'm1', 'text': text}]))
@@ -132,6 +150,16 @@ class Matters(unittest.TestCase):
         self.assertIn("matter['contested_facts']", inspect.getsource(case_register))
         sheet = fact_sheet.build(self.PACKAGE, {})
         self.assertEqual(sheet['clients'][0]['contested_facts'][0]['subject'], 'arbitral forum')
+
+    def test_a_v1_register_stays_readable_but_a_new_generation_reads_conflicts(self):
+        self.assertEqual(case_register.VERSION, 'case-register-v2')
+        saved = {'version': 'case-register-v1', 'method': 'model', 'clients': {}, 'matters': {'m1': {'leads': [], 'team': []}}, 'lawyers': {}}
+        self.assertIs(case_register.current({'case_register': saved, 'matters': []}), saved)
+
+    def test_the_register_compares_form_answers_with_the_narrative(self):
+        self.assertIn('cross_border_cell', case_register.MatterFacts.model_fields['material_conflicts'].description)
+        self.assertIn('Report it even when an expert could reconcile', case_register.MatterFacts.model_fields['material_conflicts'].description)
+        self.assertIn('ICC in Paris', case_register.matter_sources({'crossBorder': 'Yes. Arbitration at the ICC in Paris.'}))
 
     def test_writers_receive_the_opening_and_significance_rules(self):
         self.assertIn('never the opening', ec.MATTER_TASK)

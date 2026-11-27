@@ -68,7 +68,9 @@ MATERIAL_CONFLICTS = '''MATERIAL CONFLICTS: when the sources give two incompatib
 material fact of a matter (fact_sheet contested_facts: its forum, legal basis, outcome,
 date or a role), the Submission states neither version: it describes the uncontested
 work, and the Audit names the conflict as pending confirmation by the firm. Never
-reconcile incompatible facts by inference.'''
+reconcile incompatible facts by inference, and never characterise the contested fact with
+a word of either version (for an arbitral forum: "an international arbitration", never a
+treaty, investment or institutional arbitration, nor its seat).'''
 
 SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS))
 
@@ -85,6 +87,7 @@ FROM_RECOMMENDATION = {'present': 'present', 'develop': 'development_potential',
 BAND = re.compile(r'\bBand\s*(\d)\b', re.I)
 NOT_RANKED = re.compile(r'\b(?:not\s+ranked|unranked|no\s+rankead\w*|sin\s+ranking)\b', re.I)
 RANKED = re.compile(r'\b(?:ranked|rankead\w*|band\s*\d|senior\s+statesp\w*|eminent\s+practitioner|up\s+and\s+coming)\b', re.I)
+PENDING = re.compile(r'\bcategory\s+pending\b|\bcategor[ií]a\s+pendiente\b', re.I)
 ENTRY = re.compile(r'\bentry[- ]band\b|\blowest\s+band\b|\blower[- ]band\b', re.I)
 
 
@@ -110,6 +113,14 @@ def apply_candidacy(plan, package):
     The state and the recommendation say the same thing; a lawyer the firm declares
     ranked keeps or improves that position instead of an entry band."""
     for c in plan.get('candidates', []):
+        label = ' '.join(str(c.get('suggested_ranking') or '').split())
+        if PENDING.search(label) and label.casefold() != 'category pending':
+            # "Category pending (keep the declared position…)": the category is the
+            # form's label; the explanation belongs in the criterion (Public Law probe).
+            note = PENDING.sub('', label).strip(' ()-:;,.')
+            c['suggested_ranking'] = 'Category pending'
+            if not str(c.get('category_missing_criterion') or '').strip() and note:
+                c['category_missing_criterion'] = note
         state = c.get('candidacy_state')
         if state in STATES:
             c['recommendation'] = RECOMMENDATION[state]
@@ -160,6 +171,17 @@ def _proper(text):
     return {w.casefold() for w in re.findall(r"\b(?:[A-Z]{2,}|[A-Z][a-záéíóúñ]+)\b", str(text or ''))} - STOP
 
 
+WORDS = re.compile(r"[A-Za-zÁÉÍÓÚÑáéíóúñ][\w'’-]{2,}")
+FUNCTION = STOP - {'arbitration', 'proceedings', 'proceeding'}
+
+
+def _modifiers(text, own, shared):
+    """Own terms of one version placed right before the disputed object both versions
+    name ("investment arbitration" when the versions disagree on the arbitration)."""
+    words = [w.casefold() for w in WORDS.findall(str(text or ''))]
+    return {words[j] for i, w in enumerate(words) if w in shared for j in (i - 1, i - 2) if j >= 0 and words[j] in own}
+
+
 def conflict_faults(package, matters):
     """A narrative that states either version of a contested fact (Public Law: the
     forum of an arbitration given both as a treaty arbitration and as an ICC one)."""
@@ -173,8 +195,10 @@ def conflict_faults(package, matters):
             a, b = conflict.get('quote_a', ''), conflict.get('quote_b', '')
             own_a, own_b = _terms(a) - _terms(b), _terms(b) - _terms(a)
             names_a, names_b = _proper(a) - _terms(b), _proper(b) - _terms(a)
+            shared = ({w.casefold() for w in WORDS.findall(a)} & {w.casefold() for w in WORDS.findall(b)}) - FUNCTION
             used = sorted((own_a & text if len(own_a & text) >= 2 or names_a & text else set()) |
-                          (own_b & text if len(own_b & text) >= 2 or names_b & text else set()))
+                          (own_b & text if len(own_b & text) >= 2 or names_b & text else set()) |
+                          _modifiers(item.get('text'), own_a | own_b, shared))
             if used:
                 faults.append(f'{label}: the narrative states a contested {conflict.get("subject") or "fact"} '
                               f'(“{a[:90]}” versus “{b[:90]}”; it uses: {", ".join(used[:5])}). State neither version: '
