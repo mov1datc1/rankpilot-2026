@@ -106,7 +106,22 @@ must remain explicit in the narrative, never diluted into a generic statement.
 selection_rationale is internal: never mention selection, the portfolio, reserves or
 other matters in the narrative; show the strategic element through the facts.
 Name the client consistently with its register name; never narrate how the source
-spells or describes it.'''
+spells or describes it.
+WHY THE MATTER MATTERED (the form asks for it): identify the element that makes this
+mandate relevant (a decisive result, a technically demanding interaction of legal
+regimes, a transaction together with its operational implementation, the length and
+depth of the client relationship, a cross-border structure) and build the narrative
+around it: state it early and explain its significance with the facts of the record
+only (for example, a resolution fixing an amount equal to 1% of the original
+assessment means the client's exposure was reduced to a small fraction of the amount
+assessed). A documented result is the core of the narrative, never a closing
+afterthought. Connect elements the record gives separately when they belong together
+(the tax analysis of an acquisition and the buyer's later operational set-up;
+foreign-exchange effects, inflation and transfer pricing; a relationship that began
+in a given year and the work it now covers). Weave each lawyer's role into the account
+of the work instead of a separate closing line ("The matter was led by ..."). The aim
+is legal, commercial and strategic density, not length: no generalities, no
+inference the record does not support.'''
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
@@ -226,13 +241,28 @@ or rankings; (3) the key types of work as two to four capability pillars that
 develop the shared institutional_arguments, each proved by one or two decisive
 mandates stated in a clause with their legal mechanism and result (publishable
 clients by name), never a matter-by-matter catalogue ("For X, we ... For Y, we
-..."): the full matters belong in section D/E; (4) industry sector expertise and
+..."): the full matters belong in section D/E. The team is part of each capability,
+never a separate element at the end: in each pillar name the lawyer or lawyers who
+lead or execute its decisive mandates (fact sheet: leads_alone, co_leads,
+team_member), so the legal work never reads as detached from the professionals who
+lead it; the early leadership paragraph does not replace that link and B10 need
+not open with the team; (4) industry sector expertise and
 areas of recent growth, where the sources evidence them. C2 builds a persuasive case in an assertive institutional voice; it is not a
 request followed by a list of reasons. Order the argument: (a) the evolution,
 sophistication and relevance of the recent work; (b) the specific evidence that
 distinguishes the practice and, where the sources ask for individual recognition,
 each such lawyer; (c) how that evidence supports the positioning; (d) the ranking
-aspiration, stated once at the end as the consequence of the argument. Take the
+aspiration, stated once at the end as the consequence of the argument. The
+objective guides the argument but is not its subject: the evidence (technical
+sophistication, relevance of the mandates, results, international dimension, depth
+of the team) carries the case, and the positioning emerges from it as a conclusion
+about the standing that work demonstrates (for example "the breadth and results of
+this work are those of a Band 1 practice"), never as a petition to the researcher:
+never "seeks", "requests", "asks", "puts forward", "should be ranked", "should be
+maintained", "supports moving" or "supports the promotion of", and never mention the
+band, promotion or recognition anywhere else in C2. The same principle governs
+individuals: each lawyer's category is the conclusion of that lawyer's evidence,
+stated once, never a list of requests. Take the
 practice aspiration from the supplied target; name a band only when one is supplied.
 When the supplied target is a first recognition, state it simply as recognition in
 the practice and guide, without the words "first-time" or "for the first time".
@@ -429,6 +459,67 @@ def leadership_faults(package, value):
             'Keep the leadership and team paragraph right after the opening and state each person\'s role as the source does.')
     for name,figure,quote in years[:4]:
         faults.append(f'B10 omits {name}\'s experience ("{figure}"), which b10_source states: "{quote}". Keep it in the leadership paragraph.')
+    return faults
+
+
+def _paragraphs(text):
+    return [p for p in re.split(r'\n\s*\n|\n', str(text or '')) if p.strip()]
+
+
+def team_link_faults(package, value):
+    """v1.0.125 (Ángela, Tax review): the team is part of each capability.
+
+    A department head who leads or co-leads matters appears in B10 beyond a single
+    paragraph: the professionals are linked to the work they lead, never left as
+    an isolated block at the start or at the end."""
+    paragraphs=_paragraphs(value.get('b10'))
+    if len(paragraphs)<3:
+        return []
+    heads=[' '.join(str((h or {}).get('name') or '').split())
+           for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])]
+    from core.fact_sheet import publication
+    faults=[]
+    for head in [h for h in heads if h][:4]:
+        tokens=_surname_tokens(head)
+        led=[m for m in package.get('matters', []) if _names_person(str(m.get('leadPartner') or m.get('lead_partner') or ''), tokens)]
+        if not led:
+            continue
+        where=[i for i,p in enumerate(paragraphs) if _names_person(p, tokens)]
+        if len(where)>=2:
+            continue
+        clients=[str(m.get('client_name') or m.get('client') or '').strip() for m in led if publication(m)=='publishable'][:2]
+        example=(' (for example '+' and '.join(c for c in clients if c)+')') if any(clients) else ''
+        placement=('only in the closing paragraph' if where==[len(paragraphs)-1] else 'in a single paragraph') if where else 'nowhere'
+        faults.append(f'B10 names {head} {placement}, yet {head} leads or co-leads {len(led)} matters{example}. Name {head} in the capability pillar of the mandates they lead, so the team is part of the work rather than a separate block.')
+    return faults
+
+
+RANK_TALK = re.compile(r'\bBand\s*\d\b|\bTier\s*\d\b|\bSenior\s+Statesp\w*|\bUp\s+and\s+Coming\b|\bAssociates?\s+to\s+Watch\b'
+                       r'|\b(?:promotion|promoted|ranking|rankings|ranked)\b|\bmov(?:e|es|ing|ement)\s+(?:up|to\s+Band)\b|\bup\s+one\s+(?:band|tier)\b'
+                       r'|\b(?:individual\s+)?recognition\s+(?:in|by|from)\s+(?:Chambers|the\s+guide|the\s+rankings?)\b', re.I)
+PETITION = re.compile(r'\b(?:seeks?|seeking|requests?|requesting|asks?|asking|urges?|respectfully|submits?\s+that)\b'
+                      r'|\b(?:is|are)\s+put\s+forward\b|\bputs?\s+forward\b'
+                      r'|\bshould\s+(?:be\s+)?(?:ranked|maintained|promoted|moved|recogni[sz]ed|retained|remain|move)\b'
+                      r'|\bsupports?\s+(?:[\w&.\-]+[’\']s\s+|the\s+|its\s+|our\s+|their\s+)?(?:moving|movement|move|advancement|promotion|positioning|maintaining|recognition|ranking|inclusion|elevation)\b'
+                      r'|\b(?:warrants?|merits?|deserves?|justif(?:y|ies))\s+(?:a\s+|the\s+|its\s+)?(?:promotion|move|advancement|higher|band|ranking|recognition|inclusion)', re.I)
+
+
+def aspiration_faults(package, value):
+    """v1.0.125 (Ángela, Tax review): the positioning is the conclusion of the evidence.
+
+    C2 names a band, promotion or individual category only in its closing
+    paragraph, and never as a petition to the researcher ("seeks", "should be
+    maintained", "supports moving ...")."""
+    paragraphs=_paragraphs(value.get('c2'))
+    if not paragraphs:
+        return []
+    faults=[]
+    early=[s for p in paragraphs[:-1] for s in re.split(r'(?<=[.!?])\s+', p) if RANK_TALK.search(s)]
+    if early:
+        faults.append('C2 mentions the ranking aspiration before its closing paragraph ("'+early[0].strip()[:160]+'"). Let the evidence carry the argument and state the positioning once, at the end, as its conclusion.')
+    petitions=[m.group(0) for s in re.split(r'(?<=[.!?])\s+', ' '.join(paragraphs)) if RANK_TALK.search(s) for m in PETITION.finditer(s)]
+    if petitions:
+        faults.append('C2 asks for the ranking ("'+'", "'.join(sorted(set(p.strip() for p in petitions))[:3])+'"). State the positioning as the conclusion the evidence demonstrates, for the practice and for each lawyer (for example "the breadth and results of this work are those of a Band 1 practice"), never as a request, a proposal or what someone should be.')
     return faults
 
 
@@ -937,7 +1028,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+leadership_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
+                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)
                 if faults and not correcting:
                     # Ángela's rules: B10 within 500 words and C2 within 1,000,
                     # never collapsing the original, and the original's leadership

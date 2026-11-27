@@ -54,7 +54,9 @@ or personal role in the mandate being checked. Keep each check reason concise
 B10 has a 500-word maximum and presents the practice; an omission in B10 is material
 only when a shared argument, a confirmed head or a role the original b10_source
 gives a lawyer is missing. A secondary detail of one mandate belongs in that
-matter's narrative or in C2 and never justifies lengthening B10.
+matter's narrative or in C2 and never justifies lengthening B10. C2 states the
+positioning once, at the end, as the conclusion of the evidence; a petition for a
+band or category is a style failure.
 Do not rewrite text, change sources,
 nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
 
