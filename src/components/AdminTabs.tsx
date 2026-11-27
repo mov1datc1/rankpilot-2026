@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Users, Settings, Target, Mail, ShieldCheck, Inbox } from 'lucide-react';
+import { BarChart3, Users, Settings, Target, Mail, ShieldCheck, Inbox, GitBranch } from 'lucide-react';
 
 const adminNav = [
   { name: 'Dashboard', href: '/dashboard/admin', icon: BarChart3, exact: true },
   { name: 'Consultas / Leads', href: '/dashboard/admin/leads', icon: Inbox },
   { name: 'Auditoría Judge SOL', href: '/dashboard/admin/audit', icon: ShieldCheck },
+  { name: 'Flujo del grafo', href: '/dashboard/admin/flow', icon: GitBranch },
   { name: 'Control de Usuarios', href: '/dashboard/admin/users', icon: Users },
   { name: 'Configuración de Sistema', href: '/dashboard/admin/settings', icon: Settings },
   { name: 'Marketing y Tracking', href: '/dashboard/admin/marketing', icon: Target },

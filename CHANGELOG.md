@@ -1,3 +1,23 @@
+## 1.0.128: graph flow for administrators
+
+A new **Administration → Graph flow** page shows what happened in every block of a case, in the style of a path exploration. Only ADMIN and SUPERADMIN users can open it: the server checks the role on both pages and on every query. It is read-only: no model call and no write.
+
+- **Runs list.** The latest jobs with case, user, status, steps, calls and estimated cost.
+- **Block map.**
+  - The blocks are the case register, RAG, strategist, selection reviewer, plan, matters, B9, B10/C2, code gates, field reviewer, repair, Audit writer and reviewer, the SOL judge and delivery.
+  - Bands follow the real route of the run, and correction loops (rejections and repairs) are drawn with their number of rounds.
+  - Block size can be set by calls, cost, time or tokens.
+- **Block detail.**
+  - **What went in:** the blocks it came from, input tokens and cache, the code rejection or judge verdict that triggered it with its fields, defects and fields sent for review.
+  - **What came out:** next blocks, output and reasoning tokens, verdicts, unmet obligations, unresolved repairs and unit self-corrections.
+  - The RAG rules it retrieved, and its calls.
+- **Step-by-step route.** Every ledger step by round, with a time bar, blocks, calls, duration, cost and result.
+- **Engine route.** The engine's nodes in order, with repeated cycles folded ("case → development rejected → release ×8"), visits, states and transitions.
+- **Findings and calls.** Gates, judge, reviewer, repair, construction and delivery, plus a call table filtered by block.
+- **Data.** Only the ledger and the review reports of the case are read; documents are never loaded (about 0.5 s and 500 KB per job). Cost is estimated at list prices, with cache reads at 0.1×.
+
+Validation: 7 contract tests with synthetic data, covering blocks, costs, loops, RAG, reports, the engine route, legacy jobs and the admin guard. The page was rendered with 10 saved real runs (v115-v126) without errors, and both queries were checked read-only against the database.
+
 ## 1.0.127: one editorial method for every role (structural version after the Public Law review)
 
 The Labour, Tax and Public Law reviews each found a new gap because every review had been answered with a rule for one role. The prompts had accumulated clauses that contradicted the reviews themselves: B9 had a 500-1,000-word target (650 to draft), which filled profiles with re-told matters; an old development instruction still said "In C2 make a direct, grounded request for coverage"; C2 was defined as a positioning case that re-argued B10 with the same mandates. No new model call.
