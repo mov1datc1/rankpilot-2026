@@ -47,6 +47,10 @@ it never appears in B9, B10 or C2, not even anonymously, and it remains in secti
 and in the Audit. A client entry with research_period closed before the period is not
 part of this cycle's portfolio. A client's other_names designate that same client and
 follow its publication status.
+A lawyer's firm_request is the firm's own sentence asking for that lawyer's
+recognition. The Submission states only the current decision; when the current
+decision gives a different category or does not present the lawyer, the Audit's
+assessment of that person states what the firm asked for and why the decision differs.
 fact_sheet adds no fact about the legal work and never replaces the sources for the
 substance of a mandate.''')
 REVIEW_RULE = RULE + (''' When reviewing, a statement about one of these facts that
@@ -55,6 +59,49 @@ statement that agrees with fact_sheet is supported by the application's record.'
 
 _HEADING = re.compile(r'(?i)^\s*(?:(?:other\s+)?team\s+members?|lead partners?|lead lawyers?|socios? responsables?)\s*[:(s)]*\s*')
 _EMPTY = ('not applicable', 'sin informacion', 'n a', 'not stated', 'none', 'no aplica')
+
+
+_CATEGORY = re.compile(r'\bBand\s*\d|\bSenior\s+Statesp\w*|\bUp\s+and\s+Coming|\bAssociates?\s+to\s+watch|\bStar\s+Associates?'
+                       r'|\b(?:Eminent|Recognised|Recognized|Notable)\s+Practitioner|\bLeading\s+Individual|\bNext\s+Generation|\bRising\s+Star', re.I)
+_ASK = re.compile(r'\b(?:deserv\w*|should|request\w*|asks?|asking|seek\w*|believe|hope|highlight\w*|propos\w*|merit\w*|warrant\w*|would\s+like|aim\w*|target\w*|promot\w*|move\s+up|listed)\b', re.I)
+_SENTENCE = re.compile(r'(?<=[.!?])(?<!\b[A-Z]\.)(?<!\bMs\.)(?<!\bMr\.)(?<!\bDr\.)(?<!\bMrs\.)\s+')
+
+
+def _fold(text):
+    import unicodedata
+    return ''.join(c for c in unicodedata.normalize('NFKD', str(text or '')) if not unicodedata.combining(c)).lower()
+
+
+def firm_requests(package):
+    """v1.0.126: the firm's own sentences asking for a lawyer's recognition.
+
+    A firm can ask for a category for a lawyer in its coverage or department text
+    ("we believe that Ms X deserves to be recognised in Band 1"). The Audit once
+    proposed another category without saying so (real run, 24 Nov). Code finds the
+    literal sentence; the decision itself stays with the strategy."""
+    names = [' '.join(str(p.get('name') or p.get('fullName') or '').split()) for p in package.get('lawyers', [])]
+    tokens = {n: [t for t in _fold(n).split() if len(t) >= 4] for n in names if n}
+    counts = {}
+    for words in tokens.values():
+        for t in set(words[1:]):
+            counts[t] = counts.get(t, 0) + 1
+    texts = [package.get('c2_source'), package.get('b10_source')]
+    for p in package.get('lawyers', []):
+        texts += [p.get(k) for k in ('bio', 'comments', 'notes', 'rankingRequest', 'ranking_request')]
+    sentences = [' '.join(s.split()) for t in texts if t for s in _SENTENCE.split(str(t))]
+    found = {}
+    for sentence in sentences:
+        if not (_CATEGORY.search(sentence) and _ASK.search(sentence)):
+            continue
+        folded = ' ' + re.sub(r'[^a-z ]', ' ', _fold(sentence)) + ' '
+        for name, words in tokens.items():
+            unique = [t for t in words[1:] if counts.get(t) == 1]
+            given = ' '.join(_fold(name).split()[:2])
+            if any(' ' + t + ' ' in folded for t in unique) or (len(given.split()) == 2 and ' ' + given + ' ' in folded):
+                items = found.setdefault(identity(name), [])
+                if sentence[:300] not in items and len(items) < 2:
+                    items.append(sentence[:300])
+    return found
 
 
 def listed_names(value):
@@ -193,6 +240,9 @@ def build(package, strategy=None, development=None, person=None):
             entry['also_written_as'] = registered['other_names']
         if registered.get('statements'):
             entry['source_statements'] = registered['statements']
+        asked = firm_requests(package).get(key)
+        if asked:
+            entry['firm_request'] = asked
         if key in heads:
             # A shared headship is stated as shared: "one of the heads", never "the head".
             others = [n for n in head_names if identity(n) != key]

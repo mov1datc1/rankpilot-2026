@@ -9,7 +9,8 @@ executive_assessment: filing recommendation, objective versus verified position,
 main strength/limitation and comparative hero rationale. Where actual retrieved
 peer commentary exists, contrast concrete capabilities with the source-backed
 portfolio; table-only or absent research permits a scoped limitation, not invented
-market calibration or ranking forecasts. Suggested budget 220 words.
+market calibration or ranking forecasts. Suggested budget 220 words, plus about 60
+words for each retrieved peer profile with commentary (one concrete contrast each).
 portfolio: EXACTLY the complete ordered core, hero first, one concise source-backed
 contribution per matter. Suggested budget 420 words; preserve numbers WITH their
 concepts and qualifiers, actors, achieved results and actual pending stages. Never

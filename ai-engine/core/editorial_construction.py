@@ -119,7 +119,9 @@ afterthought. Connect elements the record gives separately when they belong toge
 (the tax analysis of an acquisition and the buyer's later operational set-up;
 foreign-exchange effects, inflation and transfer pricing; a relationship that began
 in a given year and the work it now covers). Weave each lawyer's role into the account
-of the work instead of a separate closing line ("The matter was led by ..."). The aim
+of the work instead of a separate closing line ("The matter was led by ..."). Opening
+with the decisive element never removes the firm as the actor of its work (never "the
+client receives advice" or "is the subject of an ongoing mandate"). The aim
 is legal, commercial and strategic density, not length: no generalities, no
 inference the record does not support.'''
 
@@ -149,11 +151,15 @@ profile_identities lists the profile names that ARE
 confidential registered clients: generalise each (decision=generalize, no name in
 submission_bio) and keep its legal work. A client named only in the profile with no
 publishable matter is generalised too. public_disclosure lists, per confidential
-mandate, the figures that identify it: never write those figures in submission_bio;
-state scale qualitatively (for example "a multi-million-dollar exposure", "a
-workforce of several thousand") while keeping the legal obstacle, action and result.
-A matter VALUE marked confidential is different: never state it, not even as a
-range or an order of magnitude ("seven-figure"), whether or not its client is named.
+mandate, the figures that identify it: never write those figures in submission_bio.
+A non-monetary figure (a workforce, a number of proceedings) may be stated
+qualitatively ("a workforce of several thousand", "a high-volume portfolio"). A
+monetary amount of a mandate whose value is marked confidential (the value itself, an
+assessment, a claim, an exposure) has no size at all in public text, not even as a range or an order of magnitude
+("seven-figure"): neither the figure nor a word for its size ("substantial",
+"significant", "multi-million"); name the legal concept instead ("a
+tax assessment", "the claims"), whether or not its client is named. Keep the legal
+obstacle, action and result.
 A client_sector entry governs how you label that client's business: when disputed,
 give no sector or industry label ("a confidential client"). Bind each original profile unit/entity in
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
@@ -172,8 +178,8 @@ ARCHITECTURE OF A NOMINATED B9 (the method the editorial owner applies):
    (for example development continuity, expropriation, boundaries). Open each
    theme with its most significant mandate: the client's problem, the legal
    obstacle, this lawyer's own action or strategy, and the achieved result or
-   exact current stage with its decisive scale (qualitative for a mandate in
-   public_disclosure). Related mandates in the same
+   exact current stage with its decisive scale (qualitative for a non-monetary
+   figure of a mandate in public_disclosure; none for a confidential monetary amount). Related mandates in the same
    theme follow briefly. Never one paragraph per matter in list form.
 3. Career credentials (education, teaching, professional offices, prior
    employment) appear once, where they explain the expertise.
@@ -288,7 +294,9 @@ invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
 while preserving legal work and career credentials. public_disclosure lists the
 client names and the exact figures of every confidential mandate: write none of
-them in B10 or C2; state scale qualitatively instead; a disputed client_sector gets
+them in B10 or C2; state a non-monetary scale qualitatively instead, and give a
+monetary amount of a mandate whose value is confidential no size at all (no
+"substantial", "significant" or "multi-million"); a disputed client_sector gets
 no sector label. privacy_register gives the
 publication status of every matter: a client whose matter is publishable keeps its
 name in B10 and C2 and is never called confidential. Name the publishable clients
@@ -340,7 +348,7 @@ def privacy_faults(package, strategy, profile):
         metrics={tuple(m) for m in finding['metrics']}
         spans=[s for s in metric_spans(bio) if metric_facts(s) & metrics]
         found.append('PRIVACY: submission_bio prints figures of confidential mandate '+finding['matter_id']+' ('
-                     +', '.join('"'+s+'"' for s in spans[:6])+'). State that scale qualitatively and keep the legal work, '
+                     +', '.join('"'+s+'"' for s in spans[:6])+'). State a non-monetary scale qualitatively; a confidential monetary amount gets no size at all. Keep the legal work, '
                      'action and result; the exact figures remain in confidential section E.')
     return found
 
@@ -380,6 +388,51 @@ def status_faults(package, matters):
             faults.append(f'{label}: the source records a pending or ongoing stage; state the current procedural status in the narrative or completion_status.')
         if re.search(r'\b(?:hired|retained|engaged|instructed) to (?:file|bring|initiate|commence)\b',text,re.I) and re.search(r'\b(?:filed|brought|initiated|commenced)\b',output,re.I) and not re.search(r'\b(?:filed|brought|initiated|commenced)\b',text,re.I):
             faults.append(f'{label}: the source says the firm was hired to file the action, not that it was filed; describe the mandate without inventing the procedural step.')
+    return faults
+
+
+RESULT_CUE = re.compile(r'\b(?:closed\s+with|resolution|resolved|obtained|secured|achieved|favou?rable|reduc\w+|dismiss\w+|annull?\w*|won|ruled|judgment|award\w*|approved|granted|settle\w*|recover\w*|refund\w*|exempt\w*)\b|\d+(?:[.,]\d+)?\s?%', re.I)
+TEAM_CUE = re.compile(r'\b(?:lead\s+partners?|led\s+by|co-?led\s+by|co-?leads?\b|leads\s+the\s+(?:matter|mandate)|lead\s+lawyer|supported\s+by|on\s+the\s+team|team\s+(?:comprised|included|members?))', re.I)
+TEAM_FILLER = set('the a an and with as on of by is are was were in to for its their matter mandate work team lead leads led co-led '
+                  'co-lead co-leads partner partners supported support supporting assisted associate associates senior member members '
+                  'serving served serves acting acted also who which this that from under both together alongside'.split())
+# The matter value has its own field; the narrative never restates its size.
+VALUE_TALK = re.compile(r'\b(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)[- ]figure\b|\bvalued\s+at\b', re.I)
+# A sentence ends at . ! ? but not after an initial ("Pedro I. Sosa").
+SENTENCE_END = re.compile(r'(?<=[.!?])(?<!\b[A-Z]\.)(?<!\bMs\.)(?<!\bMr\.)(?<!\bDr\.)(?<!\bMrs\.)\s+')
+STATUS_ONLY = re.compile(r'^\s*(?:the\s+)?(?:matter|mandate|work|engagement|relationship|advice)\s+(?:is|remains|continues)\s+(?:ongoing|pending|in\s+progress)\.?\s*$', re.I)
+
+
+def matter_shape_faults(package, matters):
+    """v1.0.126 (Ángela, Tax review): a matter is built around why it mattered.
+
+    Two shapes are corrected once before review: a documented result that appears
+    only as the narrative's closing sentence, and a sentence that only lists who
+    led or supported the matter. Significance itself is the writer's judgement."""
+    register={m['id']:m for m in package.get('matters',[])}
+    faults=[]
+    for item in matters:
+        source=register.get(item.get('matter_id'),{})
+        label=source.get('client_name') or source.get('client') or item.get('matter_id')
+        sentences=[s for s in SENTENCE_END.split(str(item.get('text') or '').strip()) if s.strip()]
+        while sentences and STATUS_ONLY.match(sentences[-1]):
+            sentences=sentences[:-1]
+        record=' '.join(str(source.get(k) or '') for k in ('completionDate','rawNotes','summary','otherInfo'))
+        if len(sentences)>=3 and RESULT_CUE.search(record):
+            with_result=[i for i,s in enumerate(sentences) if RESULT_CUE.search(s)]
+            if with_result==[len(sentences)-1]:
+                faults.append(f'{label}: the documented result appears only as the closing sentence ("{sentences[-1][:140]}"). Make it the core of the narrative: state it early and explain what it means for the client with the record\'s facts.')
+        value=VALUE_TALK.search(str(item.get('text') or ''))
+        if value:
+            faults.append(f'{label}: the narrative restates the matter value ("{value.group(0)}"). The value is printed in its own field, with its own confidentiality: never describe its size in the narrative.')
+        # Only the closing team line is the afterthought shape ("The matter was
+        # led by X and Y."); a team clause inside the account costs a correction
+        # call per batch without changing what the reader learns.
+        last=sentences[-1] if len(sentences)>=2 else ''
+        if last and TEAM_CUE.search(last):
+            content=[w for w in re.findall(r"[a-z][a-z'\-]+", re.sub(r"\b[A-ZÁÉÍÓÚÑ][\w'’.\-]*", ' ', last)) if w not in TEAM_FILLER]
+            if len(content)<=3:
+                faults.append(f'{label}: the narrative closes with a line that only lists who led or supported the matter ("{last[:140]}"). Weave each lawyer\'s role into the account of the work they did instead.')
     return faults
 
 
@@ -504,6 +557,9 @@ PETITION = re.compile(r'\b(?:seeks?|seeking|requests?|requesting|asks?|asking|ur
                       r'|\b(?:warrants?|merits?|deserves?|justif(?:y|ies))\s+(?:a\s+|the\s+|its\s+)?(?:promotion|move|advancement|higher|band|ranking|recognition|inclusion)', re.I)
 
 
+ASPIRE = re.compile(r'\b(?:promot\w*|move\s+up|moving\s+up|movement|advancement|advance\s+to|elevat\w*|higher\s+(?:band|tier)|target\w*|aspir\w*|objective|goal|aim(?:s|ed|ing)?\s+(?:for|to|at))\b', re.I)
+
+
 def aspiration_faults(package, value):
     """v1.0.125 (Ángela, Tax review): the positioning is the conclusion of the evidence.
 
@@ -514,7 +570,10 @@ def aspiration_faults(package, value):
     if not paragraphs:
         return []
     faults=[]
-    early=[s for p in paragraphs[:-1] for s in re.split(r'(?<=[.!?])\s+', p) if RANK_TALK.search(s)]
+    # A current ranking cited as evidence ("ranked in Band 2", a lawyer's present
+    # category beside their work) is not an aspiration; only forward-looking
+    # ranking language before the closing paragraph is.
+    early=[s for p in paragraphs[:-1] for s in re.split(r'(?<=[.!?])\s+', p) if RANK_TALK.search(s) and (ASPIRE.search(s) or PETITION.search(s))]
     if early:
         faults.append('C2 mentions the ranking aspiration before its closing paragraph ("'+early[0].strip()[:160]+'"). Let the evidence carry the argument and state the positioning once, at the end, as its conclusion.')
     petitions=[m.group(0) for s in re.split(r'(?<=[.!?])\s+', ' '.join(paragraphs)) if RANK_TALK.search(s) for m in PETITION.finditer(s)]
@@ -995,7 +1054,7 @@ def advance(state, invoke):
                     pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
                 from core import source_reservations
-                faults=status_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
+                faults=status_faults(package,value['matters'])+matter_shape_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
                 if faults and not correcting:raise ValueError('; '.join(faults))
                 if faults:pending.setdefault('status_observations',[]).extend(faults)
                 values={m['matter_id']:m for m in value['matters']}

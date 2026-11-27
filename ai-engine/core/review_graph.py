@@ -738,11 +738,12 @@ def condense_audit_letter(state, letter, trace):
     # Condense using the same validated decisions; never truncate paragraphs or
     # remove candidates/matters mechanically to meet the budget.
     letter=reconcile_next_actions(normalize_audit_section_labels(letter),state['package'])
-    if audit_word_count(letter) > AUDIT_WORD_LIMIT:
+    from core.audit_construction import word_limit
+    if audit_word_count(letter) > word_limit(state):
         from core.audit_preservation import anchors, preserve_sections
         original=dict(letter)
         shortened,trace=invoke_role({**state,'trace':trace},'writer',Letter,
-            'Condense this internal Audit into 1800–2400 Spanish words, with an absolute maximum of 2600 words across all five fields. Preserve the same verdict, target rationale, complete ordered core and hero, concrete reserve comparisons, and individual recommendations. Use one compact paragraph per person rather than eight repeated labels. Retain each person’s current/proposed category, reason, supporting matters and role, external evidence or its absence, gaps and action; common limitations may be stated once with explicit scope. Suggested budgets: verdict 220, portfolio 900, individuals 650, reserves 500, actions 130. These are allocation guides, not permission to drop decisive facts. Preserve numbers, currencies, outcomes, uncertainty and confirmed roles. No new facts or changed decisions. Remove repetition and source-auditor phrasing; do not tell the user to repair already resolved generated wording. Return all five fields. The following source-grounded final review remains mandatory.',
+            f'Condense this internal Audit into 1800–2400 Spanish words, with an absolute maximum of {word_limit(state)} words across all five fields. Preserve the same verdict, target rationale, complete ordered core and hero, concrete reserve comparisons, and individual recommendations. Use one compact paragraph per person rather than eight repeated labels. Retain each person’s current/proposed category, reason, supporting matters and role, external evidence or its absence, gaps and action; common limitations may be stated once with explicit scope. Suggested budgets: verdict 220, portfolio 900, individuals 650, reserves 500, actions 130. These are allocation guides, not permission to drop decisive facts. Preserve numbers, currencies, outcomes, uncertainty and confirmed roles. No new facts or changed decisions. Remove repetition and source-auditor phrasing; do not tell the user to repair already resolved generated wording. Return all five fields. The following source-grounded final review remains mandatory.',
             {'previous_letter':letter,'strategy':state['strategy'],'development':state.get('development'),
              'protected_anchors':{k:anchors(v) for k,v in letter.items() if isinstance(v,str)}})
         from core.audit_decisions import preserve_decisions
@@ -759,7 +760,8 @@ def writer(state):
         conflicts,trace=verify_portfolio_consistency(state,state['letter'])
         from core.editorial_case import comparison_style_defects
         conflicts=comparison_style_defects(state['letter'])+conflicts
-        if not conflicts and audit_word_count(state['letter'])<=AUDIT_WORD_LIMIT:
+        from core.audit_construction import word_limit
+        if not conflicts and audit_word_count(state['letter'])<=word_limit(state):
             return {'letter':state['letter'],'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1,'writer_validated':True,'errors':[],'repair_feedback':[],'letter_repair_requested':False,'letter_repair_report':{'corrected_fields':[],'classification_rechecked':True,'unresolved':[]}}
         state={**state,'trace':trace,'repair_feedback':conflicts or feedback}
     if state.get('letter') and state.get('repair_feedback'):
@@ -781,7 +783,8 @@ def writer(state):
         {'shared_decisions':shared_decisions,'package':state['package'],'strategy':state['strategy'],'selection_advisories':state.get('selection_advisories',[]),'repair_source_notes':state.get('repair_report',{}).get('source_notes',[]),'development':state.get('development'), 'previous_letter':state.get('letter'),'case_obligations':obligations(state['package'],state['strategy'],state.get('development') or {}) if (state.get('development') or {}).get('version') in ('editorial-development-v3','editorial-development-v4') else [],'defects':state.get('repair_feedback') or state.get('judge',{}).get('defects',[])})
     letter=project_letter(state,letter)
     letter,trace=condense_audit_letter(state,letter,trace)
-    errors=[] if audit_word_count(letter)<=AUDIT_WORD_LIMIT else ['RankPilot debe condensar el Audit ejecutivo conservando las decisiones y su respaldo.']
+    from core.audit_construction import word_limit
+    errors=[] if audit_word_count(letter)<=word_limit(state) else ['RankPilot debe condensar el Audit ejecutivo conservando las decisiones y su respaldo.']
     # Internal stable IDs remain in strategy JSON, not reader-facing prose.
     names = {str(m['id']): str(m.get('client') or m.get('name') or m.get('title') or '') for m in state['package'].get('matters', [])}
     for field, text in letter.items():

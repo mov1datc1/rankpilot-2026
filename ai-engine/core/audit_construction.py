@@ -46,7 +46,8 @@ category or target: they are read-only decisions that the application prints.
 Use names of clients and people, never internal IDs. This is an internal
 document, so confidential client names may appear. Do not narrate system
 stages, declare approval or ask the user to fix generated wording.
-executive_assessment (about 220 words): filing recommendation, primary AND any
+executive_assessment (about 220 words, plus about 60 words for each profile in
+peer_profiles): filing recommendation, primary AND any
 secondary objective (pursue it, or say why it does not apply yet), objective versus
 the current position exactly as position_statement describes it (a declared or
 unmatched position is never "verified"; a supplied band or target is never
@@ -298,7 +299,34 @@ def slots(state):
                 'incremental_contribution': comparison.get('incremental_contribution', '')}
     core = [d['matter_id'] for d in strategy.get('matters', []) if d.get('disposition') == 'core']
     portfolio = OrderedDict((f'P{i+1:02d}', {'matter_id': mid, 'client': name(mid)}) for i, mid in enumerate(core))
-    return {'portfolio': portfolio, 'people': people, 'leaders': leaders, 'comparisons': comparisons}
+    return {'portfolio': portfolio, 'people': people, 'leaders': leaders, 'comparisons': comparisons,
+            'peers': peer_profiles(state)}
+
+
+def peer_profiles(state):
+    """v1.0.126: retrieved competitor profiles with commentary, one contrast each.
+
+    The executive verdict had a fixed ~220-word budget and also had to give one
+    concrete contrast per retrieved peer: with three peers it did not fit, the
+    writer declared the comparison limited and the judge failed the Audit for
+    omitting it (three real runs). The budget now grows with each peer."""
+    verification = state.get('ranking_verification') or (state.get('package') or {}).get('ranking_verification') or {}
+    return [str((p.get('subject') or {}).get('name')) for p in ((verification.get('profile_research') or {}).get('profiles') or [])
+            if (p.get('subject') or {}).get('kind') == 'competitor' and p.get('status') == 'retrieved'
+            and str(p.get('commentary') or '').strip()][:4]
+
+
+def word_limit(state):
+    """The executive Audit cap grows with the peer contrasts it must contain."""
+    return WORD_LIMIT + 60 * len(peer_profiles(state))
+
+
+def executive_words(plan):
+    return 220 + 60 * len(plan.get('peers') or [])
+
+
+def executive_chars(plan):
+    return 2600 + 650 * len(plan.get('peers') or [])
 
 
 def _strict(name, fields):
@@ -349,7 +377,9 @@ def letter_schema(plan):
             + item['alternative'] + ', with facts and status on BOTH sides, ending with why the selected matter was preferred and what would change that. No menor/mayor escala.', words['comparison'] * 11)
             for key, item in plan['comparisons'].items()}), ...)
     return _strict('ConstructedAudit', {
-        'executive_assessment': _text('Executive verdict in Spanish (about 220 words).', 2600),
+        'executive_assessment': _text(f'Executive verdict in Spanish (about {executive_words(plan)} words)'
+            + ('; it includes one concrete contrast for each profile in peer_profiles: ' + ', '.join(plan.get('peers') or []) if plan.get('peers') else '')
+            + '.', executive_chars(plan)),
         'portfolio': (portfolio, ...), 'leadership': (_strict('AuditLeadership', people), ...),
         'evidence_gaps': (_strict('AuditEvidenceGaps', gaps), ...),
         'next_actions': (List[NextAction], Field(description='Genuine remaining actions with their destination; empty when none remain.'))})
@@ -395,6 +425,7 @@ def audit_view(state, plan=None):
             'matter_register': list(register.values()),
             'portfolio_slots': plan['portfolio'], 'people': people,
             'additional_leader_slots': plan['leaders'], 'comparison_slots': plan['comparisons'],
+            'peer_profiles': plan.get('peers') or [],
             'selection_advisories': state.get('selection_advisories', []),
             'repair_source_notes': (state.get('repair_report') or {}).get('source_notes', []),
             'case_obligations': audit_obligations}
@@ -819,7 +850,7 @@ def repair(state, plan, content, defects, invoke, trace):
     if not targets:
         return content, [], trace
     keys = {f'R{i+1:02d}': path for i, path in enumerate(targets)}
-    limits = {'executive_assessment': 2600, 'argument': 1600, 'exclusions': 2400, 'other_reserves': 500}
+    limits = {'executive_assessment': executive_chars(plan), 'argument': 1600, 'exclusions': 2400, 'other_reserves': 500}
     schema = _strict('AuditSlotRepair', {key: _text('Corrected Spanish text for ' + str(targets[path]['label']) + '.',
                      limits.get(path.split('/')[-1], 700)) for key, path in keys.items()})
     payload = {'slots': {key: {'slot': path, **targets[path]} for key, path in keys.items()},
@@ -914,7 +945,7 @@ def write(state, invoke):
         report['review_error'] = str(error)[:300]
     words = analytical_words(letter)
     errors = list(dict.fromkeys(d['message'] for d in defects))
-    if words > WORD_LIMIT:
+    if words > word_limit(state):
         errors.append('El Audit excede la extensión ejecutiva acordada.')
     if review_error is not None and _unknown(trace):
         errors.append('La comprobación del Audit quedó sin resultado confirmado del proveedor; se conserva la carta.')
