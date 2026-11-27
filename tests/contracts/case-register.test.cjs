@@ -34,7 +34,7 @@ test('the Word anonymises every name the register gives a confidential client an
 });
 
 test('the register is stale when what it was read from changes',()=>{
-  const d=data();d.case_register={...register,source_hash:reg.registerSourceHash(d)};
+  const d=data();d.case_register={...register,version:reg.CASE_REGISTER_VERSION,source_hash:reg.registerSourceHash(d)};
   assert.equal(reg.registerFresh(d),true);
   d.matters[0].rawNotes='A new narrative.';
   assert.equal(reg.registerFresh(d),false);
@@ -52,4 +52,15 @@ test('the case register enters the package every role reads, and only a new gene
   assert.match(build,/last\.sourceHash===stableHash\(sourceSnapshot\(submission\)\)/);
   const route=fs.readFileSync(path.join(__dirname,'../../src/app/api/editorial/jobs/route.ts'),'utf8');
   assert.match(route,/body\.repair===true \? \{submission,trace:null\}/);
+});
+
+test('v1.0.127: a v1 register still renders but is read again before a new generation (material conflicts)',()=>{
+  const d=data();
+  d.case_register={...register,source_hash:reg.registerSourceHash(d)};
+  assert.equal(reg.CASE_REGISTER_VERSION,'case-register-v2');
+  assert.equal(reg.registerFresh(d),false);
+  assert.equal(reg.applyRegister(d.matters,register)[0].leadPartner,'Ana Ruiz; Bruno Soto');
+  const current={...register,version:reg.CASE_REGISTER_VERSION};
+  d.case_register={...current,source_hash:reg.registerSourceHash(d)};
+  assert.equal(reg.registerFresh(d),true);
 });

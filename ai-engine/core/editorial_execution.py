@@ -118,7 +118,12 @@ def missing_head_bios(package,proposal):
     heads={identity(h.get('name')) for h in package.get('filing_details',{}).get('heads',[]) if isinstance(h,dict)}
     # Detect absence before paying for the whole Word review. This does not
     # certify the title: the independent reviewer still checks meaning/source.
-    function=re.compile(r'\b(?:head(?:s)?\s+(?:of\s+)?|leads?\s+|leading\s+|responsible\s+for\s+)(?:[\w’&-]+\s+){0,8}(?:department|practice)\b|\bdepartment(?:al)?\s+(?:head|leader)\b',re.I)
+    # v1.0.127: "one of two department heads of the Public Law (Administrative, …)
+    # department" and "head of the Regulatory / Public Law practice" were read as
+    # missing: the plural and punctuation inside the practice name now count.
+    function=re.compile(r"\b(?:co-?)?heads?\b(?:\s+of)?[^.;]{0,120}?\b(?:department|practice)\b"
+                        r"|\b(?:leads?|leading|responsible\s+for)\b[^.;]{0,100}?\b(?:department|practice)\b"
+                        r"|\b(?:department|practice)(?:'s|’s)?\s+(?:(?:two|three|four|joint|co-?)\s+)?(?:heads?|leaders?)\b",re.I)
     return [i for i,c in enumerate(proposal.get('candidates',[]))
         if identity(c.get('name')) in heads and not ('500' in str(package.get('directory','')) and c.get('recommendation')!='present')
         and not function.search(str(c.get('submission_bio','')))]

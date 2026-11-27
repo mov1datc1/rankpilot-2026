@@ -52,7 +52,8 @@ class SheetReadsSavedFieldsOnly(unittest.TestCase):
         self.assertEqual(vega['co_leads'], [{'client': 'Alfa Bebidas & Filiales', 'with': ['Ana Soto Lara', 'Pedro Lugo']}])
         self.assertEqual(vega['department_head'], 'sole department head')
         self.assertIn('Band 2 (verified', vega['verified_ranking'])
-        self.assertIn('declared by the firm, not verified', vega['declared_ranking'])
+        # v1.0.127: the declaration is a fact of the case, confirmed (not created) by verification.
+        self.assertIn('declared by the firm: a fact of the case', vega['declared_ranking'])
         self.assertEqual(vega['current_decision'], {'recommendation': 'present', 'category': 'Band 1'})
         soto = lawyer(sheet, 'Ana Soto Lara')
         self.assertEqual(soto['leads_alone'], ['Gamma Holdings, C.A.'])
@@ -220,5 +221,5 @@ class V118SharedHeadship(unittest.TestCase):
 
     def test_c2_argues_with_named_mandates_and_results(self):
         flat = ' '.join(INSTITUTION_TASK.split())
-        self.assertIn('What must differ from B10 is the function, not the evidence', flat)
+        self.assertIn('What must differ from B10 is the function', flat)
         self.assertIn('each named by its publishable client and stated with its documented result or exact stage', flat)

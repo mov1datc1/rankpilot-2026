@@ -27,7 +27,8 @@ class BiographyDepthTests(unittest.TestCase):
         self.assertEqual(biography_depth_errors(p, v, 0), [])
         self.assertNotIn('candidates/0', repair_targets(p, s, v))
         obligation = next(o for o in obligations(p, s, v) if o['id'] == 'depth:0:b9')
-        self.assertIn('500', str(obligation))
+        # v1.0.127: B9 is an individual argument (usually 200 to 400 words), not a 500-word target.
+        self.assertIn('200 to 400', str(obligation))
         self.assertIn('Do not reject by word count alone', str(obligation))
         self.assertIn('m4', str(obligation['sources']))
         # A real omission still creates a repair; dropping the numerical floor
@@ -80,7 +81,7 @@ class BiographyDepthTests(unittest.TestCase):
         targets = enrich_biography_targets(p, v, {'candidates/0': target})
         obligation = targets['candidates/0']['depth_recovery']
         self.assertEqual(obligation['current_words'], len(c['submission_bio'].split()))
-        self.assertEqual(obligation['words_to_target_floor'], 500-len(c['submission_bio'].split()))
+        self.assertEqual(obligation['words_to_target_floor'], 200-len(c['submission_bio'].split()))
         c['submission_bio'] = ' '.join(['word'] * 600)
         self.assertNotIn('depth_recovery', enrich_biography_targets(p, v, targets)['candidates/0'])
 

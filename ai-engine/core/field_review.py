@@ -59,6 +59,10 @@ positioning once, at the end, as the conclusion of the evidence; a petition for 
 band or category is a style failure.
 Do not rewrite text, change sources,
 nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
+# v1.0.127: the reviewer judges against the same method the writers follow.
+from core import editorial_strategy as _strategy
+TASK += '\n' + _strategy.REVIEW
+
 
 
 def digest(value):

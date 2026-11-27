@@ -7,7 +7,11 @@ export { identity, isPlaceholder } from './placeholder';
  * the fact sheet and the Word renderer then use the same reading of who is who:
  * client names and the other names a source uses for them, leads and team,
  * titles as written, closing dates and explicit restrictions on public use. */
-export const CASE_REGISTER_VERSION = 'case-register-v1';
+export const CASE_REGISTER_VERSION = 'case-register-v2';
+/** v1.0.127: v2 reads material conflicts, so a v1 case is read again before its next
+ * NEW generation; a v1 reading still renders saved documents and running jobs. */
+export const READABLE_REGISTER_VERSIONS = ['case-register-v1', CASE_REGISTER_VERSION];
+const readable = (register: any) => READABLE_REGISTER_VERSIONS.includes(register?.version);
 
 const MATTER_FIELDS = ['id','client','clientName','leadPartner','lead_partner','teamMembers','team_members','completionDate',
   'rawNotes','summary','source_excerpt','original_code_extraction','extraction_evidence'];
@@ -37,7 +41,7 @@ export function registerFresh(data: any): boolean {
  * confirmed with a real name is never changed. */
 export function applyRegister(matters: any[], register: any): any[] {
   if (!Array.isArray(matters)) return matters;
-  const valid = register?.version === CASE_REGISTER_VERSION;
+  const valid = readable(register);
   return matters.map((matter: any) => {
     const facts = valid ? register.matters?.[matter?.id] : null;
     const client = valid ? register.clients?.[matter?.id] : null;
@@ -64,7 +68,7 @@ export function withoutPlaceholderContacts(rows: any[]): any[] {
  * the narrative), so the Word anonymises all of them, never a word of a description. */
 export function registerConfidentialNames(data: any, isPublishable: (matter: any) => boolean): string[] {
   const register = data?.case_register;
-  if (register?.version !== CASE_REGISTER_VERSION) return [];
+  if (!readable(register)) return [];
   const names: string[] = [];
   for (const matter of data?.matters || []) {
     const client = register.clients?.[matter?.id];

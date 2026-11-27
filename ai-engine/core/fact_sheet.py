@@ -51,6 +51,11 @@ A lawyer's firm_request is the firm's own sentence asking for that lawyer's
 recognition. The Submission states only the current decision; when the current
 decision gives a different category or does not present the lawyer, the Audit's
 assessment of that person states what the firm asked for and why the decision differs.
+A lawyer's declared_ranking is the firm's own statement of that lawyer's present
+position: a lawyer declared ranked is never treated or proposed as unranked or for an
+entry band. A client entry's contested_facts are two incompatible versions of one
+material fact: no Submission section states either version, and the Audit asks the firm
+to confirm it.
 fact_sheet adds no fact about the legal work and never replaces the sources for the
 substance of a mandate.''')
 REVIEW_RULE = RULE + (''' When reviewing, a statement about one of these facts that
@@ -216,6 +221,7 @@ def build(package, strategy=None, development=None, person=None):
                 **({'public_use': 'restricted by the source ("' + str(((package.get('case_register') or {}).get('matters') or {}).get(m.get('id'), {}).get('restriction_quote') or 'strictly confidential') + '"): this mandate is never described in B9, B10 or C2, not even anonymously; it stays in section E and in the Audit'} if m.get('public_use_restricted') else {}),
                 **({'research_period': 'closed before the confirmed research period: it is not part of the portfolio of this cycle'} if m.get('in_research_period') is False else {}),
                 **({'cross_border_question': 'the form answers that this matter is not cross-border, but the record says: "' + m['cross_border_doubt'] + '". The Audit asks the firm to confirm; the Submission keeps the form answer and never narrates the discrepancy'} if m.get('cross_border_doubt') else {}),
+                **({'contested_facts': [{'subject': c.get('subject'), 'version_a': c.get('quote_a'), 'version_b': c.get('quote_b')} for c in m['contested_facts']]} if m.get('contested_facts') else {}),
                 **({'selection': dispositions[m.get('id')]} if dispositions.get(m.get('id')) else {})} for m in matters]
     head_names = [str(h.get('name')).strip() for h in ((package.get('filing_details') or {}).get('heads') or package.get('departmentHeads') or [])
                   if isinstance(h, dict) and identity(h.get('name'))]
@@ -249,7 +255,9 @@ def build(package, strategy=None, development=None, person=None):
             entry['department_head'] = ('one of ' + str(len(heads)) + ' department heads, with ' + ' and '.join(others)) if others else 'sole department head'
         declared = profile.get('current_ranking') or profile.get('currentRank')
         if declared:
-            entry['declared_ranking'] = str(declared) + ' (declared by the firm, not verified)'
+            # v1.0.127 (Public Law): the declaration is a fact of the case; the
+            # official check only confirms it.
+            entry['declared_ranking'] = str(declared) + ' (declared by the firm: a fact of the case; official verification only confirms it)'
         if key in verified:
             entry['verified_ranking'] = verified[key] + ' (verified by the application in the official table)'
         alone, shared, team = [], [], []
