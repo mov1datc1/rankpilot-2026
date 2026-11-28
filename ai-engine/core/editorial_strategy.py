@@ -10,14 +10,17 @@ import re
 
 from core.role_evidence import identity
 
-VERSION = 'editorial-strategy-v1'
+VERSION = 'editorial-strategy-v2'
 
 SECTION_ROLES = '''ONE STRATEGY, FOUR SECTIONS WITH DIFFERENT FUNCTIONS:
 - B9 answers who deserves recognition and why. It is an individual argument for that
   lawyer: their role in the practice, their judgement, autonomy and client trust, and
   the legal sophistication of what they personally do. Mandates are its proof, each in
   a clause with this lawyer's own contribution and its result; a matter is never
-  re-told in B9, because section D/E tells it.
+  re-told in B9, because section D/E tells it. A compact proof clause ("as in the
+  challenge she led against the regulator's suspension order, which the court
+  annulled") fully proves a mandate: no reviewer asks B9 for the legal problem, the
+  procedure or the team's steps.
 - B10 answers what distinguishes this practice in its market: a thesis about what it
   does that other firms do not, carried by its team, with mandates as evidence of that
   thesis, never a list of mandates.
@@ -29,7 +32,9 @@ SECTION_ROLES = '''ONE STRATEGY, FOUR SECTIONS WITH DIFFERENT FUNCTIONS:
   presents the practice again nor begs, and it cites a mandate only for the point it
   proves.
 - Work highlights (D/E) carry the full evidence for all three.
-No section repeats another section's function or sentences.'''
+No section repeats another section's function or sentences, and none re-tells a work
+highlight: B9, B10 and C2 may use the same mandate, each for its own point and in a
+clause, never by narrating it again.'''
 
 ORIGINAL_STRATEGY = '''THE ORIGINAL STRATEGY: b10_source and c2_source are the firm's own
 strategy. Before writing, identify their central thesis: the value proposition and the
@@ -37,7 +42,13 @@ positioning argument. When that thesis is specific and well argued it is better 
 one you would invent: keep it as the thesis of the section, keep its distinctive
 formulations, and add only what strengthens it (the evidence of the mandates, the team
 that delivers it). Replace or reframe an original argument only when it is generic,
-unsupported or contradicted by the evidence.'''
+unsupported or contradicted by the evidence. b10_source and c2_source carry two
+different arguments: the B10 value proposition, and the C2 reconsideration argument
+(which aspect of the coverage, on what grounds: a leadership structure, named lawyers'
+autonomy or client reliance, a volume of work). Keep each in its own section: the C2
+argument is never folded into the B10 thesis, and a lawyer the original C2 argues for
+stays in C2 (as growing responsibility and bench depth when that lawyer is not
+presented now, never as a nomination).'''
 
 CANDIDACY = '''CANDIDACY: a ranking the firm declares for its lawyer is a fact of the case;
 official verification only confirms it, and its absence never makes that lawyer
@@ -72,7 +83,15 @@ reconcile incompatible facts by inference, and never characterise the contested 
 a word of either version (for an arbitral forum: "an international arbitration", never a
 treaty, investment or institutional arbitration, nor its seat).'''
 
-SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS))
+FORM_FIELDS = '''FORM FIELDS: a work highlight is a form with its own cells for the lead lawyer and
+the team (with their titles and committee roles), the cross-border answer and its
+jurisdictions, the value and the dates. The narrative is the summary of the matter and
+the firm's role: it does not need to repeat what those cells carry, and the absence of
+a title, a committee membership, a cross-border answer or a listed jurisdiction from the
+narrative is never an omission. The firm's own contribution, a co-lead role and the
+legal mechanism of the matter are part of the narrative.'''
+
+SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS, FORM_FIELDS))
 
 REVIEW = ('EDITORIAL METHOD (shared by every writer; judge the output against it, and never '
           'demand what it forbids, such as re-telling a matter inside B9 or a list of mandates in B10):\n' + SPEC)
@@ -215,12 +234,125 @@ def _sentences(text):
     return [s for s in re.split(r'(?<=[.!?])\s+', str(text or '').strip()) if len(s.split()) >= 6]
 
 
-def section_faults(package, value):
-    """C2 opens on the coverage, and does not restate B10 sentence by sentence."""
-    c2, b10 = str((value or {}).get('c2') or ''), str((value or {}).get('b10') or '')
-    if not c2.strip():
+# ---- No section re-tells a work highlight (v1.0.129) -------------------------
+
+def retold_sentences(text, matters, threshold=0.6, shared=6, min_words=14):
+    """Long sentences of a section that narrate a sentence of a D/E work highlight
+    again (Public Law: the B9 told each matter in full; 29 of 53 saved sections)."""
+    narrative = [_terms(s) for m in (matters or []) for s in _sentences((m or {}).get('text', ''))]
+    if not narrative:
         return []
+    found = []
+    for sentence in _sentences(text):
+        terms = _terms(sentence)
+        if len(sentence.split()) < min_words or len(terms) < 6:
+            continue
+        if any(len(terms & other) >= shared and len(terms & other) / len(terms) >= threshold for other in narrative):
+            found.append(sentence)
+    return found
+
+
+def retold_faults(label, text, matters):
+    found = retold_sentences(text, matters)
+    if len(found) < 2:
+        return []
+    return [f'{label} re-tells the work highlights ({len(found)} sentences narrate section D/E again, for example "'
+            + ' '.join(found[0].split()[:24]) + ' …"). Section D/E tells each matter; here prove the point with the mandate '
+            'in a clause: the own contribution and the result, without the legal problem, the procedure or the team narrative.']
+
+
+# A B9 is about the lawyer; a C2 about the coverage. Sentences whose subject is the
+# team, the firm or a matter narrate the work highlight again (Public Law probe of
+# v1.0.129: "The Public Law team prepared…", "The engagement addresses…", "The
+# ongoing … matter similarly concerns…"), even when they paraphrase it.
+_B9_SUBJECT = r'(?:team|firm|department|engagement|matter|mandate|work|representation|intervention|opinion|advice|practice|proceedings?|dispute|case)'
+_C2_SUBJECT = r'(?:matter|mandate|engagement|dispute|proceedings?|case|representation|opinion|motion|litigation)'
+
+
+def _subject(nouns, firm=''):
+    first = re.escape(str(firm or '').split()[0]) if str(firm or '').split() else None
+    alternatives = [r"(?:the|this|that|its|their|our|an?)\s+(?:[\w’'-]+\s+){0,4}?" + nouns + r"(?:’s|'s)?\b"]
+    if first:
+        alternatives.append(first + r"(?:’s|'s)?\b")
+    return re.compile(r'^(?:' + '|'.join(alternatives) + r')', re.I)
+
+
+def narration_sentences(text, nouns, firm=''):
+    pattern = _subject(nouns, firm)
+    return [s for s in _sentences(text) if pattern.search(s.strip())]
+
+
+B9_SENTENCE_WORDS = 45
+
+
+def b9_narration_faults(package, name, text):
+    """Narration in B9: two or more sentences about the team, the firm or the matter, or
+    a sentence over 45 words (the v1.0.129 probe answered the first rule by folding the
+    same narration into 50-60-word sentences with the lawyer as subject)."""
+    found = narration_sentences(text, _B9_SUBJECT, (package or {}).get('firm_name', ''))
+    long = [s for s in _sentences(text) if len(s.split()) > B9_SENTENCE_WORDS]
     faults = []
+    if len(found) >= 2:
+        faults.append(f'B9 of {name} narrates the matters: {len(found)} sentences have the team, the firm or the matter as subject '
+                      '(for example "' + ' '.join(found[0].split()[:16]) + ' …"). B9 is about this lawyer: make the lawyer the subject '
+                      'and keep each mandate as proof in a clause (own contribution and result); section D/E tells the matter.')
+    if long:
+        faults.append(f'B9 of {name} has {len(long)} sentence(s) over {B9_SENTENCE_WORDS} words (for example "'
+                      + ' '.join(long[0].split()[:16]) + ' …"). A mandate is proof in a clause: state what this lawyer did and the '
+                      'result in a short sentence, and leave the matter\'s problem, procedure and team work to section D/E.')
+    return faults
+
+
+def c2_narration_faults(text):
+    found = narration_sentences(text, _C2_SUBJECT)
+    if len(found) < 2:
+        return []
+    return [f'C2 summarises matters: {len(found)} sentences have a matter as subject (for example "'
+            + ' '.join(found[0].split()[:16]) + ' …"). C2 argues what the coverage should reconsider; cite a mandate only '
+            'in a clause for the point it proves, inside a sentence about the practice or a lawyer.']
+
+
+def _plain(text):
+    import unicodedata
+    return ''.join(c for c in unicodedata.normalize('NFKD', str(text or '').casefold()) if not unicodedata.combining(c))
+
+
+def named_lawyers(package, text):
+    """Roster lawyers a text names (full name, or a surname of a multi-word name)."""
+    words = set(re.findall(r"[a-z][a-z'’-]+", _plain(text)))
+    plain = _plain(text)
+    found = []
+    for person in (package or {}).get('lawyers', []):
+        name = str(person.get('name') or person.get('fullName') or '').strip()
+        tokens = [t for t in re.findall(r"[a-z][a-z'’-]+", _plain(name)) if len(t) > 2]
+        if not tokens:
+            continue
+        if _plain(name) in plain or (len(tokens) > 1 and any(t in words for t in tokens[1:])):
+            found.append(name)
+    return found
+
+
+def c2_argument_faults(package, c2):
+    """The original C2 argues for named lawyers; the generated C2 keeps that argument."""
+    source = str((package or {}).get('c2_source') or '')
+    if not source.strip() or not str(c2 or '').strip():
+        return []
+    missing = [n for n in named_lawyers(package, source) if n not in named_lawyers(package, c2)]
+    if not missing:
+        return []
+    return ['C2 drops the original argument about ' + ', '.join(missing) + ': c2_source argues their position (leadership, '
+            'autonomy, client reliance). Keep that argument as part of the reconsideration, with its evidence; for a lawyer '
+            'not presented now, as growing responsibility and bench depth, never as a nomination.']
+
+
+def section_faults(package, value, matters=None):
+    """C2 opens on the coverage, keeps the original C2 argument and does not restate B10;
+    neither B10 nor C2 re-tells a work highlight."""
+    c2, b10 = str((value or {}).get('c2') or ''), str((value or {}).get('b10') or '')
+    faults = retold_faults('B10', b10, matters) if b10.strip() else []
+    if not c2.strip():
+        return faults
+    faults += retold_faults('C2', c2, matters) + c2_narration_faults(c2) + c2_argument_faults(package, c2)
     first = [p for p in c2.split('\n') if p.strip()][0]
     if not COVERAGE.search(first):
         faults.append('C2 opens by presenting the practice ("' + first.strip()[:140] + '"). C2 answers what the directory '

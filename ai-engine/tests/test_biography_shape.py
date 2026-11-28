@@ -48,7 +48,8 @@ class ShapeRuleTests(unittest.TestCase):
         found = biography_shape.faults(self.candidate(LIST_BIO))
         self.assertEqual(len(found), 1)
         self.assertIn('B9 SHAPE', found[0])
-        self.assertIn('two to four legal themes', found[0])
+        self.assertIn("two to four points of this lawyer's individual case", found[0])
+        self.assertIn('never re-tell its problem, procedure or team narrative', found[0])
 
     def test_themed_biography_and_short_or_secondary_profiles_pass(self):
         self.assertEqual(biography_shape.faults(self.candidate(THEMED_BIO)), [])

@@ -99,11 +99,12 @@ def faults(candidate):
         found.append(
             f'B9 SHAPE: {name} has {len(paras)} paragraphs and {len(leads)} open with another mandate the lawyer led'
             + (f' ({sample})' if sample else '') + '. Rewrite as the ARCHITECTURE OF A NOMINATED B9: an opening that '
-            'positions the lawyer in this practice; the same mandates grouped into two to four legal themes, each opened by '
-            'its most significant mandate (client problem, legal obstacle, own action, achieved result or exact current '
-            f'stage) with related mandates following briefly; credentials once; one factual close. At most {MAX_PARAGRAPHS} '
-            'paragraphs, no "Finally,"/"Additionally," list markers. Keep every fact, status and mandate; figures of a '
-            'confidential mandate stay qualitative.')
+            'positions the lawyer in this practice; two to four points of this lawyer\'s individual case (role, judgement, '
+            'autonomy, client trust, legal sophistication), each proved by their mandates in a clause with the own '
+            'contribution and the achieved result or exact current stage; credentials once; one factual close. Section D/E '
+            f'tells each matter: never re-tell its problem, procedure or team narrative here. At most {MAX_PARAGRAPHS} '
+            'paragraphs, no "Finally,"/"Additionally," list markers. Keep every mandate with its result or status; figures '
+            'of a confidential mandate stay qualitative.')
     repeats = repeated_sentences(bio)
     if repeats:
         found.append('B9 REPETITION: the same content is stated twice: ' + '; '.join(

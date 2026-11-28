@@ -72,7 +72,7 @@ class Development(BaseModel):
     target_rationale: str = Field(description='Preserve the requested target or explain any recommended change using evidence; distinguish objective from verified current ranking.')
     principal_strength: str
     principal_vulnerability: str
-    original_strategy: str = Field(default='', description='Internal, in Spanish: the central thesis of b10_source and c2_source (value proposition and positioning argument) in one or two sentences, whether it is stronger than what you would build from the mandates alone, and how B10 and C2 keep and strengthen it. Empty only when there is no original narrative.')
+    original_strategy: str = Field(default='', description='Internal, in Spanish, in two parts: (1) the B10 thesis of b10_source (its value proposition); (2) the C2 argument of c2_source (which aspect of the coverage it asks to reconsider and on what grounds, naming the lawyers it argues for). For each, whether it is stronger than what you would build from the mandates alone and how that section keeps and strengthens it; the C2 argument is never folded into the B10 thesis. Empty only when there is no original narrative.')
     hero_rationale: str = Field(description='Explain why this hero best proves the candidature relative to the strongest other selected mandate.')
     candidates: list[Candidate]
     comparisons: list[Comparison]
