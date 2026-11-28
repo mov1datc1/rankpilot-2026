@@ -91,7 +91,45 @@ a title, a committee membership, a cross-border answer or a listed jurisdiction 
 narrative is never an omission. The firm's own contribution, a co-lead role and the
 legal mechanism of the matter are part of the narrative.'''
 
-SPEC = '\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS, FORM_FIELDS))
+# v1.0.130: B9 kept re-telling the matters whatever surface rule it was given (team as
+# subject, then long sentences, then subordinate clauses: v1.0.129 probes), because it
+# received each matter's full narrative. The plan, which reads everything, now decides
+# each lawyer's proof of each mandate in one clause; B9 and C2 receive that clause, and a
+# mandate with a usable clause reaches B9 without its narrative.
+PROOF_WORDS = 25
+PROOF_LIMIT = 35  # longer than this is a narration, not a proof: the record is sent instead
+
+PROOF_CLAUSES = f'''PROOF CLAUSES: for every lawyer, give each supporting_matters entry a
+proof_clause: ONE clause of at most {PROOF_WORDS} words, in English, with this lawyer's own
+contribution to that mandate and its result or exact current stage (for example "led the
+constitutional challenge that preserved the client's non-financial services" or "co-leads
+the defence, now awaiting the court's ruling"). It names no client and no confidential
+figure, and it never re-tells the matter's legal problem, procedure or team: B9 and C2 cite
+the mandate through this clause, and section D/E tells the matter. A lawyer who is only a
+team member gets a clause stating that participation ("was part of the team that ..."),
+never a leadership role. Every selected mandate whose record names the lawyer, as lead or
+as team member, has its supporting_matters entry with the actual role and its clause, so
+that B9 cites each of their mandates through a clause.'''
+
+PROOF_B9 = '''PROOF CLAUSES: proof_clauses gives, per mandate of this lawyer, the shared
+plan's decided proof: their own contribution and its result or current stage. Those
+mandate records reach you without their narrative on purpose, because section D/E tells
+the matter. In B9 each such mandate appears once, as that proof inside a sentence about
+this lawyer (rephrase it to fit; add the client's name only when privacy_register
+publishes it); never add its legal problem, procedure, team or other facts. Read a
+complete record only for a mandate without a proof clause, and use it the same way: one
+clause with this lawyer's contribution and its result. The body of
+B9 is the individual argument (role, judgement, autonomy, client trust); the proofs
+support it.'''
+
+PROOF_C2 = '''proof_clauses gives, per presented lawyer, the shared plan's proof of each of
+their mandates: when C2 argues for a lawyer, cite their mandates through these clauses
+(naming a publishable client), never through the matter's narrative.'''
+
+NARRATIVE_KEYS = ('source_excerpt', 'rawNotes', 'summary', 'notes', 'description', 'otherInfo',
+                  'outcome', 'extraction_evidence', 'original_code_extraction', 'extraction_issues')
+
+SPEC ='\n'.join((SECTION_ROLES, ORIGINAL_STRATEGY, CANDIDACY, MATTER_SIGNIFICANCE, MATTER_OPENING, MATERIAL_CONFLICTS, FORM_FIELDS))
 
 REVIEW = ('EDITORIAL METHOD (shared by every writer; judge the output against it, and never '
           'demand what it forbids, such as re-telling a matter inside B9 or a list of mandates in B10):\n' + SPEC)
@@ -368,6 +406,61 @@ def section_faults(package, value, matters=None):
         faults.append('C2 repeats B10 (for example "' + repeated[0][:140] + '"). Keep each mandate in C2 only for the point '
                       'it proves about the coverage; the presentation of the practice belongs to B10.')
     return faults
+
+
+# ---- Proof clauses: the plan decides, B9 and C2 cite (v1.0.130) ---------------
+
+def proof_clauses(candidate, eligible=None):
+    """matter_id -> this lawyer's proof clause from the shared plan, when it is a usable
+    clause. A missing, overlong or foreign clause is skipped: that mandate reaches B9 with
+    its full record, as before, so a weak plan never blocks the case."""
+    result = {}
+    for support in (candidate or {}).get('supporting_matters') or []:
+        clause = ' '.join(str(support.get('proof_clause') or '').split())
+        matter_id = support.get('matter_id')
+        if (not clause or not matter_id or matter_id in result or len(clause.split()) > PROOF_LIMIT
+                or (eligible is not None and matter_id not in eligible)):
+            continue
+        result[matter_id] = clause
+    return result
+
+
+def proof_record(matter, clause):
+    """A mandate as B9 reads it once the plan has decided its proof: identity, roles, stage,
+    value and restrictions, plus the clause; without the narrative that D/E tells."""
+    record = {k: v for k, v in (matter or {}).items() if k not in NARRATIVE_KEYS}
+    record['proof_clause'] = clause
+    return record
+
+
+def keep_proofs(value, current):
+    """A repaired candidate keeps the plan's proof clauses: the repair writes prose, never
+    the shared decision. A clause the current candidate does not have is not added."""
+    if not isinstance(value, dict) or not isinstance(current, dict) or not isinstance(value.get('supporting_matters'), list):
+        return value
+    decided = {s.get('matter_id'): s.get('proof_clause') for s in current.get('supporting_matters') or []
+               if isinstance(s, dict) and s.get('proof_clause')}
+    result = dict(value)
+    result['supporting_matters'] = []
+    for support in value['supporting_matters']:
+        if isinstance(support, dict):
+            support = {k: v for k, v in support.items() if k != 'proof_clause'}
+            if decided.get(support.get('matter_id')):
+                support['proof_clause'] = decided[support.get('matter_id')]
+        result['supporting_matters'].append(support)
+    return result
+
+
+def presented_proofs(candidates):
+    """For C2: each presented lawyer's proof clauses, in the plan's order."""
+    result = {}
+    for candidate in candidates or []:
+        if candidate.get('recommendation') != 'present':
+            continue
+        clauses = proof_clauses(candidate)
+        if clauses:
+            result[candidate['name']] = [{'matter_id': k, 'proof_clause': v} for k, v in clauses.items()]
+    return result
 
 
 # ---- A matter does not open with a procedural outcome ------------------------

@@ -9,7 +9,7 @@ from utils.literal_source import table_text_view
 from core.section_limits import B10_MAX_WORDS
 import copy
 from typing import Literal
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, model_serializer
 
 DEVELOPMENT_VERSION = 'editorial-development-v4'
 from core.biography_depth import BiographyDepth, DEPTH_CONTRACT, DEPTH_INSTRUCTION
@@ -23,6 +23,16 @@ class SupportingMatter(BaseModel):
     matter_id: str
     personal_role: str
     source_quote: str
+    # v1.0.130: decided by the shared plan; B9 and C2 cite the mandate through it.
+    proof_clause: str = Field(default='', description='Internal, in English: ONE clause of at most 25 words with this lawyer\'s own contribution to this mandate and its result or exact current stage, the proof B9 and C2 cite. No client name, no confidential figure, never the matter\'s legal problem, procedure or team narrative.')
+
+    @model_serializer(mode='wrap')
+    def _without_empty_proof(self, handler):
+        # An entry without a decided proof serialises exactly as before v1.0.130.
+        data = handler(self)
+        if isinstance(data, dict) and not data.get('proof_clause'):
+            data.pop('proof_clause', None)
+        return data
 
 class Candidate(BaseModel):
     name: str

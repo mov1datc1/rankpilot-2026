@@ -1,3 +1,23 @@
+## 1.0.130: the plan decides each lawyer's proof of each mandate; B9 and C2 cite it
+
+The 1.0.129 checks did not stop B9 from re-telling the matters. Three paid passes on the saved Public Law run found three ways around surface rules:
+- first the team or the matter as the subject of each sentence;
+- then 50-60-word sentences with the lawyer as subject;
+- with the 45-word limit, subordinate clauses ("…where the team prepared and coordinated expert testimony…").
+
+The rubric kept B9, complementarity and C2 function at 2/5. The cause was the input, not the rules: the B9 writer received the full narrative of every mandate and re-told it. C2 was argued from the same narratives as B10.
+
+- **Proof clauses in the plan.** The shared plan, which reads every record, now gives each lawyer's supporting mandate a `proof_clause`: one clause of at most 25 words with the lawyer's own contribution and its result or current stage. It names no client and no confidential figure, and never re-tells the matter. Every selected mandate that names the lawyer, as lead or as team member, gets one, with the actual role.
+- **B9 receives the clause, not the narrative.** A mandate with a usable clause reaches the B9 writer as its identity, roles, stage, value and restrictions plus the clause, without its narrative fields. Its decisive passages are no longer sent either. The writer is told to cite it once, as that proof, inside a sentence about the lawyer. A missing or overlong clause (over 35 words) falls back to the full record, as before, so a weak plan never stops the case.
+- **C2 receives the presented lawyers' clauses** and cites their mandates through them when it argues for a lawyer.
+- **Clauses are shared decisions.** A repair writes prose, never the plan: a repaired candidate keeps the plan's clauses, cannot add one, and is not rejected for omitting one. An entry without a clause serialises exactly as before.
+- **Cost.** On the saved Public Law run, the B9 writers would read about 9,000 input tokens of mandate records instead of about 51,500, roughly 0.08 USD less per case before self-corrections. The plan writes a few hundred more tokens.
+
+Validation:
+- Python 1,220 tests OK (new `test_v130_proof_clauses.py`).
+- Third paid pass of 1.0.129 (0.335 USD, before this change): rubric 29/40. One presented B9 met the 45-word limit but re-told the matters in subordinate clauses; the other was unchanged after its self-correction.
+- 1.0.130 itself is not yet paid-validated.
+
 ## 1.0.129: every section proves with mandates in a clause; the original C2 argument is kept
 
 The rubric on the 1.0.127 probe left three criteria weak: B9 re-told the matters (2/5), the sections shared the same narrative (complementarity 2/5) and C2 lost the original argument about the firm's lawyers (3/5). The cause was in the code. The B9 writer already said "never re-tell", but three later pieces still asked for the opposite:

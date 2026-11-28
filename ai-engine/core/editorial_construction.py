@@ -71,7 +71,8 @@ PLAN_TASK += '\n' + '\n'.join((editorial_strategy.SECTION_ROLES, editorial_strat
 Record in original_strategy the B10 thesis and, separately, the C2 argument (the aspect to
 reconsider, its grounds and the lawyers it names) and how each section keeps it, and give each
 lawyer a candidacy_state; the institutional_arguments are claims about what distinguishes
-the practice, proved by mandates, never one argument per mandate.'''
+the practice, proved by mandates, never one argument per mandate.
+''' + editorial_strategy.PROOF_CLAUSES
 
 MATTER_TASK = COMMON + ''' Write these matter narratives in English. The destination
 and original restrictions are explicit in field_contracts. E is confidential:
@@ -1002,6 +1003,15 @@ def advance(state, invoke):
             # omitted achieved result or a result rewritten as an aim).
             payload['mandate_results']={m['matter_id']:m.get('decisive_source_quotes',[]) for m in work.get('matters',[])
                                         if m.get('matter_id') in ids and m.get('decisive_source_quotes')}
+            # v1.0.130: a mandate whose proof the plan decided reaches B9 as that
+            # clause, without the narrative it kept re-telling (v1.0.129 probes).
+            proofs=editorial_strategy.proof_clauses(c,ids)
+            if proofs:
+                payload['package']['matters']=[editorial_strategy.proof_record(m,proofs[m['id']]) if m['id'] in proofs else m
+                                               for m in payload['package']['matters']]
+                payload['mandate_results']={k:v for k,v in payload['mandate_results'].items() if k not in proofs}
+                payload['proof_clauses']=proofs
+                task+='\n'+editorial_strategy.PROOF_B9
             if bindings is not None:payload['source_bindings']=bindings
         else:
             schema=strict_model('InstitutionalProse',model_fields(full,('b10','c2','institutional_execution')))
@@ -1014,6 +1024,10 @@ def advance(state, invoke):
                 'department_size':department_size(package)}
             from core.public_privacy import public_disclosure
             payload['public_disclosure']=public_disclosure(package,selected)
+            proofs=editorial_strategy.presented_proofs(work.get('candidates'))
+            if proofs:
+                payload['proof_clauses']=proofs
+                task+='\n'+editorial_strategy.PROOF_C2
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
