@@ -9,6 +9,7 @@ import re
 from typing import Literal, Union, Optional
 from pydantic import BaseModel, create_model, ConfigDict, Field
 from core.editorial_development import Candidate, Comparison
+from core.editorial_strategy import keep_proofs
 from core.section_limits import B10_MAX_WORDS
 from core.biography_depth import BiographyDepth, DEPTH_INSTRUCTION
 from core.profile_binding_repair import enrich_profile_bindings, binding_output_model, validate_binding_delta
@@ -391,6 +392,9 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         if isinstance(targets[path]['current_value'],dict):
             if not isinstance(value,dict) or (path!='case_plan' and (len(path.split('/'))!=2 or not path.startswith('candidates/'))):
                 raise ValueError('Invalid candidate correction')
+            if path!='case_plan':
+                # v1.0.130: proof clauses are shared-plan decisions; a repair keeps them.
+                value=keep_proofs(value,targets[path]['current_value'])
             value=(EditorialCase if path=='case_plan' else Candidate).model_validate(value).model_dump(exclude_unset=True)
             if path!='case_plan' and value['name']!=targets[path]['current_value']['name']:
                 raise ValueError('Repair cannot change candidate identity')

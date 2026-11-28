@@ -1,3 +1,55 @@
+## 1.0.130: the plan decides each lawyer's proof of each mandate; B9 and C2 cite it
+
+The 1.0.129 checks did not stop B9 from re-telling the matters. Three paid passes on the saved Public Law run found three ways around surface rules:
+- first the team or the matter as the subject of each sentence;
+- then 50-60-word sentences with the lawyer as subject;
+- with the 45-word limit, subordinate clauses ("…where the team prepared and coordinated expert testimony…").
+
+The rubric kept B9, complementarity and C2 function at 2/5. The cause was the input, not the rules: the B9 writer received the full narrative of every mandate and re-told it. C2 was argued from the same narratives as B10.
+
+- **Proof clauses in the plan.** The shared plan, which reads every record, now gives each lawyer's supporting mandate a `proof_clause`: one clause of at most 25 words with the lawyer's own contribution and its result or current stage. It names no client and no confidential figure, and never re-tells the matter. Every selected mandate that names the lawyer, as lead or as team member, gets one, with the actual role.
+- **B9 receives the clause, not the narrative.** A mandate with a usable clause reaches the B9 writer as its identity, roles, stage, value and restrictions plus the clause, without its narrative fields. Its decisive passages are no longer sent either. The writer is told to cite it once, as that proof, inside a sentence about the lawyer. A missing or overlong clause (over 35 words) falls back to the full record, as before, so a weak plan never stops the case.
+- **C2 receives the presented lawyers' clauses** and cites their mandates through them when it argues for a lawyer.
+- **Clauses are shared decisions.** A repair writes prose, never the plan: a repaired candidate keeps the plan's clauses, cannot add one, and is not rejected for omitting one. An entry without a clause serialises exactly as before.
+- **Cost.** On the saved Public Law run, the B9 writers would read about 9,000 input tokens of mandate records instead of about 51,500, roughly 0.08 USD less per case before self-corrections. The plan writes a few hundred more tokens.
+
+Validation:
+- Python 1,220 tests OK (new `test_v130_proof_clauses.py`).
+- Third paid pass of 1.0.129 (0.335 USD, before this change): rubric 29/40. One presented B9 met the 45-word limit but re-told the matters in subordinate clauses; the other was unchanged after its self-correction.
+- 1.0.130 itself is not yet paid-validated.
+
+## 1.0.129: every section proves with mandates in a clause; the original C2 argument is kept
+
+The rubric on the 1.0.127 probe left three criteria weak: B9 re-told the matters (2/5), the sections shared the same narrative (complementarity 2/5) and C2 lost the original argument about the firm's lawyers (3/5). The cause was in the code. The B9 writer already said "never re-tell", but three later pieces still asked for the opposite:
+- the B9 shape check asked for themes "opened by the mandate (client problem, legal obstacle, own action, result)" and to "keep every fact";
+- the field reviewer's obligation asked B9 to "develop the contribution, distinctive issue and result" of each mandate;
+- the Audit-consistency obligation asked that each contribution "be developed" in B9.
+
+The reviewer and repair then lengthened every B9 again. No check looked for a section narrating a work highlight a second time. The plan recorded the original strategy only from B10, so the C2 argument (consolidated leadership, named lawyers' autonomy) was folded into it.
+
+- **One B9 contract across roles.** The writer, the shape check, the field reviewer, the Audit-consistency obligation and repair all ask for the same thing: the mandate as proof of the lawyer's case, as a clause with the own contribution and the result. A compact proof clause meets the obligation; no reviewer asks B9 for the legal problem, the procedure or the team's steps.
+- **No section re-tells a work highlight** (checked in code before review, with one self-correction and then an observation). A B9, B10 or C2 with two or more long sentences that share most of their terms with a sentence of section D/E is corrected. On saved runs this flags 21 of 31 presented B9s and the B10/C2 of most cases, as the editorial owner's reviews did.
+- **The original C2 argument is kept.** The plan records the B10 thesis and, separately, the C2 argument: the aspect to reconsider, its grounds and the lawyers it names. A C2 that drops a lawyer the original C2 argues for is corrected. A lawyer not presented now stays in the C2 as growing responsibility and bench depth, never as a nomination.
+
+- **Review loops** (measured with the graph-flow data of 10 saved runs). A case costs 5.27 USD on average: the field reviewer 1.91 (12.3 calls of about 26,000 input tokens), the judge 0.94, repair 0.55, and writing only about 1.05.
+  - B9 is the field most often re-reviewed (25 times) and the one the judge most often sends back (9 of 23 fields). The B9 contract above addresses it.
+  - "Omission" is the most frequent defect: 51 cases. About half asked the matter narrative to repeat what the form's own cells carry: the leads' titles and committee roles, the cross-border answer and its jurisdictions. The writer, the field reviewer, repair and the judge now read that those cells are not omissions, and the two matter obligations say so.
+  - The prompt cache is not the lever: the part common to all calls of one role in a case is about 20% of each call, so it would save about 0.10 USD per case. It is not changed.
+
+- **Narration checks from the paid probe.** The overlap check caught copied sentences, not paraphrases. Two more checks were added:
+  - A B9 is corrected when two or more of its sentences have the team, the firm or the matter as subject, or when a sentence runs over 45 words. The first rule alone was answered by folding the same narration into 50-60-word sentences with the lawyer as subject.
+  - A C2 is corrected when two or more of its sentences have a matter as subject.
+  - When the original C2 argues from people, that argument, one lawyer at a time, is the C2's evidence.
+
+Validation:
+- Python 1,211 tests OK (new `test_v129_sections.py`).
+- Free replay on 9 saved runs and on the 1.0.127 probe.
+- Paid probe on the saved Public Law run (1.43 USD), first pass only. Rubric: 27/40, against 24/40 for 1.0.127 and 15/40 for the saved 1.0.126 run. Audit-Submission coherence went from 2 to 5 and the original strategy from 3 to 4. B9 (2/5) and complementarity (2/5) did not move.
+- A second pass of the two presented B9s and B10/C2 with the narration checks:
+  - the C2 now follows the original argument (current coverage, one paragraph per lawyer, the bench as depth, one conclusion) and passes every check;
+  - the B9s passed the subject rule only by writing 50-60-word sentences. That pass came before the 45-word limit, which is not yet paid-validated.
+- The effect on the review loops shows only in a full run.
+
 ## 1.0.128: graph flow for administrators
 
 A new **Administration → Graph flow** page shows what happened in every block of a case, in the style of a path exploration. Only ADMIN and SUPERADMIN users can open it: the server checks the role on both pages and on every query. It is read-only: no model call and no write.

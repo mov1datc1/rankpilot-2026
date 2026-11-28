@@ -9,7 +9,7 @@ from utils.literal_source import table_text_view
 from core.section_limits import B10_MAX_WORDS
 import copy
 from typing import Literal
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, model_serializer
 
 DEVELOPMENT_VERSION = 'editorial-development-v4'
 from core.biography_depth import BiographyDepth, DEPTH_CONTRACT, DEPTH_INSTRUCTION
@@ -23,6 +23,16 @@ class SupportingMatter(BaseModel):
     matter_id: str
     personal_role: str
     source_quote: str
+    # v1.0.130: decided by the shared plan; B9 and C2 cite the mandate through it.
+    proof_clause: str = Field(default='', description='Internal, in English: ONE clause of at most 25 words with this lawyer\'s own contribution to this mandate and its result or exact current stage, the proof B9 and C2 cite. No client name, no confidential figure, never the matter\'s legal problem, procedure or team narrative.')
+
+    @model_serializer(mode='wrap')
+    def _without_empty_proof(self, handler):
+        # An entry without a decided proof serialises exactly as before v1.0.130.
+        data = handler(self)
+        if isinstance(data, dict) and not data.get('proof_clause'):
+            data.pop('proof_clause', None)
+        return data
 
 class Candidate(BaseModel):
     name: str
@@ -72,7 +82,7 @@ class Development(BaseModel):
     target_rationale: str = Field(description='Preserve the requested target or explain any recommended change using evidence; distinguish objective from verified current ranking.')
     principal_strength: str
     principal_vulnerability: str
-    original_strategy: str = Field(default='', description='Internal, in Spanish: the central thesis of b10_source and c2_source (value proposition and positioning argument) in one or two sentences, whether it is stronger than what you would build from the mandates alone, and how B10 and C2 keep and strengthen it. Empty only when there is no original narrative.')
+    original_strategy: str = Field(default='', description='Internal, in Spanish, in two parts: (1) the B10 thesis of b10_source (its value proposition); (2) the C2 argument of c2_source (which aspect of the coverage it asks to reconsider and on what grounds, naming the lawyers it argues for). For each, whether it is stronger than what you would build from the mandates alone and how that section keeps and strengthens it; the C2 argument is never folded into the B10 thesis. Empty only when there is no original narrative.')
     hero_rationale: str = Field(description='Explain why this hero best proves the candidature relative to the strongest other selected mandate.')
     candidates: list[Candidate]
     comparisons: list[Comparison]

@@ -68,9 +68,11 @@ additional source leaders internally without inventing roster titles.'''
 PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
 PLAN_TASK += '\n' + '\n'.join((editorial_strategy.SECTION_ROLES, editorial_strategy.ORIGINAL_STRATEGY,
     editorial_strategy.CANDIDACY, editorial_strategy.MATTER_SIGNIFICANCE)) + '''
-Record the original thesis and how B10 and C2 keep it in original_strategy, and give each
+Record in original_strategy the B10 thesis and, separately, the C2 argument (the aspect to
+reconsider, its grounds and the lawyers it names) and how each section keeps it, and give each
 lawyer a candidacy_state; the institutional_arguments are claims about what distinguishes
-the practice, proved by mandates, never one argument per mandate.'''
+the practice, proved by mandates, never one argument per mandate.
+''' + editorial_strategy.PROOF_CLAUSES
 
 MATTER_TASK = COMMON + ''' Write these matter narratives in English. The destination
 and original restrictions are explicit in field_contracts. E is confidential:
@@ -134,7 +136,7 @@ inference the record does not support.
 ''' + editorial_strategy.MATTER_OPENING + '''
 Describe the legal sophistication the record shows: a notable client or a difficult
 jurisdiction never turns a routine filing, registration or permit into complex work.
-''' + editorial_strategy.MATERIAL_CONFLICTS
+''' + editorial_strategy.MATERIAL_CONFLICTS + '\n' + editorial_strategy.FORM_FIELDS
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
@@ -145,7 +147,7 @@ role explicitly in submission_bio. Preserve material career credentials, scale
 qualifiers (such as "high-value" disputes), prior
 employment, professional offices (such as bar association committee/officer roles)
 and all substantive personally attributed core/reserve work without softening
-sourced achieved results into aims. Vary sentence openings across matter
+sourced achieved results into aims. Vary sentence openings across
 paragraphs (never start consecutive paragraphs with repetitive phrases such as
 "named lead partner"). Distinguish their own
 role from the firm's result. Generalise private client identities and identifying
@@ -176,7 +178,8 @@ give no sector or industry label ("a confidential client"). Bind each original p
 profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
 (never from another unit), copy source_quote literally, and for every retained
 credential copy public_quote verbatim from the actual resulting submission_bio.
-Preserve every distinct substantive contribution in submission_case_coverage. Do
+Preserve every distinct substantive contribution in submission_case_coverage, each as
+proof in a clause of this B9 (never a re-told matter). Do
 not narrate verification rules, missing rankings or source sufficiency in public
 prose. Keep limited team participation proportionate without inventing a
 nomination or personal result.
@@ -275,7 +278,10 @@ practice's present position or its absence and, when c2_source gives one, the fi
 own reading of the market; (b) the precise aspect that deserves reconsideration (the
 practice's position, a named lawyer, a type of work or capability the coverage does not
 reflect); (c) the evidence that justifies it, each decisive mandate cited only for the
-point it proves; (d) the conclusion,
+point it proves, in a clause inside a sentence about the practice or a lawyer, never a
+sentence or paragraph that summarises a matter; when c2_source argues from people (a
+leadership structure, named lawyers' autonomy or client reliance), that argument, one
+lawyer at a time, is the evidence; (d) the conclusion,
 stated once at the end as the consequence of the argument. The
 objective guides the argument but is not its subject: the evidence (technical
 sophistication, relevance of the mandates, results, international dimension, depth
@@ -997,6 +1003,15 @@ def advance(state, invoke):
             # omitted achieved result or a result rewritten as an aim).
             payload['mandate_results']={m['matter_id']:m.get('decisive_source_quotes',[]) for m in work.get('matters',[])
                                         if m.get('matter_id') in ids and m.get('decisive_source_quotes')}
+            # v1.0.130: a mandate whose proof the plan decided reaches B9 as that
+            # clause, without the narrative it kept re-telling (v1.0.129 probes).
+            proofs=editorial_strategy.proof_clauses(c,ids)
+            if proofs:
+                payload['package']['matters']=[editorial_strategy.proof_record(m,proofs[m['id']]) if m['id'] in proofs else m
+                                               for m in payload['package']['matters']]
+                payload['mandate_results']={k:v for k,v in payload['mandate_results'].items() if k not in proofs}
+                payload['proof_clauses']=proofs
+                task+='\n'+editorial_strategy.PROOF_B9
             if bindings is not None:payload['source_bindings']=bindings
         else:
             schema=strict_model('InstitutionalProse',model_fields(full,('b10','c2','institutional_execution')))
@@ -1009,6 +1024,10 @@ def advance(state, invoke):
                 'department_size':department_size(package)}
             from core.public_privacy import public_disclosure
             payload['public_disclosure']=public_disclosure(package,selected)
+            proofs=editorial_strategy.presented_proofs(work.get('candidates'))
+            if proofs:
+                payload['proof_clauses']=proofs
+                task+='\n'+editorial_strategy.PROOF_C2
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
@@ -1092,7 +1111,7 @@ def advance(state, invoke):
                 profile={**work['candidates'][unit['index']],**value}
                 profile,titled=biography_openings.place_title(profile,package)
                 profile,_=prose_rules.polish_candidate(profile,package)
-                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
+                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))+editorial_strategy.b9_narration_faults(package,str(profile.get('name')),profile.get('submission_bio','') if profile.get('recommendation')=='present' else '')
                 prior=(pending.get('shape_fallback') or {}).get(key)
                 if shape and not correcting:
                     # Ángela's B9 architecture, checked before review: one
@@ -1102,7 +1121,7 @@ def advance(state, invoke):
                     raise ValueError('; '.join(shape))
                 if correcting and prior and len(shape)>prior['faults']:
                     profile={**profile,**prior['fields']}
-                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)
+                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))+editorial_strategy.b9_narration_faults(package,str(profile.get('name')),profile.get('submission_bio','') if profile.get('recommendation')=='present' else '')
                     pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
                 if shape:pending.setdefault('shape_observations',[]).extend(shape)
                 (pending.get('shape_fallback') or {}).pop(key,None)
@@ -1112,7 +1131,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)+editorial_strategy.section_faults(package,value)
+                faults=length_faults(package,value)+leadership_faults(package,value)+team_link_faults(package,value)+aspiration_faults(package,value)+headcount_faults(package,value)+objective_faults(package,value)+editorial_strategy.section_faults(package,value,work.get('matters'))
                 if faults and not correcting:
                     # Ángela's rules: B10 within 500 words and C2 within 1,000,
                     # never collapsing the original, and the original's leadership
