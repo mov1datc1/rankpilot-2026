@@ -45,6 +45,42 @@ class NoSectionRetellsAMatter(unittest.TestCase):
         self.assertIn("editorial_strategy.section_faults(package,value,work.get('matters'))", source)
 
 
+class SectionsDoNotNarrate(unittest.TestCase):
+    PACKAGE = {'firm_name': 'Example Legal'}
+
+    def test_a_b9_whose_sentences_are_about_the_team_is_corrected(self):
+        bio = ('Ana Ruiz heads the practice. The Public Law team prepared expert testimony on state entities. '
+               'Example Legal’s department advises on permits and procedures before authorities. The engagement addresses contractual performance and escalation into international forums.')
+        faults = es.b9_narration_faults(self.PACKAGE, 'Ana Ruiz', bio)
+        self.assertTrue(faults and '3 sentences' in faults[0], faults)
+
+    def test_a_b9_about_the_lawyer_passes(self):
+        bio = ('Ana Ruiz heads the practice and is the counsel lenders call when a supervisor reinterprets the rules. '
+               'She led the challenge that preserved a microfinance bank’s services, and she directs the enforcement strategy '
+               'that secured precautionary measures against State entities.')
+        self.assertEqual(es.b9_narration_faults(self.PACKAGE, 'Ana Ruiz', bio), [])
+
+    def test_narration_folded_into_a_long_sentence_is_corrected_too(self):
+        long = ('Ana Ruiz leads the representation of a confidential client in enforcement following an arbitral award, advancing '
+                'through precautionary measures after expert testimony prepared and coordinated by the team addressed whether '
+                'state-owned entities lack real autonomy and operate as instruments of the central government in the '
+                'enforcement proceedings abroad.')
+        faults = es.b9_narration_faults(self.PACKAGE, 'Ana Ruiz', 'Ana Ruiz heads the practice and advises regulated lenders. ' + long)
+        self.assertTrue(any('over 45 words' in f for f in faults), faults)
+
+    def test_a_c2_that_summarises_matters_is_corrected(self):
+        c2 = ('The current coverage does not reflect the practice. A confidential international dispute demonstrates the point: '
+              'we analysed regulatory omissions. The ongoing banking matter similarly concerns a challenge to the supervisor.')
+        self.assertTrue(es.c2_narration_faults(c2))
+        self.assertTrue(any(f.startswith('C2 summarises matters') for f in es.section_faults({}, {'b10': 'x', 'c2': c2}, [])))
+
+    def test_the_c2_task_takes_the_people_argument_as_evidence(self):
+        flat = ' '.join(ec.INSTITUTION_TASK.split())
+        self.assertIn('never a sentence or paragraph that summarises a matter', flat)
+        self.assertIn('that argument, one lawyer at a time, is the evidence', flat)
+        self.assertEqual(inspect.getsource(ec).count('editorial_strategy.b9_narration_faults('), 2)
+
+
 class OriginalC2Argument(unittest.TestCase):
     PACKAGE = {'lawyers': LAWYERS, 'c2_source': ('The practice has consolidated its leadership. Bruno Lima now handles '
                                                  'complex matters independently and Carla Vega has gained autonomy.')}

@@ -277,7 +277,10 @@ practice's present position or its absence and, when c2_source gives one, the fi
 own reading of the market; (b) the precise aspect that deserves reconsideration (the
 practice's position, a named lawyer, a type of work or capability the coverage does not
 reflect); (c) the evidence that justifies it, each decisive mandate cited only for the
-point it proves; (d) the conclusion,
+point it proves, in a clause inside a sentence about the practice or a lawyer, never a
+sentence or paragraph that summarises a matter; when c2_source argues from people (a
+leadership structure, named lawyers' autonomy or client reliance), that argument, one
+lawyer at a time, is the evidence; (d) the conclusion,
 stated once at the end as the consequence of the argument. The
 objective guides the argument but is not its subject: the evidence (technical
 sophistication, relevance of the mandates, results, international dimension, depth
@@ -1094,7 +1097,7 @@ def advance(state, invoke):
                 profile={**work['candidates'][unit['index']],**value}
                 profile,titled=biography_openings.place_title(profile,package)
                 profile,_=prose_rules.polish_candidate(profile,package)
-                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))
+                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))+editorial_strategy.b9_narration_faults(package,str(profile.get('name')),profile.get('submission_bio','') if profile.get('recommendation')=='present' else '')
                 prior=(pending.get('shape_fallback') or {}).get(key)
                 if shape and not correcting:
                     # Ángela's B9 architecture, checked before review: one
@@ -1104,7 +1107,7 @@ def advance(state, invoke):
                     raise ValueError('; '.join(shape))
                 if correcting and prior and len(shape)>prior['faults']:
                     profile={**profile,**prior['fields']}
-                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))
+                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)+privacy_faults(package,strategy,profile)+editorial_strategy.retold_faults('B9 of '+str(profile.get('name')),profile.get('submission_bio',''),work.get('matters'))+editorial_strategy.b9_narration_faults(package,str(profile.get('name')),profile.get('submission_bio','') if profile.get('recommendation')=='present' else '')
                     pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
                 if shape:pending.setdefault('shape_observations',[]).extend(shape)
                 (pending.get('shape_fallback') or {}).pop(key,None)

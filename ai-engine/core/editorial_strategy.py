@@ -261,6 +261,57 @@ def retold_faults(label, text, matters):
             'in a clause: the own contribution and the result, without the legal problem, the procedure or the team narrative.']
 
 
+# A B9 is about the lawyer; a C2 about the coverage. Sentences whose subject is the
+# team, the firm or a matter narrate the work highlight again (Public Law probe of
+# v1.0.129: "The Public Law team prepared…", "The engagement addresses…", "The
+# ongoing … matter similarly concerns…"), even when they paraphrase it.
+_B9_SUBJECT = r'(?:team|firm|department|engagement|matter|mandate|work|representation|intervention|opinion|advice|practice|proceedings?|dispute|case)'
+_C2_SUBJECT = r'(?:matter|mandate|engagement|dispute|proceedings?|case|representation|opinion|motion|litigation)'
+
+
+def _subject(nouns, firm=''):
+    first = re.escape(str(firm or '').split()[0]) if str(firm or '').split() else None
+    alternatives = [r"(?:the|this|that|its|their|our|an?)\s+(?:[\w’'-]+\s+){0,4}?" + nouns + r"(?:’s|'s)?\b"]
+    if first:
+        alternatives.append(first + r"(?:’s|'s)?\b")
+    return re.compile(r'^(?:' + '|'.join(alternatives) + r')', re.I)
+
+
+def narration_sentences(text, nouns, firm=''):
+    pattern = _subject(nouns, firm)
+    return [s for s in _sentences(text) if pattern.search(s.strip())]
+
+
+B9_SENTENCE_WORDS = 45
+
+
+def b9_narration_faults(package, name, text):
+    """Narration in B9: two or more sentences about the team, the firm or the matter, or
+    a sentence over 45 words (the v1.0.129 probe answered the first rule by folding the
+    same narration into 50-60-word sentences with the lawyer as subject)."""
+    found = narration_sentences(text, _B9_SUBJECT, (package or {}).get('firm_name', ''))
+    long = [s for s in _sentences(text) if len(s.split()) > B9_SENTENCE_WORDS]
+    faults = []
+    if len(found) >= 2:
+        faults.append(f'B9 of {name} narrates the matters: {len(found)} sentences have the team, the firm or the matter as subject '
+                      '(for example "' + ' '.join(found[0].split()[:16]) + ' …"). B9 is about this lawyer: make the lawyer the subject '
+                      'and keep each mandate as proof in a clause (own contribution and result); section D/E tells the matter.')
+    if long:
+        faults.append(f'B9 of {name} has {len(long)} sentence(s) over {B9_SENTENCE_WORDS} words (for example "'
+                      + ' '.join(long[0].split()[:16]) + ' …"). A mandate is proof in a clause: state what this lawyer did and the '
+                      'result in a short sentence, and leave the matter\'s problem, procedure and team work to section D/E.')
+    return faults
+
+
+def c2_narration_faults(text):
+    found = narration_sentences(text, _C2_SUBJECT)
+    if len(found) < 2:
+        return []
+    return [f'C2 summarises matters: {len(found)} sentences have a matter as subject (for example "'
+            + ' '.join(found[0].split()[:16]) + ' …"). C2 argues what the coverage should reconsider; cite a mandate only '
+            'in a clause for the point it proves, inside a sentence about the practice or a lawyer.']
+
+
 def _plain(text):
     import unicodedata
     return ''.join(c for c in unicodedata.normalize('NFKD', str(text or '').casefold()) if not unicodedata.combining(c))
@@ -301,7 +352,7 @@ def section_faults(package, value, matters=None):
     faults = retold_faults('B10', b10, matters) if b10.strip() else []
     if not c2.strip():
         return faults
-    faults += retold_faults('C2', c2, matters) + c2_argument_faults(package, c2)
+    faults += retold_faults('C2', c2, matters) + c2_narration_faults(c2) + c2_argument_faults(package, c2)
     first = [p for p in c2.split('\n') if p.strip()][0]
     if not COVERAGE.search(first):
         faults.append('C2 opens by presenting the practice ("' + first.strip()[:140] + '"). C2 answers what the directory '

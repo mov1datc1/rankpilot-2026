@@ -16,7 +16,19 @@ The reviewer and repair then lengthened every B9 again. No check looked for a se
   - "Omission" is the most frequent defect: 51 cases. About half asked the matter narrative to repeat what the form's own cells carry: the leads' titles and committee roles, the cross-border answer and its jurisdictions. The writer, the field reviewer, repair and the judge now read that those cells are not omissions, and the two matter obligations say so.
   - The prompt cache is not the lever: the part common to all calls of one role in a case is about 20% of each call, so it would save about 0.10 USD per case. It is not changed.
 
-Validation: Python 1,206 tests OK (new `test_v129_sections.py`). The checks were replayed at no cost on 9 saved runs and on the 1.0.127 probe, where they flag exactly what the rubric found: the B9 that re-told two matters, and the C2 that dropped the lawyer the original argued for. Paid validation is pending; the effect on the review loops shows only in a full run.
+- **Narration checks from the paid probe.** The overlap check caught copied sentences, not paraphrases. Two more checks were added:
+  - A B9 is corrected when two or more of its sentences have the team, the firm or the matter as subject, or when a sentence runs over 45 words. The first rule alone was answered by folding the same narration into 50-60-word sentences with the lawyer as subject.
+  - A C2 is corrected when two or more of its sentences have a matter as subject.
+  - When the original C2 argues from people, that argument, one lawyer at a time, is the C2's evidence.
+
+Validation:
+- Python 1,211 tests OK (new `test_v129_sections.py`).
+- Free replay on 9 saved runs and on the 1.0.127 probe.
+- Paid probe on the saved Public Law run (1.43 USD), first pass only. Rubric: 27/40, against 24/40 for 1.0.127 and 15/40 for the saved 1.0.126 run. Audit-Submission coherence went from 2 to 5 and the original strategy from 3 to 4. B9 (2/5) and complementarity (2/5) did not move.
+- A second pass of the two presented B9s and B10/C2 with the narration checks:
+  - the C2 now follows the original argument (current coverage, one paragraph per lawyer, the bench as depth, one conclusion) and passes every check;
+  - the B9s passed the subject rule only by writing 50-60-word sentences. That pass came before the 45-word limit, which is not yet paid-validated.
+- The effect on the review loops shows only in a full run.
 
 ## 1.0.128: graph flow for administrators
 
